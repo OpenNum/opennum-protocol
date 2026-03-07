@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenNum Protocol — Whitepaper v1.0</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #ffffff;
+      color: #111111;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 16px;
+      line-height: 1.9;
+    }
+    a { color: #111; }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 40px 120px;
+    }
+
+    /* HEADER */
+    .doc-header {
+      border-bottom: 2px solid #111;
+      padding-bottom: 48px;
+      margin-bottom: 64px;
+    }
+    .doc-nav {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 48px;
+    }
+    .doc-nav a { color: #888; text-decoration: none; }
+    .doc-nav a:hover { color: #111; }
+    .doc-title {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: bold;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+    .doc-subtitle {
+      font-size: 18px;
+      color: #555;
+      font-style: italic;
+      margin-bottom: 32px;
+    }
+    .doc-meta {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: #888;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    /* TOC */
+    .toc {
+      background: #f8f8f8;
+      border-left: 3px solid #111;
+      padding: 32px 36px;
+      margin-bottom: 64px;
+    }
+    .toc h2 {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 20px;
+      font-family: 'Courier New', monospace;
+    }
+    .toc ol {
+      padding-left: 20px;
+      color: #333;
+    }
+    .toc li { margin-bottom: 6px; font-size: 15px; }
+    .toc a { color: #333; text-decoration: none; }
+    .toc a:hover { color: #111; text-decoration: underline; }
+    .toc .sub { padding-left: 24px; margin-top: 4px; }
+    .toc .sub li { font-size: 14px; margin-bottom: 3px; }
+
+    /* CONTENT */
+    h2 {
+      font-size: 26px;
+      font-weight: bold;
+      margin: 64px 0 24px;
+      padding-top: 48px;
+      border-top: 1px solid #ddd;
+      letter-spacing: -0.3px;
+    }
+    h2:first-of-type { border-top: none; }
+    h3 {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 36px 0 16px;
+      color: #333;
+    }
+    p { margin-bottom: 20px; color: #333; }
+    strong { color: #111; }
+
+    ul, ol {
+      padding-left: 28px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    li { margin-bottom: 8px; }
+
+    /* CODE BLOCKS */
+    .code-block {
+      background: #111;
+      color: #ddd;
+      padding: 28px 32px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      margin: 24px 0 28px;
+      border-radius: 0;
+      overflow-x: auto;
+    }
+    .code-block .k { color: #fff; }
+    .code-block .v { color: #aaa; }
+    .code-block .c { color: #666; font-style: italic; }
+
+    /* TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0 32px;
+      font-size: 14px;
+    }
+    th {
+      background: #111;
+      color: #fff;
+      padding: 12px 16px;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e5e5;
+      color: #333;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8f8f8; }
+
+    /* CALLOUT */
+    .callout {
+      border-left: 3px solid #111;
+      padding: 20px 24px;
+      margin: 28px 0;
+      background: #f8f8f8;
+      font-style: italic;
+      color: #444;
+    }
+
+    /* ABSTRACT */
+    .abstract {
+      background: #f8f8f8;
+      padding: 32px 36px;
+      margin-bottom: 48px;
+      border-top: 2px solid #111;
+      border-bottom: 1px solid #ddd;
+    }
+    .abstract-label {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 14px;
+    }
+    .abstract p { margin-bottom: 0; font-size: 15px; color: #444; font-style: italic; }
+
+    /* FOOTER */
+    .doc-footer {
+      margin-top: 80px;
+      padding-top: 32px;
+      border-top: 2px solid #111;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .doc-footer p {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 1px;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 40px 20px 80px; }
+      .doc-meta { flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="doc-nav">
+      <a href="index.html"><img src="img/logo.svg" alt="OpenNum" style="height:26px;vertical-align:middle;margin-right:6px;opacity:0.8"/>← opennum.org</a>
+      &nbsp;/&nbsp; Whitepaper v1.0
+      &nbsp;|&nbsp; <a href="whitepaper-cn.html">中文版</a>
+      &nbsp;|&nbsp; <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a>
+    </div>
+    <div class="doc-title">OpenNum Protocol</div>
+    <div class="doc-subtitle">A Bitcoin-Native Identity Standard for the Ordinals Era</div>
+    <div class="doc-meta">
+      <span>Version 1.0</span>
+      <span>March 2026</span>
+      <span>OpenNum Team</span>
+      <span>opennum.org</span>
+      <span>License: MIT</span>
+    </div>
+  </div>
+
+  <!-- ABSTRACT -->
+  <div class="abstract">
+    <div class="abstract-label">Abstract</div>
+    <p>OpenNum is an <strong>application-layer identity protocol</strong> built on top of the Bitcoin Ordinals indexing system. It transforms Ordinal Inscription numbers into permanent, human-readable identity identifiers — Bitcoin's phone book and wallet for the AI era. Rather than sharing 62-character wallet addresses, users register their inscription number as their OpenNum ID — a short, memorable integer that maps cryptographically to their Bitcoin wallet. The inscription's image serves as their verified on-chain avatar. OpenNum requires no smart contracts, no sidechains, and no changes to the Bitcoin protocol. One number takes you everywhere.</p>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#problem">The Problem</a></li>
+      <li><a href="#solution">The OpenNum Solution</a></li>
+      <li>
+        <a href="#protocol">Protocol Specification</a>
+        <ol class="sub">
+          <li><a href="#registration">Registration</a></li>
+          <li><a href="#validity">Validity Rules</a></li>
+          <li><a href="#transfer">Transfer and Reassignment</a></li>
+          <li><a href="#indexer">Indexer Architecture</a></li>
+          <li><a href="#authority">Number Authority &amp; Determinism</a></li>
+          <li><a href="#statemachine">Identity State Machine</a></li>
+          <li><a href="#btcsuffix">.btc Display Alias</a></li>
+        </ol>
+      </li>
+      <li><a href="#usecases">Use Cases</a></li>
+      <li><a href="#comparison">Competitive Landscape</a></li>
+      <li><a href="#open">Open Protocol Principles</a></li>
+      <li><a href="#risks">Known Risks and Challenges</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#aiagents">AI Agent Integration</a></li>
+      <li><a href="#extended">Extended Wallet Applications</a></li>
+      <li><a href="#conclusion">11. Conclusion</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. PROBLEM -->
+  <h2 id="problem">1. The Problem</h2>
+  <p>Bitcoin wallet addresses are cryptographically secure but fundamentally inhuman. A typical Taproot address reads:</p>
+  <div class="code-block">bc1p8dqa4wjvnt890qmfws83te2v3rxd7zr5uu6vsrk8kqnf3cgwwuqszc3qa5</div>
+  <p>This creates three compounding problems:</p>
+  <ul>
+    <li><strong>Usability.</strong> No person can reliably remember, communicate, or verify a 62-character alphanumeric string. Every transfer requires copy-paste, and a single error means permanent loss of funds.</li>
+    <li><strong>Identity.</strong> There is no native way to associate a Bitcoin wallet with a human identity. Without identity, Bitcoin wallets cannot serve as the basis for social interaction, community, or trust.</li>
+    <li><strong>Adoption.</strong> The complexity of raw addresses is a primary barrier to mainstream Bitcoin adoption. New users encounter the address problem on day one and have no intuitive framework for it.</li>
+  </ul>
+  <p>Ethereum's ENS (Ethereum Name Service) partially addressed this by mapping human-readable names (e.g., <code>satoshi.eth</code>) to wallet addresses. However, ENS relies on smart contracts that are unavailable on Bitcoin Layer 1. Bitcoin's UTXO model does not natively support the stateful computation required for a name registry contract.</p>
+  <div class="callout">
+    "The best interface is the one that disappears. Bitcoin needs an identity layer that people already understand — a number."
+  </div>
+
+  <!-- 2. SOLUTION -->
+  <h2 id="solution">2. The OpenNum Solution</h2>
+  <p>OpenNum leverages a unique property of the Bitcoin Ordinals protocol: every inscription is permanently assigned a sequential integer — its inscription number — at the time of creation. As of early 2026, over <strong>112 million inscriptions</strong> exist on Bitcoin, each with a globally unique number that can never change and can never be reassigned to a different inscription.</p>
+  <p>OpenNum makes this simple: <strong>your inscription number is your identity.</strong></p>
+  <div class="callout">
+    Think of OpenNum as a <strong>Bitcoin phone number system</strong>: your inscription number is your number, your wallet is your device, and sending to #2025 is like dialing a call. No one in the world should have to memorize a 62-character string — they just need to know your number.
+  </div>
+  <div class="code-block">
+    <span class="c">// Instead of this:</span><br />
+    <span class="v">Send BTC to: bc1p8dqa4wjvnt890qmfws83te2v3rxd7zr5uu...</span><br /><br />
+    <span class="c">// You do this:</span><br />
+    <span class="k">Send BTC to: #2025</span>
+  </div>
+  <p>The inscription number resolves to the current wallet holding that inscription. The inscription's image becomes the owner's avatar. The wallet's on-chain holdings are publicly verifiable. One number carries identity, payment routing, social context, and community membership simultaneously.</p>
+  <p>Like a phone number or a QQ account, the number travels with the owner. If the inscription is sold, the number transfers to the new owner — who must re-register to activate the identity. This creates a natural market for desirable numbers (low numbers, repeating digits, culturally significant sequences) without any artificial scarcity mechanism.</p>
+
+  <!-- 3. PROTOCOL -->
+  <h2 id="protocol">3. Protocol Specification</h2>
+
+  <h3 id="registration">3.1 Registration</h3>
+  <div class="callout">
+    <strong>Why inscriptions, not UTXOs, PubKeys, or Satoshi numbers?</strong><br/>
+    Several identity anchors exist on Bitcoin. OpenNum's choice is deliberate: UTXOs are spent and destroyed with each transaction — unusable as persistent identity; PubKeys can be generated infinitely with no scarcity or sybil resistance; Satoshi numbers (sat numbers) lack images and content, missing the visual identity layer. <strong>Inscriptions</strong> uniquely combine: globally unique sequential number (scarcity) + embedded content image (avatar layer) + market price (economic anchor) + transfer cost (natural sybil resistance). No other anchor offers all four.
+  </div>
+  <p>To register an OpenNum ID, a holder must own the target inscription in their Bitcoin wallet and produce a signed registration message. The message structure is:</p>
+  <div class="code-block">
+<span class="k">{</span><br />
+&nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
+&nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.0"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_id"</span>: <span class="v">"[inscription number as integer]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"[bitcoin taproot address]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">"[unix timestamp]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"[secp256k1 signature over the above fields]"</span><br />
+<span class="k">}</span>
+  </div>
+  <p>The signature is produced using the Bitcoin wallet's private key via standard secp256k1 signing, identical to the mechanism used for Bitcoin message signing in all major wallets. This cryptographically proves ownership of the wallet — and therefore ownership of the inscription within it — without revealing the private key and without any on-chain transaction.</p>
+  <p>The registration message supports an optional <strong><code>"display_name"</code></strong> field, allowing a holder to attach a human-chosen label (e.g., "Satoshi_v2") to their number. The display name does not replace the number — the number remains the canonical unique identifier, just as a Twitter @handle is canonical while the display name is cosmetic. Display names are not globally unique; inscription numbers are.</p>
+
+  <h3 id="validity">3.2 Validity Rules</h3>
+  <p>A registration is valid if and only if all of the following conditions are met:</p>
+  <ol>
+    <li>The signing wallet currently holds the claimed inscription, verifiable via any Bitcoin Ordinals indexer.</li>
+    <li>The cryptographic signature is valid for the declared wallet address and message payload.</li>
+    <li>The timestamp is within an acceptable freshness window (recommended: 10 minutes for initial registration).</li>
+    <li>No currently valid registration exists for the same inscription number from a different wallet.</li>
+  </ol>
+
+  <h3 id="transfer">3.3 Transfer and Reassignment</h3>
+  <p>When an inscription moves to a new wallet address (via a Bitcoin transaction), the following occurs automatically:</p>
+  <ul>
+    <li>The previous registration becomes cryptographically invalid. The old wallet no longer holds the inscription, so the old signature no longer satisfies validity rule (1).</li>
+    <li>The inscription number enters a <strong>dormant state</strong>: the number is visible in the OpenNum system but is not mapped to any active identity.</li>
+    <li>The new inscription holder may register the number at any time by producing a new signed message from the new wallet.</li>
+    <li>Until re-registration, the number cannot be used for payments, messaging, or community access.</li>
+  </ul>
+  <div class="callout">
+    This mechanism mirrors the real-world model of phone numbers and account handles: the number travels with the asset, but identity activation requires the new holder's explicit action. This protects against unwanted identity assumptions upon receiving an inscription as a gift or purchase.
+  </div>
+
+  <h3 id="indexer">3.4 Indexer Architecture</h3>
+  <p>OpenNum requires no changes to Bitcoin's consensus rules. The protocol operates entirely at the application layer via indexers — software that monitors the Bitcoin blockchain and maintains a current state of all OpenNum registrations.</p>
+  <p>Any party may operate an OpenNum indexer. The indexer performs three functions:</p>
+  <ol>
+    <li><strong>Monitor</strong> Bitcoin blocks for inscription ownership changes (via standard Ordinals indexing).</li>
+    <li><strong>Validate</strong> incoming OpenNum registration messages against the validity rules in §3.2.</li>
+    <li><strong>Serve</strong> a public REST API mapping inscription numbers to wallet addresses, profile metadata, and registration status.</li>
+  </ol>
+  <p>Because any party can run an indexer and the validation rules are deterministic, the system is decentralized. Multiple independent indexers will converge on identical state given the same Bitcoin chain data and registration messages.</p>
+  <p><strong>Message propagation:</strong> In v1.0, registration messages are submitted via <strong>HTTP REST API</strong> to the reference indexer (<code>POST /api/v1/register</code>). Any party may run an independent indexer and accept registration messages. Future versions (v2.0+) will introduce a P2P Gossip network enabling message propagation across indexer nodes without any centralized entry point.</p>
+
+  <h3 id="authority">3.5 Number Authority &amp; Deterministic Foundation</h3>
+  <p>Inscription numbers (e.g. #2025) are not directly derived from Bitcoin consensus — they are computed by the <code>ord</code> indexing software based on confirmation order. This raises a critical question: if different indexer versions produce different numbers for the same chain data, which number is canonical?</p>
+  <p>OpenNum uses a <strong>dual-anchor design</strong>: every registration message includes both fields — the inscription number (human-readable) and the inscription txid (Bitcoin consensus primitive).</p>
+  <div class="code-block">
+<span class="k">{</span><br />
+&nbsp;&nbsp;<span class="k">"inscription_number"</span>: <span class="v">2025</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// human-readable number</span><br />
+&nbsp;&nbsp;<span class="k">"inscription_txid"</span>: <span class="v">"abc123...def"</span>,&nbsp;&nbsp;<span class="c">// Bitcoin consensus primitive</span><br />
+&nbsp;&nbsp;<span class="k">"indexer_ruleset"</span>: <span class="v">"ord-v0.18-mainnet"</span>&nbsp;<span class="c">// canonical ruleset declaration</span><br />
+<span class="k">}</span>
+  </div>
+  <p>The <strong>txid</strong> is the GPS coordinate (Bitcoin consensus, unforgeable). The <strong>number</strong> is the street address (human-readable, indexer-computed). Together they make OpenNum <strong>numbering-dispute-immune</strong>: even if indexer versions disagree on a number, the txid always identifies the correct inscription.</p>
+  <div class="callout">
+    <strong>Cursed Inscriptions (#c-1234):</strong> ~472,043 inscriptions created before Bitcoin block 824,544 using non-standard methods were assigned negative numbers. The Ordinals Jubilee update (January 6, 2024) formally rehabilitated them with permanent negative numbers. OpenNum treats cursed inscriptions as first-class citizens: they display as <code>#c-1234</code>, carry identical registration rights, and represent the earliest Ordinals participants — numbers with unique historical significance.
+  </div>
+
+  <h3 id="statemachine">3.6 Identity State Machine</h3>
+  <p>Every OpenNum number exists in exactly one of four states at any moment:</p>
+  <table>
+    <thead>
+      <tr><th>State</th><th>Flag</th><th>Meaning</th><th>API Response</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Active</strong></td><td>🟢</td><td>Registered and valid; current holder has signed</td><td>Returns wallet address</td></tr>
+      <tr><td><strong>Dormant</strong></td><td>⚫</td><td>Inscription transferred; old registration void, new holder not yet registered</td><td>Returns dormant status</td></tr>
+      <tr><td><strong>Cooling</strong></td><td>🟠 + countdown</td><td>Transfer occurred within last 30 days; prompts new holder to activate</td><td>Returns days remaining</td></tr>
+      <tr><td><strong>Flagged</strong></td><td>🔵</td><td>Previous holder published a formal transfer declaration</td><td>Returns declaration content</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    The 30-day cooling window gives wallets, integrations, and new holders sufficient buffer to handle ownership transitions. A number in cooling shows a visible orange indicator rather than silently going dormant, reducing cases where new holders miss payments because they haven't yet re-registered.
+  </div>
+
+  <h3 id="btcsuffix">3.7 .btc Display Alias</h3>
+  <p>Many inscriptions contain domain name registrations in SNS (Satoshi Name Service) JSON format: <code>{"p":"sns","op":"reg","name":"satoshi.btc"}</code>. The OpenNum indexer <strong>automatically reads</strong> such inscriptions and surfaces the domain as a <strong>display alias</strong> on the profile — without affecting the canonical inscription number. If the inscription's number is #2025, both <code>#2025</code> and <code>satoshi.btc</code> are visible on the profile. btcmap, unisat domains, and other SNS-compatible systems are also supported.</p>
+  <div class="callout">
+    If the number is your street address, the .btc name is the nameplate on your door. Both coexist. OpenNum doesn't monopolize naming — it aggregates all on-chain identity signals.
+  </div>
+
+  <!-- 4. USE CASES -->
+  <h2 id="usecases">4. Use Cases</h2>
+
+  <h3>4.1 Simplified Bitcoin Payments</h3>
+  <p>Any OpenNum-compatible wallet resolves a number to the current wallet address before constructing a transaction. The user types <strong>#2025</strong> and sends Bitcoin — the wallet handles address resolution invisibly. This makes Bitcoin payments as intuitive as sending a WeChat red envelope.</p>
+
+  <h3>4.2 On-Chain Social Identity</h3>
+  <p>Every registered OpenNum ID has a public profile containing: the inscription image as avatar, the registration timestamp (proving early participation), current on-chain holdings visible to all, and links to verified external social accounts. Users who choose to make their wallet public gain a rich, verifiable digital identity — impossible to fake, impossible to counterfeit.</p>
+
+  <h3>4.3 Social Media Binding</h3>
+  <p>Users may link their OpenNum ID to external platforms (Twitter/X, TikTok, Instagram, etc.) through a mutual verification process: the user posts their OpenNum number on their social profile, then signs a binding message in the OpenNum system. Indexers crawl both signals and confirm the link. Once bound, a creator's followers can send Bitcoin or inscriptions directly through the creator's social profile.</p>
+
+  <h3>4.4 Community Membership</h3>
+  <p>Holding an inscription from a specific collection grants access to that collection's community. The inscription is the membership card — it is on-chain, verifiable by anyone, and transferable as a standard Bitcoin transaction. This creates a new model for exclusive communities, DAOs, and events where membership is provably scarce.</p>
+
+  <h3>4.5 Inscription Gifting</h3>
+  <p>Sending an inscription to a recipient requires only their OpenNum number. No address copying, no error risk. This dramatically lowers the friction of inscription gifting, enabling viral social behaviors: gifting low-number inscriptions as meaningful presents, merchants rewarding customers with brand inscriptions, and communities airdropping to members by number.</p>
+
+  <h3>4.6 Contract Attestation</h3>
+  <p>Two OpenNum holders co-sign a structured document using their respective wallet private keys. The combined signature produces a tamper-proof, timestamped attestation that both parties agreed to the document's contents at a specific point in time. While not a legal instrument by itself, this provides cryptographic evidence admissible as supporting material in disputes.</p>
+
+  <h3>4.7 Wallet Onboarding</h3>
+  <p>Bitcoin wallet providers can inscribe batches of low-cost text inscriptions and gift one to each new user upon account creation. From the moment of onboarding, the user possesses a permanent, unique inscription number — their Bitcoin identity number. This eliminates the "empty wallet" problem that discourages new users and gives them an immediate reason to engage with the Bitcoin ecosystem.</p>
+
+  <!-- 5. COMPARISON -->
+  <h2 id="comparison">5. Competitive Landscape</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>ENS (Ethereum)</th>
+        <th>OpenNum (Bitcoin)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Identifier type</td>
+        <td>Chosen text name (e.g., satoshi.eth)</td>
+        <td>Sequential integer (e.g., #2025)</td>
+      </tr>
+      <tr>
+        <td>Underlying chain</td>
+        <td>Ethereum</td>
+        <td>Bitcoin</td>
+      </tr>
+      <tr>
+        <td>Smart contract required</td>
+        <td>Yes (ERC-721 + registry)</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>Avatar source</td>
+        <td>Linked NFT (separate)</td>
+        <td>Inscription image (same asset)</td>
+      </tr>
+      <tr>
+        <td>Identity type</td>
+        <td>Name chosen by user</td>
+        <td>Number issued by protocol order</td>
+      </tr>
+      <tr>
+        <td>Scarcity mechanism</td>
+        <td>Namespace (any text)</td>
+        <td>Sequential integers (natural scarcity)</td>
+      </tr>
+      <tr>
+        <td>Transfer mechanism</td>
+        <td>ENS NFT transfer</td>
+        <td>Inscription transfer + re-registration</td>
+      </tr>
+      <tr>
+        <td>Registration cost</td>
+        <td>Gas + annual renewal fee</td>
+        <td>Signature only (no on-chain cost)</td>
+      </tr>
+      <tr>
+        <td>Asset backing</td>
+        <td>No (name is separate from assets)</td>
+        <td>Yes (inscription is the identity asset)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.1 Full Competitive Map</h3>
+  <p>OpenNum is not the first project to explore an identity layer on Bitcoin, but it is the only system designed specifically for <strong>individual users</strong>, anchored to <strong>inscription numbers</strong>, with <strong>zero on-chain registration cost</strong>.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>ENS</th>
+        <th>MicroStrategy Orange</th>
+        <th>BTCO DID</th>
+        <th>OpenNum</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Target user</td>
+        <td>Individuals (Ethereum)</td>
+        <td>Enterprises / institutions</td>
+        <td>Developers / technical</td>
+        <td>Individual users</td>
+      </tr>
+      <tr>
+        <td>Identifier format</td>
+        <td>Chosen text name</td>
+        <td>W3C DID string</td>
+        <td>W3C DID string</td>
+        <td>Sequential integer</td>
+      </tr>
+      <tr>
+        <td>Underlying chain</td>
+        <td>Ethereum</td>
+        <td>Bitcoin</td>
+        <td>Bitcoin</td>
+        <td>Bitcoin</td>
+      </tr>
+      <tr>
+        <td>On-chain registration cost</td>
+        <td>Gas + annual fee</td>
+        <td>Yes (batch transaction)</td>
+        <td>Yes (inscription tx)</td>
+        <td>No (signature only)</td>
+      </tr>
+      <tr>
+        <td>Human readability</td>
+        <td>High (satoshi.eth)</td>
+        <td>Low (DID string)</td>
+        <td>Low (DID string)</td>
+        <td>High (#2025)</td>
+      </tr>
+      <tr>
+        <td>Built-in avatar</td>
+        <td>Requires linked NFT</td>
+        <td>None</td>
+        <td>None</td>
+        <td>Inscription image, automatic</td>
+      </tr>
+      <tr>
+        <td>AI agent identity</td>
+        <td>None</td>
+        <td>None</td>
+        <td>None</td>
+        <td>Native in v1.1</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 6. OPEN PROTOCOL -->
+  <h2 id="open">6. Open Protocol Principles</h2>
+  <p>OpenNum is designed to be a public good for the Bitcoin ecosystem, not a proprietary platform. We commit to the following principles:</p>
+  <ul>
+    <li><strong>Open specification.</strong> The complete protocol specification is published under MIT license. Any developer may implement it without permission or payment.</li>
+    <li><strong>No rent-seeking.</strong> OpenNum charges no registration fees, no renewal fees, and no transaction fees at the protocol layer. Applications built on OpenNum may charge for their services; the protocol itself will not.</li>
+    <li><strong>Decentralized indexing.</strong> We operate a reference indexer, but we actively encourage independent indexers. Decentralization of the indexer layer is a design goal, not an afterthought.</li>
+    <li><strong>Wallet neutrality.</strong> OpenNum is not affiliated with any wallet provider. We provide an open SDK that any wallet can integrate. We do not favor any wallet in our reference implementation.</li>
+    <li><strong>Inscription binding, not wallet binding.</strong> OpenNum deliberately anchors identity to the inscription number rather than the wallet address. Wallets are containers that users can create or replace at any time, carrying no inherent scarcity or cost. Inscriptions are on-chain, unique, cost-bearing Bitcoin UTXOs. Binding identity to the inscription means: as long as you hold the inscription, the identity is unambiguously yours; when you transfer it, the identity clearly passes to the new holder — the same model used by domain names and phone numbers for decades. This provides stronger ownership semantics and a more trustworthy foundation than wallet-binding.</li>
+  </ul>
+
+  <!-- 7. RISKS -->
+  <h2 id="risks">7. Known Risks and Challenges</h2>
+
+  <h3>7.1 Bitcoin Community Conservatism</h3>
+  <p>A significant portion of the Bitcoin community opposes the Ordinals protocol, viewing inscriptions as unnecessary congestion on the network. OpenNum inherits this controversy. We acknowledge this risk and note that OpenNum adds zero additional on-chain load — registration is a pure off-chain cryptographic operation.</p>
+
+  <h3>7.2 Network Effects and Cold-Start Strategy</h3>
+  <p>Like all identity systems, OpenNum's value is proportional to adoption. An OpenNum ID with no compatible wallets or applications has limited utility. The path to value requires coordinated adoption by wallets, marketplaces, and applications. This is a genuine chicken-and-egg challenge that we address via the open SDK strategy: make integration trivially easy so wallets have no reason not to support it.</p>
+  <p>We have identified three concrete cold-start entry points that can establish early utility without waiting for mass wallet adoption: <strong>(1) BRC-20 holder communities</strong> — tens of thousands of ORDI, SATS, and similar token holders already possess inscriptions and can register OpenNum IDs immediately with no new action required, forming a natural first-user cohort. <strong>(2) OpenClaw AI agent operators</strong> — the agent identity need is immediate; a single operator can register their entire agent fleet, creating real value without mass adoption. <strong>(3) Inscription marketplaces</strong> — platforms like Magic Eden and OKX NFT can display OpenNum IDs as holder identities on inscription pages, generating visible user value and word-of-mouth even before wallet-layer integration.</p>
+
+  <h3>7.2.1 Inscriptions as Natural Spam Barrier</h3>
+  <p>Unlike identity systems that require engineered rate limits or CAPTCHAs, OpenNum's spam resistance is structural: <strong>registration requires holding an inscription, and inscriptions have real on-chain cost.</strong> Every OpenNum ID is backed by at least one inscription already on the Bitcoin blockchain. Mass spam registration requires mass inscription minting — economically prohibitive. Indexer implementations may optionally add additional rate limits, but the protocol's economic structure is the primary line of defense.</p>
+
+  <h3>7.3 Indexer Centralization Risk</h3>
+  <p>During the early phase of the protocol, a single reference indexer will handle most queries. This is a temporary centralization risk. We publish the indexer source code from day one and actively encourage third parties to run independent instances.</p>
+
+  <h3>7.4 Inscription Liquidity and ID Stability</h3>
+  <p>High-value inscriptions are frequently traded. An OpenNum ID tied to a traded inscription will experience ownership changes. The dormant state mechanism addresses this gracefully, but applications must handle dormant IDs without crashing. Reference implementations will include dormancy handling patterns.</p>
+
+  <h3>7.5 Competitive Risk</h3>
+  <p>MicroStrategy's Orange DID project addresses a related problem (decentralized identity on Bitcoin) at the enterprise layer. Wallet providers with large user bases could implement similar functionality. OpenNum's defense is the open protocol strategy: if our standard is adopted as the de facto Bitcoin identity layer, it succeeds even if large players build on top of it rather than competing with it.</p>
+
+  <!-- 8. ROADMAP -->
+  <h2 id="roadmap">8. Roadmap</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>Timeline</th>
+        <th>Deliverables</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1 — Foundation</td>
+        <td>Q1 2026</td>
+        <td>Protocol v1.0 specification · opennum.org website · Whitepaper · GitHub repository</td>
+      </tr>
+      <tr>
+        <td>2 — Demo</td>
+        <td>Q2 2026</td>
+        <td>Web application · Wallet connect · Profile page · BTC send by number</td>
+      </tr>
+      <tr>
+        <td>3 — Social</td>
+        <td>Q3 2026</td>
+        <td>Messaging · Inscription gifting · Social account binding · Community access</td>
+      </tr>
+      <tr>
+        <td>4 — SDK</td>
+        <td>Q4 2026</td>
+        <td>Open-source wallet SDK · Third-party wallet integrations · Merchant tools</td>
+      </tr>
+      <tr>
+        <td>5 — Scale</td>
+        <td>2027+</td>
+        <td>Mobile application · Multi-language · Global expansion</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- 9. AI AGENT INTEGRATION -->
+  <h2 id="aiagents">9. AI Agent Integration</h2>
+  <p>The emergence of self-hosted AI agent frameworks — most notably <strong>OpenClaw</strong>, which as of early 2026 powers approximately 150,000 autonomous agents worldwide — introduces a new class of participant to the Bitcoin ecosystem: software agents that independently hold wallets, receive payments, and disburse funds without human approval for each transaction.</p>
+  <p>These agents face an unsolved identity problem that maps precisely onto the problem OpenNum was designed to address.</p>
+
+  <h3>9.1 The AI Agent Identity Problem</h3>
+  <p>An OpenClaw agent is a long-running process operating on a server — typically a personal machine such as a Mac Mini — controlled by a human operator. The agent maintains a Bitcoin wallet and can conduct transactions autonomously: paying for compute, renting servers, hiring other agents, and receiving payment for services rendered. As agents multiply, several critical questions emerge:</p>
+  <ul>
+    <li><em>Who is accountable</em> when an AI agent sends or receives funds?</li>
+    <li><em>How does a counterparty verify</em> it is dealing with a legitimate agent operated by a trustworthy human, not a sybil or honeypot?</li>
+    <li><em>How do agents discover</em> each other's payment addresses without a centralized registry?</li>
+    <li><em>Can an agent's reputation</em> accumulate and transfer in a way that survives infrastructure changes?</li>
+  </ul>
+  <p>None of these questions are answered by raw Bitcoin wallet addresses alone. An AI agent with a wallet address is indistinguishable from a scam bot. OpenNum changes this.</p>
+
+  <h3>9.2 OpenNum as the Agent Trust Anchor</h3>
+  <p>Every AI agent can be registered under its human operator's inscription number, establishing a cryptographically verifiable chain of accountability — what we call the <strong>Human-Agent Trust Bridge</strong>.</p>
+  <p>The binding works as follows:</p>
+  <ol>
+    <li>The human operator holds an inscription — for example, inscription <strong>#2025</strong>.</li>
+    <li>The operator's OpenClaw instance maintains a dedicated operational Bitcoin wallet.</li>
+    <li>The operator signs an extended OpenNum registration message binding the <em>agent wallet address</em> to their <em>inscription identity</em>, with a metadata field identifying the agent role.</li>
+    <li>The OpenNum indexer records this agent registration, making the agent's wallet publicly discoverable as "Agent of #2025."</li>
+  </ol>
+  <p>Any party transacting with this agent now has two pieces of information: the payment address, and the human operator's on-chain identity. The operator's inscription — its age, rarity, and history — serves as a trust signal for all agents they operate.</p>
+
+  <h3>9.3 Protocol Extension: Agent Wallet Registration</h3>
+  <p>To support agent identities, we propose the following extension to the OpenNum registration format (v1.1):</p>
+  <div class="code-block">
+<span class="k">{</span><br />
+&nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
+&nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.1"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_id"</span>: <span class="v">"2025"</span>,<br />
+&nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"bc1p8dqa4...zrx5k"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// operator wallet (holds inscription)</span><br />
+&nbsp;&nbsp;<span class="k">"agent_wallet"</span>: <span class="v">"bc1pagent...xyz9"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// agent's operational wallet</span><br />
+&nbsp;&nbsp;<span class="k">"agent_role"</span>: <span class="v">"openclaw"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// agent framework identifier</span><br />
+&nbsp;&nbsp;<span class="k">"agent_label"</span>: <span class="v">"Trading Assistant #1"</span>,<span class="c">// human-readable label</span><br />
+&nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">1735689600</span>,<br />
+&nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"H9k2mN...Xp4q"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// signed by operator wallet</span><br />
+<span class="k">}</span>
+  </div>
+  <p>An operator may register multiple agent wallets under a single inscription number, creating a verifiable fleet of agents operating under one accountable identity. Validity rules for agent registrations follow the same principles as standard registrations: the signing wallet must currently hold the claimed inscription.</p>
+
+  <h3>9.4 The Human-Agent Trust Bridge</h3>
+  <p>This architecture connects two worlds that have previously been disconnected: the human ownership of on-chain assets, and the autonomous activity of AI agents. Practical implications include:</p>
+  <ul>
+    <li><strong>Accountability.</strong> Every agent action is traceable to a human-held inscription. Low-number holders (e.g., #2025) demonstrate long-standing Bitcoin commitment and a significant financial stake — natural signals of trustworthy agent operation.</li>
+    <li><strong>Reputation portability.</strong> An operator can upgrade infrastructure, change servers, or redeploy agents without losing their identity. The inscription number and its history remain constant.</li>
+    <li><strong>Discovery.</strong> Applications query the OpenNum API to enumerate all agents registered by a given inscription holder, enabling multi-agent coordination without centralized directories.</li>
+    <li><strong>Payments.</strong> An agent can receive payments at its operator's OpenNum number or its registered agent wallet, both resolved through the same API used for human identities.</li>
+  </ul>
+
+  <h3>9.5 The Emerging Agent Economy</h3>
+  <p>OpenClaw agents already use Bitcoin Lightning Network micropayments to pay for compute, APIs, and inter-agent services. One agent has autonomously provisioned a virtual private server, funded it with Bitcoin, and paid for AI API credits — without a human confirming a single transaction. As this economy scales from 150,000 agents today to potentially millions by 2027, the absence of a human-readable, accountability-linked identity layer becomes a critical infrastructure gap.</p>
+  <p>OpenNum fills this gap with zero additional on-chain load. The same protocol that lets a human send Bitcoin to <strong>#2025</strong> also lets an AI agent verify the identity and accountability chain behind any agent wallet it transacts with. OpenNum thus becomes not merely a human identity layer for Bitcoin, but the foundational identity infrastructure for the autonomous agent economy being built on Bitcoin today.</p>
+  <div class="callout">
+    "Every AI agent is operated by a human. Every human with an inscription has a number. OpenNum makes that connection cryptographically verifiable — and publicly auditable."
+  </div>
+
+  <h3>9.6 Comparison with Ethereum ERC-8004</h3>
+  <p>In January 2026, Ethereum launched <strong>ERC-8004 (Trustless Agents)</strong>, a standard for on-chain agent identity registration. It had over 24,000 agents registered in its first month. This is Ethereum's answer to the agent identity problem. OpenNum v1.1 is the Bitcoin-native equivalent — and outperforms ERC-8004 on several critical dimensions:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>ERC-8004 (Ethereum)</th>
+        <th>OpenNum v1.1 (Bitcoin)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Underlying chain</td>
+        <td>Ethereum</td>
+        <td>Bitcoin</td>
+      </tr>
+      <tr>
+        <td>Registration cost</td>
+        <td>Gas fee (on-chain tx)</td>
+        <td>Zero on-chain cost (signature only)</td>
+      </tr>
+      <tr>
+        <td>Human operator anchor</td>
+        <td>None (agent identity is anonymous)</td>
+        <td>Mandatory — bound to inscription-holding human</td>
+      </tr>
+      <tr>
+        <td>Accountability</td>
+        <td>Low (raw on-chain address)</td>
+        <td>High — traceable to holder of real Bitcoin asset</td>
+      </tr>
+      <tr>
+        <td>Asset backing</td>
+        <td>None</td>
+        <td>Inscription asset backing</td>
+      </tr>
+      <tr>
+        <td>Payment routing</td>
+        <td>Requires separate protocol (x402, etc.)</td>
+        <td>Native — OpenNum number resolves directly to BTC address</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>The emergence of ERC-8004 validates that AI agent identity is a genuine market need. OpenNum v1.1 fills the same gap natively on Bitcoin — and adds what ERC-8004 lacks: <strong>an accountability chain traceable to a human holding real Bitcoin assets</strong>.</p>
+
+  
+  <!-- 10. EXTENDED WALLET APPLICATIONS -->
+  <h2 id="extended">10. Extended Wallet Applications</h2>
+  <p>Beyond the core use cases described in Section 4, OpenNum unlocks a broader set of applications that emerge from the nature of Bitcoin inscription ownership. These scenarios address real problems facing current Bitcoin and Ordinals users — from abandoned assets to identity flexibility to multi-context payments.</p>
+
+  <h3>10.1 Reviving Abandoned Inscriptions</h3>
+  <p>Hundreds of millions of inscriptions currently sit dormant in Bitcoin wallets — acquired during the BRC-20 mania of 2023, early Ordinals speculation, or casual minting, and now treated as digital clutter. By many estimates, the majority of Bitcoin inscriptions have never been sold, traded, or used in any meaningful way since creation.</p>
+  <p>OpenNum fundamentally reframes the value of any inscription: <strong>what matters is not the inscription's content, but its permanent integer identity.</strong> A "worthless" BRC-20 mint inscription from inscription #8,400,221 carries a globally unique, immutable number — a number that can become its holder's permanent Bitcoin identity. The inscription that was gathering dust becomes a social address, a payment routing number, and a community membership credential simultaneously.</p>
+  <p>This is genuine value creation from existing on-chain assets, requiring no new protocol, no new token, and no additional Bitcoin transactions beyond the OpenNum registration signature.</p>
+
+  <h3>10.2 BRC-20 Tokens as Community Identity</h3>
+  <p>BRC-20 tokens — the experimental fungible token standard built on Bitcoin Ordinals — created a unique phenomenon: tens of thousands of inscription holders who share a common ticker symbol, a common aesthetic, and a common financial stake. ORDI holders, SATS holders, MEME holders, and hundreds of other communities already exist in a latent form. What they lack is a shared on-chain identity infrastructure.</p>
+  <p>OpenNum provides exactly this. When a holder of an ORDI mint inscription registers with OpenNum, their inscription number becomes their community identity. The OpenNum indexer can enumerate all registered holders of any BRC-20 ticker, making the community cryptographically visible and queryable. This enables:</p>
+  <ul>
+    <li><strong>Community access gates.</strong> Any platform can grant access to verified BRC-20 holders by querying the OpenNum API — no centralized list, no manual verification.</li>
+    <li><strong>Shared visual identity.</strong> BRC-20 inscriptions often share a common format and aesthetic (the JSON ticker inscription). This shared image becomes a community badge that all registered holders display as their OpenNum avatar.</li>
+    <li><strong>Intra-community payments.</strong> ORDI holders can send Bitcoin to each other by OpenNum number, building an internal economy within the token community.</li>
+    <li><strong>Revived utility.</strong> A BRC-20 token that has lost speculative value as a currency retains permanent value as a community membership credential and identity anchor — a fundamentally different and more durable form of utility.</li>
+  </ul>
+  <div class="callout">
+    A BRC-20 token that is worth zero satoshis as a currency is still worth something as a permanent, on-chain identity number. OpenNum is the bridge between worthless tokens and useful identities.
+  </div>
+
+  <h3>10.3 Identity on Demand</h3>
+  <p>The cost to create a Bitcoin inscription has fallen dramatically since 2023. At current fee rates, a minimal text inscription can be created for a few dollars or less. This opens a powerful capability: <strong>any user can create a fresh inscription at any time, instantly obtaining a new OpenNum identity number — without changing their existing wallet.</strong></p>
+  <p>Practical scenarios:</p>
+  <ul>
+    <li>A user who already holds inscription #2025 as their primary identity wants a separate identity for a business venture. They inscribe a simple logo or text, receive inscription #29,400,800, and register it as their business OpenNum ID — all from the same wallet.</li>
+    <li>A developer building on OpenNum wants a "testnet identity" for experimentation. They inscribe a throwaway image, obtain a new number, and use it for testing without contaminating their primary identity.</li>
+    <li>A creator wants a project-specific identity for a new NFT drop or community campaign. They inscribe the project's image, register it with OpenNum, and promote the project number as its community handle.</li>
+  </ul>
+  <p>The wallet does not change. The private key does not change. Only the inscription — and therefore the OpenNum number — changes. This gives users full identity flexibility within a single Bitcoin wallet.</p>
+
+  <h3>10.4 Multi-Number Routing: One Wallet, Multiple Identities</h3>
+  <p>A single Bitcoin wallet can hold multiple inscriptions. OpenNum allows each inscription in a wallet to be registered independently, creating a multi-number system analogous to having multiple phone numbers on a single device. Each number can serve a distinct role:</p>
+  <table>
+    <thead>
+      <tr><th>Number</th><th>Role</th><th>Used For</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>#2025</td><td>Primary identity</td><td>Social profile, public payments, community memberships</td></tr>
+      <tr><td>#88052</td><td>Business identity</td><td>Merchant receipts, invoicing, professional contacts</td></tr>
+      <tr><td>#3,400,120</td><td>Project identity</td><td>Specific DAO, NFT collection, or community campaign</td></tr>
+      <tr><td>#29,400,800</td><td>Ephemeral identity</td><td>One-time transactions, privacy-preserving payments</td></tr>
+    </tbody>
+  </table>
+  <p>All four numbers resolve to wallets controlled by the same private key. The operator chooses which number to share in any given context. Counterparties paying to different numbers route to different wallets or the same wallet — as the operator configures. This gives users a level of payment routing sophistication previously only available to corporate treasury systems.</p>
+  <p>Privacy applications are also meaningful: a user can share a high-number inscription (which carries less social context and cannot be linked to their primary identity without their disclosure) for transactions where they prefer not to reveal their primary OpenNum number. The numbers are on-chain, but the association between them is private unless the owner chooses to disclose it.</p>
+
+  <h3>10.5 The Long Tail of Inscription Value</h3>
+  <p>Taken together, these four scenarios point toward a significant revaluation of the inscription ecosystem. If OpenNum achieves meaningful adoption, every inscription — including the hundreds of millions currently considered worthless — acquires a floor value as a potential identity number. The inscription's content becomes secondary; its permanent integer number is the durable asset.</p>
+  <p>This does not require any change to the Bitcoin protocol, any new token issuance, or any centralized authority to declare which inscriptions have value. Value emerges from adoption of the OpenNum identity layer — a positive-sum outcome for all inscription holders, regardless of when or why they acquired their inscriptions.</p>
+
+  <!-- 10. CONCLUSION -->
+  <h2 id="conclusion">11. Conclusion</h2>
+  <p>Bitcoin has 112 million inscriptions and counting. Each carries a unique, permanent integer — a number that has existed on the most secure distributed ledger in human history since the moment it was created. These numbers are already scarce, already on-chain, and already owned by real people.</p>
+  <p>OpenNum turns these numbers into something humanity has always used to find each other: <strong>a simple, memorable identifier.</strong></p>
+  <p>Your inscription number is your Bitcoin identity. It can route payments, represent your on-chain reputation, grant community access, and serve as a verifiable avatar across the internet. It travels with you when you transfer it and remains dormant when you sell it, waiting for the next holder to claim it — just like a phone number.</p>
+  <p>We believe the Bitcoin ecosystem needs an identity layer that is open, free, and built on Bitcoin's own primitives. We believe every Bitcoin wallet in the world should support sending to a number. We believe OpenNum can be that layer.</p>
+  <p>The protocol is open. The standard is free. The number is yours.</p>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <div>
+      <p>OpenNum Team · opennum.org · 2026</p>
+      <p style="margin-top:6px;">MIT License · Open Protocol · No permission required</p>
+    </div>
+    <div>
+      <p><a href="index.html">opennum.org</a> · <a href="whitepaper-cn.html">中文版</a> · <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

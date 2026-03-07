@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "name": "opennum",
+  "builds": [
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/public/index.html" },
+    { "src": "/whitepaper", "dest": "/public/whitepaper-cn.html" },
+    { "src": "/whitepaper-cn", "dest": "/public/whitepaper-cn.html" },
+    { "src": "/whitepaper-en", "dest": "/public/whitepaper-en.html" },
+    { "src": "/whitepaper-kr", "dest": "/public/whitepaper-kr.html" },
+    { "src": "/whitepaper/(.*)", "dest": "/public/whitepaper/$1" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
+}

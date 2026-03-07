@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenNum 协议 — 白皮书 v1.0</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #ffffff;
+      color: #111111;
+      font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      font-size: 16px;
+      line-height: 2.0;
+    }
+    a { color: #111; }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 40px 120px;
+    }
+
+    .doc-header {
+      border-bottom: 2px solid #111;
+      padding-bottom: 48px;
+      margin-bottom: 64px;
+    }
+    .doc-nav {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: #888;
+      margin-bottom: 48px;
+    }
+    .doc-nav a { color: #888; text-decoration: none; }
+    .doc-nav a:hover { color: #111; }
+    .doc-title {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: bold;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      letter-spacing: 0;
+    }
+    .doc-subtitle {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 32px;
+    }
+    .doc-meta {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: #888;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .toc {
+      background: #f8f8f8;
+      border-left: 3px solid #111;
+      padding: 32px 36px;
+      margin-bottom: 64px;
+    }
+    .toc h2 {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 20px;
+      font-family: 'Courier New', monospace;
+    }
+    .toc ol { padding-left: 20px; color: #333; }
+    .toc li { margin-bottom: 6px; font-size: 15px; }
+    .toc a { color: #333; text-decoration: none; }
+    .toc a:hover { color: #111; text-decoration: underline; }
+    .toc .sub { padding-left: 24px; margin-top: 4px; }
+    .toc .sub li { font-size: 14px; margin-bottom: 3px; }
+
+    h2 {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 64px 0 24px;
+      padding-top: 48px;
+      border-top: 1px solid #ddd;
+    }
+    h3 {
+      font-size: 17px;
+      font-weight: bold;
+      margin: 36px 0 16px;
+      color: #333;
+    }
+    p { margin-bottom: 20px; color: #333; }
+    strong { color: #111; }
+    ul, ol { padding-left: 28px; margin-bottom: 20px; color: #333; }
+    li { margin-bottom: 8px; }
+
+    .code-block {
+      background: #111;
+      color: #ddd;
+      padding: 28px 32px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      margin: 24px 0 28px;
+      overflow-x: auto;
+    }
+    .code-block .k { color: #fff; }
+    .code-block .v { color: #aaa; }
+    .code-block .c { color: #666; font-style: italic; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0 32px;
+      font-size: 14px;
+    }
+    th {
+      background: #111;
+      color: #fff;
+      padding: 12px 16px;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+    td { padding: 12px 16px; border-bottom: 1px solid #e5e5e5; color: #333; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8f8f8; }
+
+    .callout {
+      border-left: 3px solid #111;
+      padding: 20px 24px;
+      margin: 28px 0;
+      background: #f8f8f8;
+      color: #444;
+      font-size: 15px;
+    }
+
+    .abstract {
+      background: #f8f8f8;
+      padding: 32px 36px;
+      margin-bottom: 48px;
+      border-top: 2px solid #111;
+      border-bottom: 1px solid #ddd;
+    }
+    .abstract-label {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 14px;
+    }
+    .abstract p { margin-bottom: 0; font-size: 15px; color: #444; }
+
+    .doc-footer {
+      margin-top: 80px;
+      padding-top: 32px;
+      border-top: 2px solid #111;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .doc-footer p {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 40px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <div class="doc-nav">
+      <a href="index.html"><img src="img/logo.svg" alt="OpenNum" style="height:26px;vertical-align:middle;margin-right:6px;opacity:0.8"/>← opennum.org</a>
+      &nbsp;/&nbsp; 白皮书 v1.0
+      &nbsp;|&nbsp; <a href="whitepaper.html">English</a>
+      &nbsp;|&nbsp; <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a>
+    </div>
+    <div class="doc-title">OpenNum 协议</div>
+    <div class="doc-subtitle">比特币 Ordinals 时代的原生身份标准</div>
+    <div class="doc-meta">
+      <span>版本 1.0</span>
+      <span>2026年3月</span>
+      <span>OpenNum Team</span>
+      <span>opennum.org</span>
+      <span>开源协议：MIT</span>
+    </div>
+  </div>
+
+  <div class="abstract">
+    <div class="abstract-label">摘要</div>
+    <p>OpenNum 是一个建立在 Ordinals 索引系统之上的<strong>应用层身份协议</strong>（Application-Layer Identity Protocol），将比特币 Ordinal Inscription（铭刻）编号转化为永久的、人类可读的身份标识符。用户无需再分享62位钱包地址，只需将自己持有的铭刻编号注册为 OpenNum ID——一个简短、易记的数字，通过密码学与其比特币钱包绑定。铭刻的图像自动成为其链上头像。OpenNum 不需要智能合约、不需要侧链、不需要对比特币协议做任何改动。它仅凭一个数字，即可实现支付、社交、社区身份认证和数字合约存证。</p>
+  </div>
+
+  <div class="toc">
+    <h2>目录</h2>
+    <ol>
+      <li><a href="#problem">问题所在</a></li>
+      <li><a href="#solution">OpenNum 解决方案</a></li>
+      <li>
+        <a href="#protocol">协议规范</a>
+        <ol class="sub">
+          <li><a href="#registration">注册机制</a></li>
+          <li><a href="#validity">有效性规则</a></li>
+          <li><a href="#transfer">转让与重新注册</a></li>
+          <li><a href="#indexer">索引器架构</a></li>
+          <li><a href="#authority">编号权威与确定性基础</a></li>
+          <li><a href="#statemachine">身份状态机</a></li>
+          <li><a href="#btcsuffix">.btc 域名铭刻作为显示别名</a></li>
+        </ol>
+      </li>
+      <li><a href="#usecases">应用场景</a></li>
+      <li><a href="#comparison">竞争格局与对比分析</a></li>
+      <li><a href="#open">开放协议原则</a></li>
+      <li><a href="#risks">已知风险与挑战</a></li>
+      <li><a href="#roadmap">路线图</a></li>
+      <li><a href="#aiagents">AI 代理集成</a></li>
+      <li><a href="#extended">钱包扩展应用</a></li>
+      <li><a href="#conclusion">结语</a></li>
+    </ol>
+  </div>
+
+  <h2 id="problem">1. 问题所在</h2>
+  <p>比特币钱包地址在密码学上是安全的，但对人类来说根本无法使用。一个典型的 Taproot 地址是这样的：</p>
+  <div class="code-block">bc1p8dqa4wjvnt890qmfws83te2v3rxd7zr5uu6vsrk8kqnf3cgwwuqszc3qa5</div>
+  <p>这造成了三个叠加的问题：</p>
+  <ul>
+    <li><strong>可用性差。</strong>没有人能可靠地记住、转述或核对一个62位的字母数字字符串。每次转账都需要复制粘贴，一个字符出错就意味着永久丢失资产。</li>
+    <li><strong>缺乏身份。</strong>比特币没有原生机制将钱包地址与人类身份关联。没有身份，比特币钱包就无法成为社交互动、社区构建或信任关系的基础。</li>
+    <li><strong>阻碍普及。</strong>复杂的地址格式是比特币大众化最主要的障碍之一。新用户在第一天就遭遇这个问题，却没有任何直觉性的解决方案。</li>
+  </ul>
+  <p>以太坊的 ENS（以太坊域名服务）通过将人类可读的名称（如 <code>satoshi.eth</code>）映射到钱包地址，部分解决了这个问题。但 ENS 依赖智能合约，而比特币 Layer 1 不支持智能合约。比特币的 UTXO 模型不具备名称注册合约所需的状态计算能力。</p>
+  <div class="callout">
+    最好的界面是消失的界面。比特币需要一个人们本能就能理解的身份层——一个数字。
+  </div>
+
+  <h2 id="solution">2. OpenNum 解决方案</h2>
+  <p>OpenNum 利用了比特币 Ordinals 协议的一个独特特性：每一个铭刻在创建时都会被永久分配一个顺序整数——即其铭刻编号。截至2026年初，比特币上已有超过 <strong>1.12亿个铭刻</strong>，每一个都有一个全球唯一、永不改变、永不转让给其他铭刻的编号。</p>
+  <p>OpenNum 将这件事变得极其简单：<strong>你的铭刻编号就是你的身份。</strong></p>
+  <div class="callout">
+    把 OpenNum 理解成<strong>比特币电话号码系统</strong>：你的铭刻编号就是你的号码，你的钱包就是你的设备，向 #2025 转账就如同拨打电话。世界上没有一个人需要记住一串62位的字符串——他们只需要知道对方的号码。
+  </div>
+  <div class="code-block">
+    <span class="c">// 以前是这样：</span><br />
+    <span class="v">转账给：bc1p8dqa4wjvnt890qmfws83te2v3rxd7zr5uu...</span><br /><br />
+    <span class="c">// 现在是这样：</span><br />
+    <span class="k">转账给：#2025</span>
+  </div>
+  <p>铭刻编号解析到当前持有该铭刻的钱包地址。铭刻的图像自动成为持有者的头像。钱包的链上资产对所有人公开可验证。一个数字同时承载身份、支付路由、社交上下文和社区成员资格。</p>
+  <p>就像手机号码或QQ号一样，这个数字随持有者移动。如果铭刻被出售，编号随之转移给新持有者——新持有者需要重新注册才能激活身份。这为抢手号码（低编号、重复数字、吉祥数字）创造了一个自然的市场，无需任何人为稀缺机制。</p>
+
+  <h2 id="protocol">3. 协议规范</h2>
+
+  <h3 id="registration">3.1 注册机制</h3>
+  <p>要注册一个 OpenNum ID，持有者必须在其比特币钱包中持有目标铭刻，并生成一条已签名的注册消息。消息结构如下：</p>
+  <div class="callout">
+    <strong>为什么选铭刻，而非 UTXO、PubKey 或 Satoshi 编号？</strong><br/>
+    比特币上存在多种可能的身份锚点，OpenNum 选择铭刻编号是有明确理由的：<br/>
+    · <strong>UTXO</strong> 每次花费即消失，无法作为持久身份锚点；<br/>
+    · <strong>PubKey</strong> 一个人可创建无限个，无稀缺性约束，无法防女巫攻击；<br/>
+    · <strong>Satoshi 编号</strong>（sat number）理论可行，但 sat 无头像、无内容，缺少身份的视觉层，且链上价值共识远弱于铭刻；<br/>
+    · <strong>铭刻</strong>同时具备：全局唯一顺序编号（稀缺性）+ 自带内容图像（头像层）+ 市场流通价格（经济锚定）+ 转让成本（天然防女巫）。四项优势叠加，其他选项只具备其中一两项。
+  </div>
+  <div class="code-block">
+<span class="k">{</span><br />
+&nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
+&nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.0"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_id"</span>: <span class="v">"[铭刻编号，整数]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"[比特币 Taproot 地址]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">"[Unix 时间戳]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"[对上述字段的 secp256k1 签名]"</span><br />
+<span class="k">}</span>
+  </div>
+  <p>签名使用比特币钱包私钥通过标准 secp256k1 算法生成，与所有主流钱包的比特币消息签名机制完全相同。这在密码学上证明了钱包所有权——进而证明了其中铭刻的所有权——无需暴露私钥，无需任何链上交易。</p>
+  <p>注册消息支持一个可选字段 <strong><code>"display_name"</code></strong>，允许持有者为其编号绑定一个自选的显示名（如 "Satoshi_v2"）。显示名不替代编号，编号仍是规范的唯一标识符——类似于 Twitter @handle 与显示名的关系。同一显示名可能被多人注册；编号是全局唯一的，显示名不是。</p>
+
+  <h3 id="validity">3.2 有效性规则</h3>
+  <p>一条注册记录有效，当且仅当满足以下所有条件：</p>
+  <ol>
+    <li>签名钱包当前持有所声明的铭刻，可通过任何比特币 Ordinals 索引器验证。</li>
+    <li>密码学签名对于声明的钱包地址和消息内容有效。</li>
+    <li>时间戳在可接受的新鲜度窗口内（建议：初始注册时10分钟内）。</li>
+    <li>不存在来自其他钱包的、针对同一铭刻编号的当前有效注册记录。</li>
+  </ol>
+
+  <h3 id="transfer">3.3 转让与重新注册</h3>
+  <p>当铭刻通过比特币交易转移到新钱包地址时，以下情况自动发生：</p>
+  <ul>
+    <li>原有注册记录在密码学上自动失效。旧钱包不再持有该铭刻，因此旧签名不再满足有效性规则第(1)条。</li>
+    <li>该铭刻编号进入<strong>休眠状态</strong>：编号在 OpenNum 系统中可见，但不映射到任何活跃身份。</li>
+    <li>新铭刻持有者可随时通过新钱包生成签名消息来注册该编号。</li>
+    <li>在重新注册之前，该编号不能用于支付、消息或社区访问。</li>
+  </ul>
+  <div class="callout">
+    这一机制与手机号码和账号的现实模型完全对应：号码随资产转移，但身份激活需要新持有者的主动操作。这保护了收到铭刻（作为礼物或购买）的用户，不会被强加一个他们未主动确认的身份。
+  </div>
+
+  <h3 id="indexer">3.4 索引器架构</h3>
+  <p>OpenNum 不需要改变比特币的共识规则。协议完全在应用层通过索引器运行——索引器是监控比特币区块链、维护所有 OpenNum 注册当前状态的软件。</p>
+  <p>任何人都可以运行 OpenNum 索引器。索引器执行三项功能：</p>
+  <ol>
+    <li><strong>监控</strong>比特币区块中的铭刻所有权变化（通过标准 Ordinals 索引）。</li>
+    <li><strong>验证</strong>传入的 OpenNum 注册消息是否符合 §3.2 的有效性规则。</li>
+    <li><strong>提供</strong>公开的 REST API，将铭刻编号映射到钱包地址、个人资料元数据和注册状态。</li>
+  </ol>
+  <p>由于任何人都可以运行索引器，且验证规则是确定性的，系统是去中心化的。多个独立索引器在相同的比特币链数据和注册消息输入下，将收敛到完全相同的状态。</p>
+  <p><strong>注册消息传播机制：</strong>在 v1.0 阶段，注册消息通过 <strong>HTTP REST API</strong> 提交至参考索引器（<code>POST /api/v1/register</code>）。任何人均可独立运行索引器并接受注册消息。未来版本（v2.0+）将引入 P2P Gossip 网络，使注册消息无需依赖任何中心化入口即可在多个索引器节点之间传播。</p>
+
+  <h3 id="authority">3.5 编号权威与确定性基础</h3>
+  <p>铭刻编号（如 #2025）并不直接来自比特币共识——它由 <code>ord</code> 索引软件根据铭刻被确认的顺序计算得出。这引发了一个关键问题：如果不同版本的索引软件对同一链上数据产生不同的编号结果，OpenNum 应以哪个为准？</p>
+  <p>为解决这一问题，OpenNum 采用<strong>双锚设计</strong>：注册消息同时包含两个字段——铭刻编号（人类可读）和铭刻交易ID（Bitcoin 共识原语）。</p>
+  <div class="code-block">
+<span class="k">{</span><br />
+&nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
+&nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.0"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_number"</span>: <span class="v">2025</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 人类可读编号</span><br />
+&nbsp;&nbsp;<span class="k">"inscription_txid"</span>: <span class="v">"abc123...def"</span>,&nbsp;&nbsp;&nbsp;<span class="c">// Bitcoin 共识原语（不可篡改）</span><br />
+&nbsp;&nbsp;<span class="k">"indexer_ruleset"</span>: <span class="v">"ord-v0.18-mainnet"</span>,<span class="c">// 索引规则集声明</span><br />
+&nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"[比特币 Taproot 地址]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">"[Unix 时间戳]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"[secp256k1 签名]"</span><br />
+<span class="k">}</span>
+  </div>
+  <p><strong>txid</strong> 是比特币共识层的 GPS 坐标——绝对可靠、不可伪造。<strong>编号</strong>是人类可读的门牌号——方便记忆和传播。两者同时存在，使 OpenNum 具备<strong>编号争议免疫性</strong>：即使将来发现编号排序争议，系统依然可以通过 txid 回溯到正确的铭刻身份。</p>
+  <p>OpenNum 在协议规范中明确声明所采用的索引规则集版本（<code>indexer_ruleset</code> 字段），确保所有独立索引器在相同的规则集和链数据下收敛到完全相同的状态。同一输入，必然相同输出——这是 OpenNum 去中心化的数学保证。</p>
+
+  <h4 style="font-size:15px;font-weight:bold;margin:24px 0 12px;color:#333;">咒刻铭刻（Cursed Inscriptions）</h4>
+  <p>在 Ordinals 协议的早期，使用非标准方法创建的铭刻（在比特币区块 824,544 之前）被分配了负数编号，称为<strong>咒刻铭刻</strong>（Cursed Inscriptions），共约 47.2 万枚，编号从 <code>#c-1</code> 至 <code>#c-472,043</code>。</p>
+  <p>2024年1月6日，Ordinals 协议的 Jubilee（升格）更新正式承认了这批铭刻的合法地位，为它们赋予了永久的负数编号，结束了关于其合法性的争议。<strong>OpenNum 将咒刻铭刻视为一等公民：</strong></p>
+  <ul>
+    <li>在 OpenNum 系统中显示为 <code>#c-1234</code> 格式（对应 Ordinals 负数编号 #-1234）</li>
+    <li>可以完整注册 OpenNum 身份，享有与正数编号完全相同的权利</li>
+    <li>早期咒刻铭刻的持有者是比特币 Ordinals 生态最早期的参与者，其 OpenNum 号码具有独特的历史意义和稀缺价值</li>
+  </ul>
+  <div class="callout">
+    txid 是 GPS 坐标，编号是门牌号。两者缺一不可：GPS 保证你找到正确的房子，门牌号让邻居知道怎么找你。OpenNum 的双锚设计让编号系统既人性化，又密码学可靠。
+  </div>
+
+  <h3 id="statemachine">3.6 身份状态机</h3>
+  <p>每个 OpenNum 编号在任何时刻处于四种状态之一。这个<strong>身份状态机</strong>（Identity State Machine）是 OpenNum 协议的核心机制，确保铭刻所有权变更时身份状态的清晰传递。</p>
+  <table>
+    <thead>
+      <tr>
+        <th>状态</th>
+        <th>标志</th>
+        <th>含义</th>
+        <th>API 解析结果</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>活跃（Active）</strong></td>
+        <td>🟢</td>
+        <td>已注册且有效；铭刻当前持有者已完成签名注册</td>
+        <td>返回当前钱包地址</td>
+      </tr>
+      <tr>
+        <td><strong>休眠（Dormant）</strong></td>
+        <td>⚫</td>
+        <td>铭刻已转让；旧注册自动失效，新持有者尚未注册</td>
+        <td>返回"休眠"，不可用于支付</td>
+      </tr>
+      <tr>
+        <td><strong>冷却（Cooling）</strong></td>
+        <td>🟠 + 倒计时</td>
+        <td>铭刻在过去30天内发生转让；提示接收方尽快激活身份</td>
+        <td>返回"冷却中"及剩余天数</td>
+      </tr>
+      <tr>
+        <td><strong>标记（Flagged）</strong></td>
+        <td>🔵</td>
+        <td>前任持有者主动发布了链下转让声明；新持有者已获公开通知</td>
+        <td>返回"标记"及声明内容</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>状态转换规则如下：</p>
+  <ul>
+    <li><strong>活跃 → 休眠：</strong>铭刻发生比特币层面的所有权转移，旧注册自动失效</li>
+    <li><strong>休眠 → 冷却：</strong>转移发生时间在30天内，系统自动进入冷却状态提示激活</li>
+    <li><strong>冷却/休眠 → 活跃：</strong>新持有者完成 OpenNum 注册签名</li>
+    <li><strong>任何状态 → 标记：</strong>前任持有者主动发布链下转让声明（可附接收方联系方式）</li>
+  </ul>
+  <div class="callout">
+    <strong>冷却期的设计意义：</strong>铭刻市场交易活跃，30天冷却窗口给予钱包应用、外部集成方和新持有者充足的缓冲时间处理所有权变更。冷却期内 OpenNum ID 以醒目的橙色标志显示，而非直接进入无声的休眠状态，大幅减少新持有者因未及时注册而错过支付的情况。
+  </div>
+
+  <h3 id="btcsuffix">3.7 .btc 域名铭刻作为显示别名</h3>
+  <p>比特币 Ordinals 生态中存在大量以 JSON 格式铭刻的域名注册——如 <code>{"p":"sns","op":"reg","name":"satoshi.btc"}</code>。这些铭刻通过标准 Ordinals 协议写入比特币，具有与任何其他铭刻相同的链上存在性和唯一编号。</p>
+  <p>OpenNum 索引器在解析身份时，<strong>自动读取</strong>铭刻内容中符合 SNS（Satoshi Name Service）格式的域名注册，并将其作为该编号的<strong>显示别名元数据</strong>：</p>
+  <ul>
+    <li>若持有者的铭刻本身是一个 .btc 域名注册，OpenNum 个人主页将自动显示 <code>satoshi.btc</code> 作为别名</li>
+    <li>显示别名不影响编号的唯一性——<code>#2025</code> 仍是规范标识符，<code>satoshi.btc</code> 是可选的人类友好展示名</li>
+    <li>持有者可在 OpenNum 个人主页选择展示或隐藏其 .btc 别名</li>
+    <li>btcmap、unisat 域名等其他符合公开 JSON 格式的铭刻域名体系同样受到支持</li>
+  </ul>
+  <div class="callout">
+    如果说编号是你的门牌号，.btc 就是你房子上挂的名字牌。两者并存，各司其职。OpenNum 不垄断命名，它聚合现有的所有链上身份信号。
+  </div>
+
+  <h2 id="usecases">4. 应用场景</h2>
+
+  <h3>4.1 简化比特币支付</h3>
+  <p>任何兼容 OpenNum 的钱包在构建交易前自动将编号解析为当前钱包地址。用户输入 <strong>#2025</strong> 发送比特币——钱包在后台处理地址解析，对用户完全透明。这使比特币支付变得像发微信红包一样直觉化。</p>
+
+  <h3>4.2 链上社交身份</h3>
+  <p>每个已注册的 OpenNum ID 都有一个公开的个人主页，包含：铭刻图像作为头像、注册时间戳（证明早期参与）、所有人可见的链上资产持仓，以及已验证的外部社交账号链接。选择公开钱包的用户将获得一个丰富的、可验证的数字身份——无法伪造，无法造假。</p>
+
+  <h3>4.3 社交媒体绑定</h3>
+  <p>用户可以通过双向验证机制将其 OpenNum ID 与外部平台（Twitter/X、TikTok、抖音、微博等）绑定：用户在社交主页简介中写上自己的 OpenNum 编号，然后在 OpenNum 系统中用钱包签名确认绑定。索引器爬取两端信号并确认链接。绑定后，创作者的粉丝可以直接通过创作者的社交主页发送比特币或铭刻。</p>
+
+  <h3>4.4 社区成员资格</h3>
+  <p>持有特定系列的铭刻即可进入该系列的社区。铭刻就是会员证——它在链上、任何人可验证、可作为标准比特币交易转让。这为独家社区、DAO 和活动创造了一种全新的模式：成员资格天然稀缺，可被证明。</p>
+
+  <h3>4.5 铭刻赠送</h3>
+  <p>向收件人发送铭刻只需要他们的 OpenNum 编号。无需复制地址，无需担心出错。这大幅降低了铭刻赠送的摩擦，催生病毒式社交行为：将低编号铭刻作为有意义的礼物赠送，商家向客户奖励品牌铭刻，社区按编号向成员空投。</p>
+
+  <h3>4.6 合约存证</h3>
+  <p>两个 OpenNum 持有者使用各自的钱包私钥对一份结构化文件进行联合签名。合并后的签名产生一份防篡改的、带时间戳的存证，证明双方在特定时间点同意文件内容。这为纠纷提供了可作为佐证材料的密码学证据。</p>
+
+  <h3>4.7 钱包新用户引导</h3>
+  <p>比特币钱包服务商可以批量铭刻低成本的文字铭刻，在新用户注册时赠送一枚。从入驻第一天起，用户就拥有了一个永久的、唯一的铭刻编号——他们的比特币身份号码。这消除了让新用户望而却步的"空钱包"问题，给了他们立即参与比特币生态的理由。</p>
+
+  <h2 id="comparison">5. 竞争格局与对比分析</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>特性</th>
+        <th>ENS（以太坊）</th>
+        <th>OpenNum（比特币）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>标识符类型</td>
+        <td>用户自选文字（如 satoshi.eth）</td>
+        <td>顺序整数（如 #2025）</td>
+      </tr>
+      <tr>
+        <td>底层区块链</td>
+        <td>以太坊</td>
+        <td>比特币</td>
+      </tr>
+      <tr>
+        <td>是否需要智能合约</td>
+        <td>是（ERC-721 + 注册表）</td>
+        <td>否</td>
+      </tr>
+      <tr>
+        <td>头像来源</td>
+        <td>关联 NFT（独立资产）</td>
+        <td>铭刻图像（同一资产）</td>
+      </tr>
+      <tr>
+        <td>身份类型</td>
+        <td>用户自选名称</td>
+        <td>协议顺序分配的编号</td>
+      </tr>
+      <tr>
+        <td>稀缺机制</td>
+        <td>命名空间（任意文字）</td>
+        <td>顺序整数（天然稀缺）</td>
+      </tr>
+      <tr>
+        <td>转让机制</td>
+        <td>ENS NFT 转让</td>
+        <td>铭刻转让 + 重新注册</td>
+      </tr>
+      <tr>
+        <td>注册成本</td>
+        <td>Gas 费 + 年费</td>
+        <td>仅需签名（无链上费用）</td>
+      </tr>
+      <tr>
+        <td>资产背书</td>
+        <td>无（名称与资产分离）</td>
+        <td>有（铭刻本身即身份资产）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.1 完整竞争格局</h3>
+  <p>OpenNum 并非第一个探索比特币身份层的项目，但它是唯一一个专为<strong>个人用户</strong>、以<strong>铭刻编号为锚点</strong>、<strong>零链上注册成本</strong>的开放系统。</p>
+  <table>
+    <thead>
+      <tr>
+        <th>特性</th>
+        <th>ENS</th>
+        <th>MicroStrategy Orange</th>
+        <th>BTCO DID</th>
+        <th>OpenNum</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>目标用户</td>
+        <td>个人（以太坊）</td>
+        <td>企业/机构</td>
+        <td>开发者/技术用户</td>
+        <td>个人用户</td>
+      </tr>
+      <tr>
+        <td>身份标识符</td>
+        <td>自选文字名</td>
+        <td>W3C DID 字符串</td>
+        <td>W3C DID 字符串</td>
+        <td>顺序整数编号</td>
+      </tr>
+      <tr>
+        <td>底层链</td>
+        <td>以太坊</td>
+        <td>比特币</td>
+        <td>比特币</td>
+        <td>比特币</td>
+      </tr>
+      <tr>
+        <td>链上注册成本</td>
+        <td>Gas + 年费</td>
+        <td>是（批量交易）</td>
+        <td>是（铭刻交易）</td>
+        <td>否（仅签名）</td>
+      </tr>
+      <tr>
+        <td>个人可读性</td>
+        <td>高（satoshi.eth）</td>
+        <td>低（DID 字符串）</td>
+        <td>低（DID 字符串）</td>
+        <td>高（#2025）</td>
+      </tr>
+      <tr>
+        <td>内置头像</td>
+        <td>需关联 NFT</td>
+        <td>无</td>
+        <td>无</td>
+        <td>铭刻图像自动成为头像</td>
+      </tr>
+      <tr>
+        <td>AI 代理身份</td>
+        <td>无</td>
+        <td>无</td>
+        <td>无</td>
+        <td>v1.1 原生支持</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="open">6. 开放协议原则</h2>
+  <p>OpenNum 旨在成为比特币生态的公共基础设施，而非专有平台。我们承诺以下原则：</p>
+  <ul>
+    <li><strong>完全开放的规范。</strong>完整的协议规范以 MIT 许可证发布。任何开发者均可在无需许可和付费的情况下实现它。</li>
+    <li><strong>不收取租金。</strong>OpenNum 在协议层不收取注册费、续期费或交易费。构建在 OpenNum 之上的应用可以为其服务收费；协议本身不会。</li>
+    <li><strong>去中心化索引。</strong>我们运行参考索引器，但积极鼓励独立索引器的出现。多个独立索引器在相同的比特币链数据和注册消息输入下，由确定性验证规则保证收敛到完全相同的状态。索引器层的去中心化是设计目标，而非事后补救。</li>
+    <li><strong>钱包中立。</strong>OpenNum 与任何钱包服务商无关联。我们提供任何钱包都可以集成的开放 SDK。我们的参考实现不偏向任何特定钱包。</li>
+    <li><strong>铭刻绑定，而非钱包绑定。</strong>OpenNum 有意将身份锚定在铭刻编号上，而非钱包地址。原因在于：钱包是用户可以随时创建或更换的容器，本身缺乏稀缺性与成本约束；而铭刻是比特币链上唯一的、有转让成本的资产。将身份绑定铭刻意味着：只要你持有铭刻，身份明确属于你；一旦你出售铭刻，身份随之清晰交接给新持有者——这与域名和手机号的成熟模型完全一致，提供了比"绑定钱包"更强的所有权语义和更可靠的信任基础。</li>
+  </ul>
+
+  <h2 id="risks">7. 已知风险与挑战</h2>
+
+  <h3>7.1 比特币社区的保守性</h3>
+  <p>比特币社区中有相当数量的人反对 Ordinals 协议，认为铭刻是对网络的不必要占用。OpenNum 继承了这一争议。我们承认这一风险，并说明：OpenNum 不会增加任何额外的链上负担——注册是纯链下的密码学操作。</p>
+
+  <h3>7.2 网络效应与冷启动策略</h3>
+  <p>与所有身份系统一样，OpenNum 的价值与采用程度成正比。在没有兼容钱包和应用的情况下，OpenNum ID 的实用性有限。实现价值需要钱包、交易市场和应用的协同采用。我们通过开放 SDK 策略来应对这个挑战：让集成变得极其简单，使钱包没有理由不支持它。</p>
+  <p>我们识别了三个具体的冷启动切入点，可以在无需等待大规模钱包集成的前提下建立早期实用性：<strong>（1）BRC-20 持有者社区</strong>——数万名 ORDI、SATS 等代币持有者已经拥有铭刻，无需任何新操作即可注册 OpenNum ID，形成天然的第一批用户。<strong>（2）OpenClaw AI 代理运营者</strong>——代理的身份需求是即时的，单一运营者即可为其代理舰队完成注册，不需要等待大规模普及即可产生实际价值。<strong>（3）铭刻交易市场</strong>——Magic Eden、OKX NFT 等市场可以将 OpenNum ID 作为持有者身份展示在铭刻页面上，即使尚未集成到钱包层，也可以产生可见的用户价值并形成口碑。</p>
+
+  <h3>7.2.1 铭刻是天然的防 Spam 门槛</h3>
+  <p>与许多身份系统需要人为设计 Rate Limit 或验证码防刷不同，OpenNum 的防 Spam 机制源自协议的结构性设计：<strong>注册需要持有铭刻，而铭刻是有真实链上成本的资产。</strong>每注册一个 OpenNum ID，背后都有至少一枚已存在于比特币链上的铭刻作为经济背书。这使得大规模垃圾注册在经济上代价高昂——攻击者必须先花费真实比特币批量铸造铭刻，才能发动 Spam 攻击。索引器实现层面可选择性加入额外的频率限制，但协议本身的经济安全已是 Spam 防护的第一道防线。</p>
+
+  <h3>7.3 索引器中心化风险</h3>
+  <p>在协议早期阶段，单一参考索引器将处理大部分查询。这是一个暂时性的中心化风险。我们从第一天起就公开索引器源代码，并积极鼓励第三方运行独立实例。</p>
+
+  <h3>7.4 铭刻流动性与 ID 稳定性</h3>
+  <p>高价值铭刻经常被交易。与被交易铭刻绑定的 OpenNum ID 将经历所有权变更。休眠状态机制优雅地处理了这一问题，但应用必须能够处理休眠 ID 而不崩溃。参考实现将包含休眠处理模式。</p>
+
+  <h3>7.5 竞争风险</h3>
+  <p>MicroStrategy 的 Orange DID 项目在企业层面解决了一个相关问题（比特币上的去中心化身份）。拥有大量用户基础的钱包服务商可能实现类似功能。OpenNum 的防御是开放协议策略：如果我们的标准被采纳为事实上的比特币身份层，那么即使大型参与者在其之上构建而非与之竞争，它也会成功。</p>
+
+  <h2 id="roadmap">8. 路线图</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>阶段</th>
+        <th>时间</th>
+        <th>交付内容</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>第一阶段：基础</td>
+        <td>2026年 Q1</td>
+        <td>协议 v1.0 规范 · opennum.org 网站 · 白皮书 · GitHub 仓库</td>
+      </tr>
+      <tr>
+        <td>第二阶段：Demo</td>
+        <td>2026年 Q2</td>
+        <td>Web 应用 · 连接钱包 · 个人主页 · 通过编号发送 BTC</td>
+      </tr>
+      <tr>
+        <td>第三阶段：社交</td>
+        <td>2026年 Q3</td>
+        <td>消息功能 · 铭刻赠送 · 社交账号绑定 · 社区门控</td>
+      </tr>
+      <tr>
+        <td>第四阶段：SDK</td>
+        <td>2026年 Q4</td>
+        <td>开源钱包 SDK · 第三方钱包集成 · 商家收款工具</td>
+      </tr>
+      <tr>
+        <td>第五阶段：规模</td>
+        <td>2027年+</td>
+        <td>移动端应用 · 多语言 · 全球扩张</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- 9. AI 代理集成 -->
+  <h2 id="aiagents">9. AI 代理集成</h2>
+  <p>自托管 AI 代理框架的兴起——最具代表性的是 <strong>OpenClaw</strong>，截至 2026 年初已为全球约 15 万个自主代理提供支持——为比特币生态系统引入了一类全新参与者：能够独立持有钱包、自主收付款项、无需人工逐笔确认的软件代理。</p>
+  <p>这些代理面临着一个尚未解决的身份认证问题，而这个问题与 OpenNum 所针对的场景高度吻合。</p>
+
+  <h3>9.1 AI 代理的身份问题</h3>
+  <p>OpenClaw 代理是一个运行在服务器上的长驻进程——通常是一台由自然人操作者控制的个人设备（如 Mac Mini）。该代理拥有比特币钱包，可以自主完成交易：支付算力费用、租用服务器、雇用其他代理、接受服务报酬。随着代理数量的增长，几个关键问题浮现：</p>
+  <ul>
+    <li><em>谁负责</em>当一个 AI 代理发送或接收资金时？</li>
+    <li><em>如何验证</em>交易对手是否为一个由可信人类操作的合法代理，而非女巫攻击或蜜罐陷阱？</li>
+    <li><em>代理如何发现</em>彼此的支付地址，而不依赖中心化注册表？</li>
+    <li><em>代理的信誉</em>是否能积累并延续，在基础设施变更后依然有效？</li>
+  </ul>
+  <p>这些问题仅凭原始比特币钱包地址无法回答。一个拥有钱包地址的 AI 代理与诈骗机器人无从区分。OpenNum 改变了这一局面。</p>
+
+  <h3>9.2 OpenNum 作为代理的信任锚点</h3>
+  <p>每个 AI 代理都可以注册在其人类操作者的铭文编号之下，建立一条可加密验证的责任链——我们称之为<strong>人机信任桥接</strong>（Human-Agent Trust Bridge）。绑定机制如下：</p>
+  <ol>
+    <li>人类操作者持有一枚铭文——例如铭文 <strong>#2025</strong>。</li>
+    <li>操作者的 OpenClaw 实例维护一个专用的运营比特币钱包。</li>
+    <li>操作者签署一条扩展的 OpenNum 注册消息，将<em>代理钱包地址</em>与其<em>铭文身份</em>绑定，并附加标识代理角色的元数据字段。</li>
+    <li>OpenNum 索引器记录此代理注册，使该代理的钱包可被公开查询为"#2025 的代理"。</li>
+  </ol>
+
+  <h3>9.3 协议扩展：代理钱包注册</h3>
+  <p>为支持代理身份，我们提议对 OpenNum 注册消息格式进行扩展（v1.1）：</p>
+  <div class="code-block">
+<span class="k">{</span><br />
+&nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
+&nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.1"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_id"</span>: <span class="v">"2025"</span>,<br />
+&nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"bc1p8dqa4...zrx5k"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 操作者钱包（持有铭文）</span><br />
+&nbsp;&nbsp;<span class="k">"agent_wallet"</span>: <span class="v">"bc1pagent...xyz9"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 代理运营钱包</span><br />
+&nbsp;&nbsp;<span class="k">"agent_role"</span>: <span class="v">"openclaw"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 代理框架标识</span><br />
+&nbsp;&nbsp;<span class="k">"agent_label"</span>: <span class="v">"交易助手 #1"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 可读标签</span><br />
+&nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">1735689600</span>,<br />
+&nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"H9k2mN...Xp4q"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 由操作者钱包签署</span><br />
+<span class="k">}</span>
+  </div>
+  <p>操作者可在一个铭文编号下注册多个代理钱包，形成一支在单一可追溯身份下运作的代理舰队。</p>
+
+  <h3>9.4 人机信任桥接的实际影响</h3>
+  <ul>
+    <li><strong>可追责性。</strong>每一次代理行动都可追溯至持有铭文的人类。低编号持有者（如 #2025）展示了长期的比特币承诺和可观的资产押注——是值得信赖的代理运营者的天然信号。</li>
+    <li><strong>信誉可移植性。</strong>操作者可以升级基础设施、更换服务器或重新部署代理，而不会丢失身份。铭文编号及其历史记录始终不变。</li>
+    <li><strong>可发现性。</strong>应用程序通过 OpenNum API 枚举某铭文持有者注册的所有代理，无需中心化目录即可实现多代理协作。</li>
+    <li><strong>支付路由。</strong>代理可在操作者的 OpenNum 号码或已注册代理钱包接收付款，两者均通过同一 API 解析。</li>
+  </ul>
+
+  <h3>9.5 正在兴起的代理经济</h3>
+  <p>OpenClaw 代理已在使用比特币闪电网络微支付支付算力、API 和代理间服务费用。已有代理完全自主地完成了租用虚拟私有服务器、通过比特币支付托管费用、购买 AI API 额度的全流程——无需人工确认任何一笔交易。随着代理经济从今天的 15 万个扩展至 2027 年可能的数百万个，缺乏可读且具有责任链接的身份层将成为关键的基础设施缺口。</p>
+  <p>OpenNum 以零额外链上负载填补这一缺口。让人类向 <strong>#2025</strong> 发送比特币的同一协议，也让 AI 代理能够验证任何交易对手背后的身份与责任链。OpenNum 因此不仅是比特币的人类身份层，更是当今正在比特币上构建的自主代理经济的基础身份基础设施。</p>
+  <div class="callout">
+    "每个 AI 代理背后都有一个人类操作者。每个拥有铭文的人都有一个号码。OpenNum 让这种关联在密码学层面可验证——并且对公众完全透明。"
+  </div>
+
+  <h3>9.6 与以太坊 ERC-8004 的对比</h3>
+  <p>2026年1月，以太坊正式上线了 <strong>ERC-8004（信任代理）</strong>标准，专为 AI 代理提供链上身份注册机制，首月已有超过 24,000 个代理注册。这是以太坊生态对代理身份问题的回答。OpenNum v1.1 是比特币生态的等价方案，且在若干关键维度上更具优势：</p>
+  <table>
+    <thead>
+      <tr>
+        <th>特性</th>
+        <th>ERC-8004（以太坊）</th>
+        <th>OpenNum v1.1（比特币）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>底层链</td>
+        <td>以太坊</td>
+        <td>比特币</td>
+      </tr>
+      <tr>
+        <td>注册成本</td>
+        <td>Gas 费（链上交易）</td>
+        <td>零链上成本（仅签名）</td>
+      </tr>
+      <tr>
+        <td>人类操作者锚定</td>
+        <td>无（代理身份匿名）</td>
+        <td>强制绑定持有铭刻的人类</td>
+      </tr>
+      <tr>
+        <td>可问责性</td>
+        <td>低（纯链上地址）</td>
+        <td>高（可追溯至持有真实资产的人）</td>
+      </tr>
+      <tr>
+        <td>身份资产背书</td>
+        <td>无</td>
+        <td>铭刻资产背书</td>
+      </tr>
+      <tr>
+        <td>支付集成</td>
+        <td>需配合 x402 等协议</td>
+        <td>原生比特币支付，OpenNum 号码即收款地址</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>ERC-8004 的出现证明了 AI 代理身份的市场需求是真实的。OpenNum v1.1 以比特币原生的方式填补同一空缺，且提供了 ERC-8004 所没有的：<strong>可追溯至持有真实比特币资产的人类的责任链</strong>。</p>
+
+  <!-- 10. 钱包扩展应用 -->
+  <h2 id="extended">10. 钱包扩展应用</h2>
+  <p>超越第4章所描述的核心应用场景，OpenNum 还能解锁一系列从比特币铭文所有权本质中涌现的扩展应用。这些场景回应了当前比特币和 Ordinals 用户面临的真实问题——从废弃资产到身份灵活性，再到多场景支付路由。</p>
+
+  <h3>10.1 废弃铭文重获价值</h3>
+  <p>数以亿计的铭文目前静静地躺在比特币钱包里——在 2023 年 BRC-20 狂热期间获得、在早期 Ordinals 投机浪潮中铸造，或随意铸刻，如今已被视为链上废纸。据估计，绝大多数比特币铭文自创建以来从未被出售、交易或以任何有意义的方式使用过。</p>
+  <p>OpenNum 从根本上重构了任何铭文的价值逻辑：<strong>重要的不是铭文的内容，而是它永久的整数身份编号。</strong>一枚"一文不值"的 BRC-20 铸造铭文——铭文编号 #8,400,221——携带着一个全球唯一、永不可变的数字。这个数字可以成为持有者永久的比特币身份：一个社交地址、一个支付路由号码、同时也是一个社区成员资格凭证。</p>
+  <p>这是对链上现有资产的真正价值创造，无需任何新协议、新代币，也无需除 OpenNum 注册签名之外的任何额外比特币交易。</p>
+
+  <h3>10.2 BRC-20 代币社区身份层</h3>
+  <p>BRC-20 代币——构建在比特币 Ordinals 上的实验性同质化代币标准——创造了一个独特的现象：数以万计拥有共同代币符号、共同视觉风格、共同经济利益的铭文持有者。ORDI 持有者、SATS 持有者、MEME 持有者以及数百个其他社区已以潜在形式存在，他们所缺乏的是一套共享的链上身份基础设施。</p>
+  <p>OpenNum 恰好提供了这一基础设施。当一位 ORDI 铸造铭文的持有者通过 OpenNum 注册时，其铭文编号便成为其社区身份标识。OpenNum 索引器可以枚举任意 BRC-20 代币符号的所有已注册持有者，使该社区在密码学层面变得清晰可查。这赋能了：</p>
+  <ul>
+    <li><strong>社区准入门控。</strong>任何平台均可通过查询 OpenNum API 向经过验证的 BRC-20 持有者开放访问权限——无需中心化名单，无需人工核验。</li>
+    <li><strong>共同视觉身份。</strong>BRC-20 铭文通常具有共同的格式和视觉风格，这种共同的图像成为所有注册持有者的社区徽章和 OpenNum 头像。</li>
+    <li><strong>社区内支付。</strong>同一 BRC-20 代币持有者之间可以通过 OpenNum 号码互相发送比特币，在代币社区内部构建内部经济体。</li>
+    <li><strong>废物利用。</strong>一个作为货币已失去投机价值的 BRC-20 代币，作为社区成员资格凭证和身份锚点依然保有永久价值——真正的变废为宝。</li>
+  </ul>
+  <div class="callout">
+    一个作为货币价值归零的 BRC-20 代币，作为永久的链上身份号码依然有其价值。OpenNum 是一文不值的代币与有用身份之间的桥梁。
+  </div>
+
+  <h3>10.3 按需自制身份</h3>
+  <p>创建一枚比特币铭文的成本自 2023 年以来大幅下降。按当前费率，一枚最简单的文本铭文可以花费几美元甚至更少。这开启了一种强大的能力：<strong>任何用户随时可以创建一枚新的铭文，立即获得一个新的 OpenNum 身份编号——无需更换现有钱包。</strong></p>
+  <p>实际应用场景：</p>
+  <ul>
+    <li>已持有铭文 #2025 作为主要身份的用户，希望为商业项目建立独立身份。铸刻一个简单 Logo 或文字，获得新铭文编号，并在同一钱包内注册为商业 OpenNum ID。</li>
+    <li>开发者需要"测试身份"用于实验，铸刻一枚临时图像获取新号码，不污染主身份。</li>
+    <li>创作者希望为 NFT 发行或社区活动创建专属身份，铸刻项目图像后注册，将项目号码作为社区识别符推广。</li>
+  </ul>
+  <p>钱包无需更换，私钥无需变更，变化的只是铭文与其对应的 OpenNum 号码。这赋予了用户在单一比特币钱包内完全的身份灵活性。</p>
+
+  <h3>10.4 多号码路由：一个钱包，多重身份</h3>
+  <p>一个比特币钱包可以持有多枚铭文。OpenNum 允许钱包内的每枚铭文独立注册，构建类似单一设备上拥有多个电话号码的系统。每个号码承担不同角色：</p>
+  <table>
+    <thead>
+      <tr><th>号码</th><th>角色</th><th>使用场景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>#2025</td><td>主要身份</td><td>社交档案、公开收款、社区成员资格</td></tr>
+      <tr><td>#88052</td><td>商业身份</td><td>商家收款、开具发票、专业联系</td></tr>
+      <tr><td>#3,400,120</td><td>项目身份</td><td>特定 DAO、NFT 集合或社区活动</td></tr>
+      <tr><td>#29,400,800</td><td>临时身份</td><td>一次性交易、隐私保护支付</td></tr>
+    </tbody>
+  </table>
+  <p>所有号码均解析至由同一私钥控制的钱包。操作者在不同场景下选择公开哪个号码。这赋予了用户此前仅存在于企业级财务系统中的支付路由灵活性。</p>
+  <p>隐私应用同样重要：高编号铭文未经主动披露无法与主要身份关联，适用于希望保持低调的交易。各号码均在链上公开，但号码之间的关联关系是私密的，除非所有者主动选择披露。</p>
+
+  <h3>10.5 铭文价值的长尾效应</h3>
+  <p>综合以上四个场景，它们共同指向铭文生态的一次重大价值重估。如果 OpenNum 实现有意义的大规模采用，每一枚铭文——包括当前被认为毫无价值的数亿枚铭文——都将获得一个作为潜在身份号码的价值底线。铭文的内容退居其次；其永久整数编号才是耐久的核心资产。</p>
+  <p>这一切不需要对比特币协议做任何改动，不需要发行任何新代币，也不需要任何中心化权威来宣告哪些铭文有价值。价值源于 OpenNum 身份层的采用——对所有铭文持有者而言，无论获取铭文的时间和原因，这都是正和结果。</p>
+
+
+    <h2 id="conclusion">11. 结语</h2>
+  <p>比特币上已有1.12亿个铭刻，且还在持续增长。每一个都携带着一个唯一的、永久的整数——一个自它被创建的那一刻起，就存在于人类历史上最安全的分布式账本上的数字。这些数字已经稀缺，已经在链上，已经被真实的人持有。</p>
+  <p>OpenNum 将这些数字变成了人类一直用来找到彼此的东西：<strong>一个简单、易记的标识符。</strong></p>
+  <p>你的铭刻编号就是你的比特币身份。它可以路由支付、代表你的链上声誉、授予社区访问权限，并作为你在互联网上经过验证的头像。当你转让它时，它随你而去；当你出售它时，它进入休眠，等待下一个持有者来激活——就像一个手机号码。</p>
+  <p>比特币生态需要一个开放的、免费的、建立在比特币自身原语之上的身份层。全世界每一个比特币钱包都应该支持向一个数字发送转账。我们相信 OpenNum 可以成为那个层。</p>
+  <p><strong>协议是开放的。标准是免费的。号码是你的。</strong></p>
+
+  <div class="doc-footer">
+    <div>
+      <p>OpenNum Team · opennum.org · 2026</p>
+      <p style="margin-top:6px;">MIT 许可证 · 开放协议 · 无需许可</p>
+    </div>
+    <div>
+      <p><a href="index.html">opennum.org</a> · <a href="whitepaper.html">English</a> · <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
