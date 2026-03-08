@@ -145,10 +145,18 @@
 <!-- HERO -->
 <div class="hero">
   <div class="hero-left">
+    <div class="hero-tag-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);border:1px solid rgba(247,147,26,0.3);padding:4px 12px;border-radius:12px;">Bitcoin Identity Layer</span>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:4px 12px;border-radius:12px;">OpenNum Identity Explorer</span>
+    </div>
     <div class="hero-eyebrow">OpenNum Identity</div>
-    <div class="hero-number">#<span>2025</span></div>
+    <div class="hero-number">#<span>60585</span></div>
     <div class="status-badge"><div class="status-dot"></div> Active</div>
     <p class="hero-desc">An inscription-based Bitcoin identity. This number permanently maps to its holder's wallet address via the OpenNum protocol.</p>
+    <div class="share-copy" style="margin-bottom:24px;">
+      <span style="font-size:12px;color:var(--muted);font-family:monospace;background:#111;border:1px solid var(--border);padding:8px 14px;border-radius:6px;display:inline-block;" id="share-text-60585">My OpenNum identity is #60585 — https://opennum.org/n/60585</span>
+      <button onclick="copyShare()" style="margin-left:10px;background:none;border:1px solid var(--border);color:var(--dim);font-size:12px;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:inherit;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--dim)'">Copy</button>
+    </div>
     <div class="hero-actions">
       <a href="https://ordiscan.com/inscription/60585" target="_blank" class="btn btn-orange">View Inscription ↗</a>
       <button class="btn btn-copy" onclick="copyNumber()">Copy #60585</button>
@@ -160,7 +168,7 @@
       <img src="img/60585.png" alt="Inscription #60585" class="inscription-img" />
       <div class="inscription-caption">
         <span>Inscription #60585</span>
-        <a href="https://ordiscan.com/inscription/60585" target="_blank">ordiscan.com ↗</a>
+        <span style="color:var(--muted)">Inscription #60585</span>
       </div>
     </div>
   </div>
@@ -192,6 +200,10 @@
     <div class="info-item">
       <div class="info-label">Ruleset</div>
       <div class="info-value mono">ord-v0.18-mainnet</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Resolver</div>
+      <div class="info-value mono">opennum-mainnet</div>
     </div>
     <div class="info-item">
       <div class="info-label">Last Updated</div>
@@ -272,6 +284,10 @@
       <div class="lc-arrow">→</div>
     </div>
     <div class="lc-step">
+      <div class="lc-node">Cooling 🟠</div>
+      <div class="lc-arrow">→</div>
+    </div>
+    <div class="lc-step">
       <div class="lc-node">Dormant ⚫</div>
       <div class="lc-arrow">→</div>
     </div>
@@ -297,8 +313,8 @@
     <a href="/whitepaper-en" class="dev-link">
       <span>📖</span> Whitepaper
     </a>
-    <a href="https://ordiscan.com/inscription/60585" target="_blank" class="dev-link">
-      <span>🔍</span> View on Ordiscan
+    <a href="#" class="dev-link" style="cursor:default;opacity:0.5;" title="Coming soon">
+      <span>⚡</span> GET /api/resolve/60585
     </a>
   </div>
 </section>
