@@ -9,7 +9,6 @@
     { "src": "/whitepaper", "dest": "/public/whitepaper-cn.html" },
     { "src": "/whitepaper-cn", "dest": "/public/whitepaper-cn.html" },
     { "src": "/whitepaper-en", "dest": "/public/whitepaper-en.html" },
-    { "src": "/whitepaper-kr", "dest": "/public/whitepaper-kr.html" },
     { "src": "/explore", "dest": "/public/explore.html" },
     { "src": "/n/2025", "dest": "/public/n/2025.html" },
     { "src": "/n/9164", "dest": "/public/n/9164.html" },

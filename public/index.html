@@ -58,15 +58,18 @@
       height: 60px;
     }
     .nav-logo {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--white);
       display: flex;
       align-items: center;
-      gap: 10px;
     }
-    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+    .nav-logo-img {
+      height: 34px;
+      width: auto;
+      background: rgba(255,255,255,0.96);
+      border-radius: 7px;
+      padding: 3px 7px;
+      display: block;
+    }
+    .nav-logo-dot { display: none; }
     .nav-links {
       display: flex;
       align-items: center;
@@ -369,10 +372,9 @@
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">
-    <div class="nav-logo-dot"></div>
-    OpenNum
-  </div>
+  <a href="/" class="nav-logo">
+    <img src="/img/logo.png" alt="OpenNum" class="nav-logo-img" />
+  </a>
   <div class="nav-links">
     <a href="#how-it-works">Protocol</a>
     <a href="#whitepaper">Whitepaper</a>
@@ -557,15 +559,6 @@
         <a href="/whitepaper/opennum-whitepaper-cn.pdf" onclick="event.stopPropagation()">PDF ↓</a>
       </div>
     </a>
-    <a class="wp-card" href="/whitepaper/opennum-whitepaper-kr.pdf">
-      <div class="wp-flag">🇰🇷</div>
-      <div class="wp-lang">Korean</div>
-      <div class="wp-title">OpenNum Whitepaper v1.0</div>
-      <div class="wp-desc">Full protocol spec including identity state machine, dual-anchor design, and AI agent extension. (Korean)</div>
-      <div class="wp-actions">
-        <a href="/whitepaper/opennum-whitepaper-kr.pdf">PDF ↓</a>
-      </div>
-    </a>
   </div>
 </section>
 
@@ -614,7 +607,7 @@
       <div class="rm-time" style="color:var(--green)">2026 Q1 ✅</div>
       <div>
         <div class="rm-phase">Phase 1 — Foundation</div>
-        <div class="rm-desc">Protocol spec v1.0 · Dual-Anchor design · Four-State Identity Machine · AI Agent identity v1.1 · Cursed Inscription support · Whitepaper (EN / CN / KR) · Identity Pages · Explorer</div>
+        <div class="rm-desc">Protocol spec v1.0 · Dual-Anchor design · Four-State Identity Machine · AI Agent identity v1.1 · Cursed Inscription support · Whitepaper (EN / CN) · Identity Pages · Explorer</div>
       </div>
     </div>
     <div class="roadmap-item">

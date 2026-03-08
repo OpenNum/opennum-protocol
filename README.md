@@ -117,10 +117,8 @@ opennum/
 ├── whitepaper/
 │   ├── opennum-whitepaper-en.pdf   # English whitepaper
 │   ├── opennum-whitepaper-cn.pdf   # Chinese whitepaper
-│   ├── opennum-whitepaper-kr.pdf   # Korean whitepaper
 │   ├── whitepaper-en.html          # English whitepaper (web)
-│   ├── whitepaper-cn.html          # Chinese whitepaper (web)
-│   └── img/logo.svg
+│   └── whitepaper-cn.html          # Chinese whitepaper (web)
 ├── protocol-spec/
 │   └── spec-v1.0.md                # Full protocol specification
 ├── docs/
@@ -137,7 +135,6 @@ opennum/
 |----------|-----|-----|
 | English | [opennum-whitepaper-en.pdf](./whitepaper/opennum-whitepaper-en.pdf) | [Read online](./whitepaper/whitepaper-en.html) |
 | Chinese | [opennum-whitepaper-cn.pdf](./whitepaper/opennum-whitepaper-cn.pdf) | [Read online](./whitepaper/whitepaper-cn.html) |
-| Korean | [opennum-whitepaper-kr.pdf](./whitepaper/opennum-whitepaper-kr.pdf) | — |
 
 ---
 
@@ -145,7 +142,7 @@ opennum/
 
 | Phase | Timeline | Deliverables |
 |-------|----------|--------------|
-| **Phase 1: Foundation** | 2026 Q1 | Protocol spec · GitHub · Whitepaper (EN/CN/KR) |
+| **Phase 1: Foundation** | 2026 Q1 | Protocol spec · GitHub · Whitepaper (EN/CN) |
 | **Phase 2: Explorer** | 2026 Q2 | opennum.org · Number lookup · Profile pages |
 | **Phase 3: Social** | 2026 Q3 | Messaging · Inscription gifting · Social account binding |
 | **Phase 4: SDK** | 2026 Q4 | Open-source wallet SDK · Third-party integrations |

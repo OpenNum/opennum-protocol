@@ -31,8 +31,9 @@
 
     /* NAV */
     nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
-    .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
-    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+    .nav-logo { display: flex; align-items: center; }
+    .nav-logo-img { height: 34px; width: auto; background: rgba(255,255,255,0.96); border-radius: 7px; padding: 3px 7px; display: block; }
+    .nav-logo-dot { display: none; }
     .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
     .nav-links a:hover { color: var(--white); }
     .nav-back { color: var(--dim); font-size: 13px; display: flex; align-items: center; gap: 6px; }
@@ -132,8 +133,7 @@
 <!-- NAV -->
 <nav>
   <a href="/" class="nav-logo">
-    <div class="nav-logo-dot"></div>
-    OpenNum
+    <img src="/img/logo.png" alt="OpenNum" class="nav-logo-img" />
   </a>
   <div class="nav-links">
     <a href="/" class="nav-back">← All Identities</a>
