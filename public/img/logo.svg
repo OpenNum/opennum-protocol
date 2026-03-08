@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 44" fill="none">
+  <!-- Icon: concentric rings with ₿ -->
+  <circle cx="22" cy="22" r="19" stroke="#f7931a" stroke-width="2.2" fill="none"/>
+  <circle cx="22" cy="22" r="12" stroke="#f7931a" stroke-width="1.4" fill="none" opacity="0.5"/>
+  <text x="22" y="27" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="13" font-weight="800" fill="#f7931a">₿</text>
+
+  <!-- Wordmark: Open (white) + Num (orange), no gap -->
+  <text x="50" y="29"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="21" font-weight="800" letter-spacing="-0.3">
+    <tspan fill="#f5f5f0">Open</tspan><tspan fill="#f7931a">Num</tspan>
+  </text>
+</svg>

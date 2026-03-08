@@ -308,14 +308,16 @@
     /* ── WHITEPAPERS ── */
     .wp-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
+      max-width: 720px;
     }
     .wp-card {
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 32px;
       display: block;
+      cursor: pointer;
       transition: border-color 0.2s, transform 0.2s;
     }
     .wp-card:hover { border-color: var(--orange); transform: translateY(-2px); }
@@ -373,7 +375,7 @@
 <!-- NAV -->
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/img/logo.png" alt="OpenNum" class="nav-logo-img" />
+    <img src="/img/logo.svg" alt="OpenNum" class="nav-logo-img" />
   </a>
   <div class="nav-links">
     <a href="#how-it-works">Protocol</a>
@@ -539,26 +541,26 @@
   <div class="section-eyebrow">Documentation</div>
   <div class="section-title">Read the<br><span>whitepaper.</span></div>
   <div class="wp-grid">
-    <a class="wp-card" href="/whitepaper-en">
+    <div class="wp-card" onclick="location.href='/whitepaper-en'">
       <div class="wp-flag">🇺🇸</div>
       <div class="wp-lang">English</div>
       <div class="wp-title">OpenNum Whitepaper v1.0</div>
       <div class="wp-desc">Full protocol spec including identity state machine, dual-anchor design, and AI agent extension.</div>
       <div class="wp-actions">
-        <a href="/whitepaper-en">Read online →</a>
+        <a href="/whitepaper-en" onclick="event.stopPropagation()">Read online →</a>
         <a href="/whitepaper/opennum-whitepaper-en.pdf" onclick="event.stopPropagation()">PDF ↓</a>
       </div>
-    </a>
-    <a class="wp-card" href="/whitepaper-cn">
+    </div>
+    <div class="wp-card" onclick="location.href='/whitepaper-cn'">
       <div class="wp-flag">🇨🇳</div>
       <div class="wp-lang">Chinese</div>
       <div class="wp-title">OpenNum Whitepaper v1.0</div>
       <div class="wp-desc">Full protocol spec including identity state machine, dual-anchor design, and AI agent extension. (Chinese)</div>
       <div class="wp-actions">
-        <a href="/whitepaper-cn">Read online →</a>
+        <a href="/whitepaper-cn" onclick="event.stopPropagation()">Read online →</a>
         <a href="/whitepaper/opennum-whitepaper-cn.pdf" onclick="event.stopPropagation()">PDF ↓</a>
       </div>
-    </a>
+    </div>
   </div>
 </section>
 
