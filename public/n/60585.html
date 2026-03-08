@@ -137,6 +137,7 @@
   </a>
   <div class="nav-links">
     <a href="/" class="nav-back">← All Identities</a>
+    <a href="/explore">Explorer</a>
     <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏</a>
     <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
   </div>
@@ -191,7 +192,10 @@
     </div>
     <div class="info-item">
       <div class="info-label">Linked Wallet</div>
-      <div class="info-value mono">bc1pdkj0na0...alz08</div>
+      <div class="info-value mono" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span id="wallet-60585">bc1pdkj0na0...alz08</span>
+        <button onclick="copyWallet()" style="background:none;border:1px solid #2a2a2a;color:#666;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;" onmouseover="this.style.color='white';this.style.borderColor='#555'" onmouseout="this.style.color='#666';this.style.borderColor='#2a2a2a'">Copy</button>
+      </div>
     </div>
     <div class="info-item">
       <div class="info-label">Inscription ID</div>

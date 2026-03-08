@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenNum Explorer — Bitcoin Identity Registry</title>
+  <meta name="description" content="Browse and search the OpenNum identity registry. Explore active Bitcoin inscription identities on the OpenNum protocol." />
+  <meta property="og:title" content="OpenNum Explorer — Bitcoin Identity Registry" />
+  <meta property="og:description" content="Browse and search the OpenNum identity registry." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@OpenNumBTC" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black:  #080808;
+      --white:  #f5f5f0;
+      --orange: #f7931a;
+      --dim:    #888;
+      --muted:  #444;
+      --border: #1e1e1e;
+      --card:   #0f0f0f;
+      --green:  #22c55e;
+      --amber:  #f59e0b;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--black); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; }
+    a { color: inherit; text-decoration: none; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #141414; padding: 2px 8px; border-radius: 3px; color: var(--orange); }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
+    .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
+    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
+    .nav-links a:hover { color: var(--white); }
+    .nav-active { color: var(--orange) !important; }
+
+    /* HEADER */
+    .page-header { max-width: 1040px; margin: 0 auto; padding: 64px 48px 48px; }
+    .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+    .page-title { font-size: clamp(32px, 5vw, 56px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 16px; }
+    .page-title span { color: var(--orange); }
+    .page-desc { font-size: 15px; color: var(--dim); max-width: 520px; line-height: 1.75; }
+
+    /* SEARCH */
+    .search-wrap { max-width: 1040px; margin: 0 auto; padding: 0 48px 48px; }
+    .search-box { display: flex; gap: 12px; }
+    .search-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--white); font-size: 15px; font-family: inherit; padding: 14px 20px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--orange); }
+    .search-btn { background: var(--orange); color: #000; border: none; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+    .search-btn:hover { opacity: 0.88; }
+    .search-hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+    /* STATS */
+    .stats-wrap { max-width: 1040px; margin: 0 auto; padding: 0 48px 56px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .stat-card { background: var(--card); padding: 28px 24px; }
+    .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: var(--white); }
+    .stat-value.orange { color: var(--orange); }
+    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* SECTION */
+    .section { max-width: 1040px; margin: 0 auto; padding: 0 48px 64px; }
+    .section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+    .section-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .section-meta { font-size: 12px; color: var(--muted); }
+
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 0 48px 56px; }
+
+    /* NUMBER TABLE */
+    .num-table { width: 100%; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .num-table-head { display: grid; grid-template-columns: 100px 90px 1fr 160px 120px; gap: 0; background: #0c0c0c; border-bottom: 1px solid var(--border); padding: 12px 20px; }
+    .num-table-head span { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .num-row { display: grid; grid-template-columns: 100px 90px 1fr 160px 120px; gap: 0; padding: 16px 20px; border-bottom: 1px solid var(--border); align-items: center; transition: background 0.15s; cursor: pointer; }
+    .num-row:last-child { border-bottom: none; }
+    .num-row:hover { background: #111; }
+    .num-row a { display: contents; }
+    .num-cell-number { font-size: 15px; font-weight: 800; color: var(--orange); letter-spacing: -0.3px; }
+    .num-cell-status {}
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 10px; }
+    .status-active   { color: var(--green); border: 1px solid var(--green); }
+    .status-dormant  { color: #666; border: 1px solid #333; }
+    .status-cooling  { color: var(--amber); border: 1px solid var(--amber); }
+    .status-flagged  { color: #60a5fa; border: 1px solid #60a5fa; }
+    .status-dot-sm   { width: 5px; height: 5px; border-radius: 50%; }
+    .num-cell-wallet { font-family: monospace; font-size: 12px; color: var(--muted); }
+    .num-cell-insc   { font-family: monospace; font-size: 11px; color: #555; }
+    .num-cell-date   { font-size: 12px; color: var(--muted); text-align: right; }
+
+    /* CARD GRID */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .id-card { background: var(--card); padding: 28px 24px; transition: background 0.15s; cursor: pointer; }
+    .id-card:hover { background: #141414; }
+    .id-card-num { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--orange); margin-bottom: 10px; }
+    .id-card-status { margin-bottom: 14px; }
+    .id-card-wallet { font-family: monospace; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .id-card-date { font-size: 11px; color: #444; }
+    .id-card-insc { font-family: monospace; font-size: 11px; color: #3a3a3a; margin-top: 8px; }
+
+    /* SEARCH RESULT */
+    .search-result { display: none; max-width: 1040px; margin: 0 auto; padding: 0 48px 48px; }
+    .search-result.visible { display: block; }
+    .result-card { border: 1px solid var(--orange); border-radius: 8px; padding: 28px; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+    .result-num { font-size: 40px; font-weight: 800; letter-spacing: -1px; color: var(--orange); }
+    .result-info { flex: 1; }
+    .result-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .result-info p { font-size: 13px; color: var(--dim); font-family: monospace; margin-bottom: 4px; }
+    .result-link { background: var(--orange); color: #000; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .result-link:hover { opacity: 0.88; }
+    .no-result { border: 1px solid var(--border); border-radius: 8px; padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); margin-top: 32px; }
+    .footer-links { display: flex; gap: 24px; }
+    footer a:hover { color: var(--dim); }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .page-header, .search-wrap, .stats-wrap, .section { padding-left: 20px; padding-right: 20px; }
+      hr.sep { margin-left: 20px; margin-right: 20px; }
+      .num-table-head, .num-row { grid-template-columns: 80px 80px 1fr 100px; }
+      .num-cell-insc { display: none; }
+      footer { padding: 24px 20px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    OpenNum
+  </a>
+  <div class="nav-links">
+    <a href="/explore" class="nav-active">Explorer</a>
+    <a href="/#how-it-works">Protocol</a>
+    <a href="/whitepaper-en">Whitepaper</a>
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
+    <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏</a>
+  </div>
+</nav>
+
+<!-- HEADER -->
+<div class="page-header">
+  <div class="page-eyebrow">Bitcoin Identity Layer</div>
+  <h1 class="page-title">OpenNum <span>Explorer</span></h1>
+  <p class="page-desc">Browse and search the OpenNum identity registry — inscription numbers mapped to Bitcoin wallets on the open protocol.</p>
+</div>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <div class="search-box">
+    <input type="text" class="search-input" id="search-input" placeholder="Search by number (e.g. #2025) or wallet address..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch()" />
+    <button class="search-btn" onclick="doSearch()">Search</button>
+  </div>
+  <div class="search-hint">Try: #2025 · #9164 · #60585</div>
+</div>
+
+<!-- SEARCH RESULT -->
+<div class="search-result" id="search-result"></div>
+
+<!-- STATS -->
+<div class="stats-wrap">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Registered</div>
+      <div class="stat-value orange">3</div>
+      <div class="stat-sub">Inscription identities</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Identities</div>
+      <div class="stat-value" style="color:var(--green)">3</div>
+      <div class="stat-sub">Currently active</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dormant</div>
+      <div class="stat-value" style="color:#555">0</div>
+      <div class="stat-sub">Awaiting re-registration</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Protocol Version</div>
+      <div class="stat-value" style="font-size:22px">v1.0</div>
+      <div class="stat-sub">opennum-mainnet</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Resolver</div>
+      <div class="stat-value" style="font-size:18px;letter-spacing:-0.5px">mainnet</div>
+      <div class="stat-sub">opennum-mainnet</div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- ALL IDENTITIES TABLE -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title">All Identities</div>
+    <div class="section-meta">3 registered · Resolver: opennum-mainnet</div>
+  </div>
+  <div class="num-table">
+    <div class="num-table-head">
+      <span>Number</span>
+      <span>Status</span>
+      <span>Inscription ID</span>
+      <span>Wallet</span>
+      <span style="text-align:right">Last Updated</span>
+    </div>
+    <div class="num-row" onclick="location.href='/n/2025'">
+      <div class="num-cell-number">#2025</div>
+      <div class="num-cell-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+      <div class="num-cell-insc">d50df8a4...9139i0</div>
+      <div class="num-cell-wallet">bc1pys4...kj30m</div>
+      <div class="num-cell-date">2026-03-08</div>
+    </div>
+    <div class="num-row" onclick="location.href='/n/9164'">
+      <div class="num-cell-number">#9164</div>
+      <div class="num-cell-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+      <div class="num-cell-insc">1b91e5a7...8c14i0</div>
+      <div class="num-cell-wallet">bc1pz3...fdwz</div>
+      <div class="num-cell-date">2026-03-08</div>
+    </div>
+    <div class="num-row" onclick="location.href='/n/60585'">
+      <div class="num-cell-number">#60585</div>
+      <div class="num-cell-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+      <div class="num-cell-insc">096f5c71...e9fdi0</div>
+      <div class="num-cell-wallet">bc1pdkj...lz08</div>
+      <div class="num-cell-date">2026-03-08</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- TOP NUMBERS -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title">Top Numbers</div>
+    <div class="section-meta">Lowest inscription numbers</div>
+  </div>
+  <div class="card-grid">
+    <a href="/n/2025" style="display:contents">
+      <div class="id-card">
+        <div class="id-card-num">#2025</div>
+        <div class="id-card-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+        <div class="id-card-wallet">bc1pys4n4h4...sxkj30m</div>
+        <div class="id-card-date">Registered Mar 2026</div>
+        <div class="id-card-insc">d50df8a4...9139i0</div>
+      </div>
+    </a>
+    <a href="/n/9164" style="display:contents">
+      <div class="id-card">
+        <div class="id-card-num">#9164</div>
+        <div class="id-card-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+        <div class="id-card-wallet">bc1pz3aulnq...wtfdwz</div>
+        <div class="id-card-date">Registered Mar 2026</div>
+        <div class="id-card-insc">1b91e5a7...8c14i0</div>
+      </div>
+    </a>
+    <a href="/n/60585" style="display:contents">
+      <div class="id-card">
+        <div class="id-card-num">#60585</div>
+        <div class="id-card-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+        <div class="id-card-wallet">bc1pdkj0na0...alz08</div>
+        <div class="id-card-date">Registered Mar 2026</div>
+        <div class="id-card-insc">096f5c71...e9fdi0</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- RECENTLY ACTIVATED -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title">Recently Activated</div>
+    <div class="section-meta">Latest Active registrations</div>
+  </div>
+  <div class="num-table">
+    <div class="num-table-head">
+      <span>Number</span>
+      <span>Status</span>
+      <span>Inscription ID</span>
+      <span>Wallet</span>
+      <span style="text-align:right">Activated</span>
+    </div>
+    <div class="num-row" onclick="location.href='/n/2025'">
+      <div class="num-cell-number">#2025</div>
+      <div class="num-cell-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+      <div class="num-cell-insc">d50df8a4...9139i0</div>
+      <div class="num-cell-wallet">bc1pys4...kj30m</div>
+      <div class="num-cell-date">2026-03-08</div>
+    </div>
+    <div class="num-row" onclick="location.href='/n/9164'">
+      <div class="num-cell-number">#9164</div>
+      <div class="num-cell-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+      <div class="num-cell-insc">1b91e5a7...8c14i0</div>
+      <div class="num-cell-wallet">bc1pz3...fdwz</div>
+      <div class="num-cell-date">2026-03-08</div>
+    </div>
+    <div class="num-row" onclick="location.href='/n/60585'">
+      <div class="num-cell-number">#60585</div>
+      <div class="num-cell-status"><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+      <div class="num-cell-insc">096f5c71...e9fdi0</div>
+      <div class="num-cell-wallet">bc1pdkj...lz08</div>
+      <div class="num-cell-date">2026-03-08</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- DEVELOPER API PREVIEW -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title">Resolver API</div>
+    <div class="section-meta" style="color:var(--amber)">Coming soon</div>
+  </div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <div style="background:#111;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:8px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:#febc2e"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
+      <span style="font-size:12px;color:#555;margin-left:8px;font-family:monospace">opennum-api-v1.0</span>
+    </div>
+    <pre style="padding:24px 28px;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.9;color:#888;overflow-x:auto"><span style="color:#555"># Resolve a number → wallet</span>
+<span style="color:#f7931a">GET</span> /api/v1/resolve/<span style="color:#7ec8e3">2025</span>
+
+<span style="color:#555"># Response</span>
+{
+  <span style="color:#f7931a">"number"</span>:     <span style="color:#98c379">2025</span>,
+  <span style="color:#f7931a">"status"</span>:     <span style="color:#98c379">"active"</span>,
+  <span style="color:#f7931a">"wallet"</span>:     <span style="color:#98c379">"bc1pys4n4h4...sxkj30m"</span>,
+  <span style="color:#f7931a">"resolver"</span>:   <span style="color:#98c379">"opennum-mainnet"</span>,
+  <span style="color:#f7931a">"updated_at"</span>: <span style="color:#98c379">"2026-03-08T00:00:00Z"</span>
+}</pre>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>© 2026 OpenNum Contributors — MIT License</div>
+  <div class="footer-links">
+    <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a>
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
+    <a href="/whitepaper-en">Whitepaper</a>
+    <a href="https://github.com/OpenNum/opennum-protocol/blob/main/protocol-spec/spec-v1.0.md" target="_blank">Protocol Spec</a>
+  </div>
+</footer>
+
+<script>
+const registry = {
+  "2025":  { num: "2025",  status: "active",  wallet: "bc1pys4n4h4...sxkj30m", insc: "d50df8a4...9139i0", updated: "2026-03-08" },
+  "9164":  { num: "9164",  status: "active",  wallet: "bc1pz3aulnq...wtfdwz",  insc: "1b91e5a7...8c14i0", updated: "2026-03-08" },
+  "60585": { num: "60585", status: "active",  wallet: "bc1pdkj0na0...alz08",   insc: "096f5c71...e9fdi0", updated: "2026-03-08" },
+};
+
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim().replace(/^#/, '');
+  const el = document.getElementById('search-result');
+  if (!q) { el.classList.remove('visible'); el.innerHTML = ''; return; }
+  const match = registry[q];
+  if (match) {
+    const statusClass = `status-${match.status}`;
+    el.innerHTML = `
+      <div class="result-card">
+        <div class="result-num">#${match.num}</div>
+        <div class="result-info">
+          <h3>OpenNum #${match.num}</h3>
+          <p>Wallet: ${match.wallet}</p>
+          <p>Inscription: ${match.insc}</p>
+          <p>Last updated: ${match.updated}</p>
+        </div>
+        <a href="/n/${match.num}" class="result-link">View Identity →</a>
+      </div>`;
+  } else {
+    el.innerHTML = `<div class="no-result">No identity found for <code>#${q}</code> — this number has not been registered yet.</div>`;
+  }
+  el.classList.add('visible');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function handleSearch(val) {
+  if (!val.trim()) {
+    const el = document.getElementById('search-result');
+    el.classList.remove('visible');
+    el.innerHTML = '';
+  }
+}
+</script>
+</body>
+</html>
