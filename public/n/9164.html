@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenNum #9164 — Bitcoin Identity</title>
+  <meta name="description" content="OpenNum #9164 — Bitcoin-native identity anchored to inscription 1b91e5a7...8c14i0" />
+  <meta property="og:title" content="OpenNum #9164 — Bitcoin Identity" />
+  <meta property="og:description" content="OpenNum turns inscription numbers into Bitcoin-native identities." />
+  <meta property="og:image" content="https://opennum.org/n/img/9164.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@OpenNumBTC" />
+  <meta name="twitter:title" content="OpenNum #9164 — Bitcoin Identity" />
+  <meta name="twitter:description" content="OpenNum turns inscription numbers into Bitcoin-native identities." />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black:  #080808;
+      --white:  #f5f5f0;
+      --orange: #f7931a;
+      --dim:    #888;
+      --muted:  #444;
+      --border: #1e1e1e;
+      --card:   #0f0f0f;
+      --green:  #22c55e;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--black); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.65; }
+    a { color: inherit; text-decoration: none; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #141414; padding: 2px 8px; border-radius: 3px; color: var(--orange); word-break: break-all; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
+    .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
+    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
+    .nav-links a:hover { color: var(--white); }
+    .nav-back { color: var(--dim); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .nav-back:hover { color: var(--white); }
+
+    /* HERO */
+    .hero { padding: 72px 48px 56px; max-width: 1040px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+    .hero-left {}
+    .hero-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 16px; }
+    .hero-number { font-size: clamp(56px, 8vw, 96px); font-weight: 800; letter-spacing: -3px; line-height: 1; margin-bottom: 20px; }
+    .hero-number span { color: var(--orange); }
+    .status-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; border: 1px solid var(--green); color: var(--green); padding: 6px 14px; border-radius: 20px; margin-bottom: 28px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .hero-desc { font-size: 15px; color: var(--dim); line-height: 1.75; margin-bottom: 32px; max-width: 400px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+    .btn-orange { background: var(--orange); color: #000; }
+    .btn-orange:hover { opacity: 0.88; }
+    .btn-ghost { border: 1px solid var(--border); color: var(--dim); }
+    .btn-ghost:hover { border-color: #555; color: var(--white); }
+    .btn-copy { border: 1px solid var(--border); color: var(--dim); cursor: pointer; background: none; font-family: inherit; }
+    .btn-copy:hover { border-color: #555; color: var(--white); }
+
+    /* INSCRIPTION IMAGE */
+    .hero-right {}
+    .inscription-frame { border: 1px solid var(--border); background: var(--card); border-radius: 8px; overflow: hidden; }
+    .inscription-img { width: 100%; display: block; max-height: 460px; object-fit: contain; background: #000; }
+    .inscription-caption { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .inscription-caption span { font-size: 12px; color: var(--muted); font-family: monospace; }
+    .inscription-caption a { font-size: 12px; color: var(--orange); }
+    .inscription-caption a:hover { text-decoration: underline; }
+
+    /* DIVIDER */
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 0 48px; }
+
+    /* INFO CARD */
+    .section { max-width: 1040px; margin: 0 auto; padding: 64px 48px; }
+    .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+    .section-title { font-size: clamp(22px, 3vw, 32px); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 36px; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .info-item { background: var(--card); padding: 24px 28px; }
+    .info-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .info-value { font-size: 15px; color: var(--white); font-weight: 500; word-break: break-all; }
+    .info-value.mono { font-family: monospace; font-size: 13px; color: var(--dim); }
+    .info-value.active { color: var(--dim); font-weight: 700; }
+
+    /* WHAT YOU CAN DO */
+    .use-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .use-card { background: var(--card); padding: 32px 28px; }
+    .use-icon { font-size: 24px; margin-bottom: 14px; }
+    .use-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .use-card p { font-size: 13px; color: var(--dim); line-height: 1.75; }
+
+    /* LIFECYCLE */
+    .lifecycle { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+    .lc-step { display: flex; align-items: center; gap: 0; }
+    .lc-node { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 20px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .lc-node.active-node { border-color: var(--orange); color: var(--orange); }
+    .lc-arrow { color: var(--muted); padding: 0 12px; font-size: 18px; }
+
+    /* DEV */
+    .dev-links { display: flex; gap: 16px; flex-wrap: wrap; }
+    .dev-link { border: 1px solid var(--border); border-radius: 6px; padding: 16px 24px; font-size: 14px; color: var(--dim); transition: all 0.18s; display: flex; align-items: center; gap: 10px; }
+    .dev-link:hover { border-color: var(--orange); color: var(--white); }
+
+    /* CTA */
+    .cta-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 56px 48px; text-align: center; }
+    .cta-box h2 { font-size: clamp(22px, 3vw, 36px); font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+    .cta-box p { color: var(--dim); font-size: 15px; margin-bottom: 32px; }
+    .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    footer a:hover { color: var(--dim); }
+
+    /* SHARE TOAST */
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: var(--white); color: #000; padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 999; }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .hero { grid-template-columns: 1fr; padding: 40px 20px; gap: 40px; }
+      .section { padding: 48px 20px; }
+      hr.sep { margin: 0 20px; }
+      footer { padding: 24px 20px; flex-direction: column; text-align: center; }
+      .lifecycle { gap: 8px; }
+      .cta-box { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    OpenNum
+  </a>
+  <div class="nav-links">
+    <a href="/" class="nav-back">← All Identities</a>
+    <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏</a>
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">OpenNum Identity</div>
+    <div class="hero-number">#<span>2025</span></div>
+    <div class="status-badge"><div class="status-dot"></div> Active</div>
+    <p class="hero-desc">An inscription-based Bitcoin identity. This number permanently maps to its holder's wallet address via the OpenNum protocol.</p>
+    <div class="hero-actions">
+      <a href="https://ordiscan.com/inscription/9164" target="_blank" class="btn btn-orange">View Inscription ↗</a>
+      <button class="btn btn-copy" onclick="copyNumber()">Copy #9164</button>
+      <button class="btn btn-ghost" onclick="shareIdentity()">Share</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="inscription-frame">
+      <img src="img/9164.png" alt="Inscription #9164" class="inscription-img" />
+      <div class="inscription-caption">
+        <span>Inscription #9164</span>
+        <a href="https://ordiscan.com/inscription/9164" target="_blank">ordiscan.com ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep">
+
+<!-- IDENTITY INFO -->
+<section class="section">
+  <div class="section-eyebrow">Identity Information</div>
+  <div class="section-title">On-chain details</div>
+  <div class="info-grid">
+    <div class="info-item">
+      <div class="info-label">Number</div>
+      <div class="info-value">#9164</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Status</div>
+      <div class="info-value" style="color:var(--green);font-weight:700">● Active</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Linked Wallet</div>
+      <div class="info-value mono">bc1pz3aulnq...wtfdwz</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Inscription ID</div>
+      <div class="info-value mono">1b91e5a7...8c14i0</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Ruleset</div>
+      <div class="info-value mono">ord-v0.18-mainnet</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Last Updated</div>
+      <div class="info-value">March 2026</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- WHAT YOU CAN DO -->
+<section class="section">
+  <div class="section-eyebrow">What You Can Do</div>
+  <div class="section-title">With OpenNum #9164</div>
+  <div class="use-grid">
+    <div class="use-card">
+      <div class="use-icon">₿</div>
+      <h3>Send Bitcoin by Number</h3>
+      <p>Any wallet implementing OpenNum can send BTC directly to <code>#9164</code> — no address needed.</p>
+    </div>
+    <div class="use-card">
+      <div class="use-icon">🪪</div>
+      <h3>Build an Identity</h3>
+      <p>Use your inscription number as a portable, verifiable handle across Bitcoin apps, markets, and communities.</p>
+    </div>
+    <div class="use-card">
+      <div class="use-icon">🔑</div>
+      <h3>Community Access</h3>
+      <p>Gate access to communities, Discord servers, or content using inscription ownership verification.</p>
+    </div>
+    <div class="use-card">
+      <div class="use-icon">🤖</div>
+      <h3>AI Agent Delegation</h3>
+      <p>Register an agent wallet under your number. Let autonomous agents operate on your behalf with verifiable accountability.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="section-eyebrow">How OpenNum Works</div>
+  <div class="section-title">No contracts. No gas. Just Bitcoin.</div>
+  <div class="info-grid">
+    <div class="info-item">
+      <div class="info-label">Step 1</div>
+      <div class="info-value" style="font-size:14px;line-height:1.7;color:var(--dim)">Own a Bitcoin Ordinal inscription. The inscription number is your permanent identity anchor.</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Step 2</div>
+      <div class="info-value" style="font-size:14px;line-height:1.7;color:var(--dim)">Sign a registration message with your wallet's secp256k1 key. Pure off-chain. No transaction required.</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Step 3</div>
+      <div class="info-value" style="font-size:14px;line-height:1.7;color:var(--dim)">The OpenNum indexer maps <code>#9164</code> to your wallet. Anyone can resolve, verify, and pay you by number.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- LIFECYCLE -->
+<section class="section">
+  <div class="section-eyebrow">Identity Lifecycle</div>
+  <div class="section-title">Current state: <span style="color:var(--green)">Active</span></div>
+  <div class="lifecycle">
+    <div class="lc-step">
+      <div class="lc-node active-node">Registered</div>
+      <div class="lc-arrow">→</div>
+    </div>
+    <div class="lc-step">
+      <div class="lc-node active-node">Active 🟢</div>
+      <div class="lc-arrow">→</div>
+    </div>
+    <div class="lc-step">
+      <div class="lc-node">Transferred</div>
+      <div class="lc-arrow">→</div>
+    </div>
+    <div class="lc-step">
+      <div class="lc-node">Dormant ⚫</div>
+      <div class="lc-arrow">→</div>
+    </div>
+    <div class="lc-step">
+      <div class="lc-node">Re-Activated 🟢</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- DEVELOPERS -->
+<section class="section">
+  <div class="section-eyebrow">Developers</div>
+  <div class="section-title">Build on OpenNum</div>
+  <div class="dev-links">
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank" class="dev-link">
+      <span>⌥</span> GitHub Repository
+    </a>
+    <a href="https://github.com/OpenNum/opennum-protocol/blob/main/protocol-spec/spec-v1.0.md" target="_blank" class="dev-link">
+      <span>📄</span> Protocol Spec v1.0
+    </a>
+    <a href="/whitepaper-en" class="dev-link">
+      <span>📖</span> Whitepaper
+    </a>
+    <a href="https://ordiscan.com/inscription/9164" target="_blank" class="dev-link">
+      <span>🔍</span> View on Ordiscan
+    </a>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- CTA -->
+<section class="section">
+  <div class="cta-box">
+    <h2>Claim Your OpenNum Identity</h2>
+    <p>Own a Bitcoin inscription? Register your number and make it yours — permanently.</p>
+    <div class="cta-btns">
+      <a href="/whitepaper-en" class="btn btn-orange">Read the Whitepaper</a>
+      <a href="https://github.com/OpenNum/opennum-protocol" target="_blank" class="btn btn-ghost">View on GitHub →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>© 2026 OpenNum Contributors — MIT License</div>
+  <div class="footer-links">
+    <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a>
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
+    <a href="/whitepaper-en">Whitepaper</a>
+  </div>
+</footer>
+
+<script>
+function copyNumber() {
+  navigator.clipboard.writeText('#9164').then(() => showToast('Copied #9164 to clipboard!'));
+}
+function shareIdentity() {
+  if (navigator.share) {
+    navigator.share({ title: 'OpenNum #9164 — Bitcoin Identity', text: 'My OpenNum identity is #9164', url: window.location.href });
+  } else {
+    navigator.clipboard.writeText(window.location.href).then(() => showToast('Link copied!'));
+  }
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

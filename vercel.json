@@ -10,6 +10,10 @@
     { "src": "/whitepaper-cn", "dest": "/public/whitepaper-cn.html" },
     { "src": "/whitepaper-en", "dest": "/public/whitepaper-en.html" },
     { "src": "/whitepaper-kr", "dest": "/public/whitepaper-kr.html" },
+    { "src": "/n/2025", "dest": "/public/n/2025.html" },
+    { "src": "/n/9164", "dest": "/public/n/9164.html" },
+    { "src": "/n/60585", "dest": "/public/n/60585.html" },
+    { "src": "/n/(.*)", "dest": "/public/n/$1" },
     { "src": "/whitepaper/(.*)", "dest": "/public/whitepaper/$1" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
