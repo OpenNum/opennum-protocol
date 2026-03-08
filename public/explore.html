@@ -29,9 +29,8 @@
 
     /* NAV */
     nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
-    .nav-logo { display: flex; align-items: center; }
-    .nav-logo-img { height: 32px; width: auto; display: block; }
-    .nav-logo-dot { display: none; }
+    .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
+    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
     .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
     .nav-links a:hover { color: var(--white); }
     .nav-active { color: var(--orange) !important; }
@@ -131,7 +130,8 @@
 <!-- NAV -->
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/img/logo.svg" alt="OpenNum" class="nav-logo-img" />
+    <div class="nav-logo-dot"></div>
+    OpenNum
   </a>
   <div class="nav-links">
     <a href="/explore" class="nav-active">Explorer</a>
