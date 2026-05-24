@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
     console.warn('ordinals.com unreachable:', e.message);
   }
 
-  // Verify secp256k1 signature (BIP322 — works for Legacy, SegWit, Taproot)
+  // Verify secp256k1 signature (BIP322: Legacy, SegWit, Taproot)
   const message = `opennum:register:${inscription_num}:${wallet}:${timestamp}`;
   try {
     const valid = Verifier.verifySignature(wallet, message, signature);
