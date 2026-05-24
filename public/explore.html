@@ -145,6 +145,7 @@
     <a href="/explore" class="nav-active">Explorer</a>
     <a href="/#how-it-works">Protocol</a>
     <a href="/whitepaper-en">Whitepaper</a>
+    <a href="/register" style="background:var(--orange);color:#000;padding:6px 14px;border-radius:4px;font-weight:700">Register</a>
     <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
     <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏</a>
   </div>
@@ -332,28 +333,35 @@
 </footer>
 
 <script>
-/* Registry — source of truth for search */
-const registry = {
-  "2025":  { status: "active", wallet: "bc1pys4n4h4...sxkj30m", updated: "2026-03-08" },
-  "9164":  { status: "active", wallet: "bc1pz3aulnq...wtfdwz",  updated: "2026-03-08" },
-  "60585": { status: "active", wallet: "bc1pdkj0na0...alz08",   updated: "2026-03-08" },
-};
-
-function doSearch() {
+async function doSearch() {
   const raw = document.getElementById('search-input').value.trim();
   const q = raw.replace(/^#/, '');
   const fb = document.getElementById('search-feedback');
-  if (!q) { fb.classList.remove('visible'); fb.innerHTML = ''; return; }
+  if (!q || isNaN(parseInt(q, 10))) { fb.classList.remove('visible'); fb.innerHTML = ''; return; }
 
-  if (registry[q]) {
-    /* Registered → navigate directly to identity page */
-    location.href = '/n/' + q;
-  } else {
-    /* Not registered → show inline feedback */
-    fb.innerHTML = `<div class="no-result">No identity found for <code>#${q}</code> — this number has not been registered yet.</div>`;
-    fb.classList.add('visible');
-    fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  fb.innerHTML = '<div class="no-result" style="color:#666">Looking up #' + q + '…</div>';
+  fb.classList.add('visible');
+
+  try {
+    const res = await fetch('/api/resolve?num=' + encodeURIComponent(q));
+    if (res.status === 200) {
+      location.href = '/n/' + q;
+      return;
+    }
+    const data = await res.json();
+    if (res.status === 404) {
+      fb.innerHTML = `<div class="no-result">
+        <strong style="display:block;margin-bottom:8px;font-size:16px">#${q} is unregistered</strong>
+        This number has not been claimed yet.
+        <a href="/register" style="display:inline-block;margin-top:14px;background:var(--orange);color:#000;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700">Register #${q} →</a>
+      </div>`;
+    } else {
+      fb.innerHTML = `<div class="no-result">Error: ${data.error || 'Unknown error'}</div>`;
+    }
+  } catch (e) {
+    fb.innerHTML = '<div class="no-result">Network error. Please try again.</div>';
   }
+  fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function onSearchInput(val) {
@@ -363,6 +371,47 @@ function onSearchInput(val) {
     fb.innerHTML = '';
   }
 }
+
+/* Load live registry from API */
+async function loadRegistry() {
+  const listEl = document.querySelector('.id-list');
+  const metaEl = document.querySelector('.section-meta');
+  if (!listEl) return;
+  try {
+    const res = await fetch('/api/list?sort=number&order=asc&limit=50');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.registrations || data.registrations.length === 0) return;
+
+    if (metaEl) metaEl.textContent = `${data.total} registered · opennum-mainnet`;
+
+    // Replace hardcoded rows with live data
+    const head = listEl.querySelector('.id-list-head');
+    listEl.innerHTML = '';
+    if (head) listEl.appendChild(head);
+
+    data.registrations.forEach(r => {
+      const num = r.inscription_num;
+      const wallet = r.wallet;
+      const shortWallet = wallet.length > 20 ? wallet.slice(0, 10) + '…' + wallet.slice(-8) : wallet;
+      const date = r.registered_at ? r.registered_at.slice(0, 10) : '—';
+      const row = document.createElement('div');
+      row.className = 'id-list-row';
+      row.style.cursor = 'pointer';
+      row.onclick = () => location.href = '/n/' + num;
+      row.innerHTML = `
+        <div class="cell-number">#${num}</div>
+        <div><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
+        <div class="cell-wallet">${shortWallet}</div>
+        <div class="cell-date">${date}</div>
+        <div class="cell-action"><span class="view-btn" onclick="event.stopPropagation();location.href='/n/${num}'">View Profile →</span></div>
+      `;
+      listEl.appendChild(row);
+    });
+  } catch (e) { /* keep static fallback */ }
+}
+
+window.addEventListener('load', loadRegistry);
 </script>
 </body>
 </html>

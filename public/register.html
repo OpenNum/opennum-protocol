@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — OpenNum Bitcoin Identity</title>
+  <meta name="description" content="Register your Bitcoin Ordinal inscription number as your permanent on-chain identity. One number. Your identity. Forever." />
+  <meta property="og:title" content="Register Your OpenNum — Bitcoin Identity" />
+  <meta property="og:url" content="https://opennum.org/register" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@OpenNumBTC" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black:  #080808;
+      --white:  #f5f5f0;
+      --orange: #f7931a;
+      --dim:    #888;
+      --muted:  #444;
+      --border: #1e1e1e;
+      --card:   #0f0f0f;
+      --green:  #22c55e;
+      --red:    #ef4444;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--black); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #141414; padding: 2px 8px; border-radius: 3px; color: var(--orange); }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
+    .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
+    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
+    .nav-links a:hover { color: var(--white); }
+    .nav-active { color: var(--orange) !important; }
+
+    /* LAYOUT */
+    .page-wrap { max-width: 760px; margin: 0 auto; padding: 64px 24px 100px; }
+
+    /* HEADER */
+    .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+    .page-title { font-size: clamp(32px, 5vw, 52px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 16px; }
+    .page-title span { color: var(--orange); }
+    .page-desc { font-size: 15px; color: var(--dim); max-width: 520px; line-height: 1.75; margin-bottom: 48px; }
+
+    /* STEPS */
+    .steps { display: flex; gap: 8px; margin-bottom: 40px; }
+    .step-dot { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; transition: all 0.25s; }
+    .step-dot.active { border-color: var(--orange); color: var(--orange); background: rgba(247,147,26,0.1); }
+    .step-dot.done { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+    .step-line { flex: 1; height: 1.5px; background: var(--border); margin-top: 13px; transition: background 0.25s; }
+    .step-line.done { background: var(--green); }
+
+    /* PANEL */
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 36px; margin-bottom: 24px; }
+    .panel-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .panel-desc { font-size: 13px; color: var(--dim); margin-bottom: 28px; line-height: 1.65; }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--orange); color: #000; }
+    .btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--border); }
+    .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* WALLET STATUS */
+    .wallet-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 18px; background: #111; border: 1px solid var(--border); border-radius: 8px; }
+    .wallet-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 6px var(--green); }
+    .wallet-indicator.off { background: var(--muted); box-shadow: none; }
+    .wallet-addr { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--dim); }
+    .wallet-label { font-size: 13px; font-weight: 600; }
+
+    /* INSCRIPTION GRID */
+    .inscription-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+    .insc-card { background: #111; border: 1.5px solid var(--border); border-radius: 8px; padding: 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
+    .insc-card:hover { border-color: var(--orange); }
+    .insc-card.selected { border-color: var(--orange); background: rgba(247,147,26,0.05); }
+    .insc-card.selected::after { content: '✓'; position: absolute; top: 8px; right: 10px; color: var(--orange); font-size: 14px; font-weight: 700; }
+    .insc-preview { width: 100%; aspect-ratio: 1; background: #1a1a1a; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .insc-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+    .insc-preview .insc-type { font-size: 11px; color: var(--muted); text-align: center; padding: 4px; }
+    .insc-num { font-size: 20px; font-weight: 800; color: var(--orange); letter-spacing: -0.5px; }
+    .insc-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .insc-already { position: absolute; top: 8px; left: 10px; font-size: 10px; font-weight: 700; background: rgba(34,197,94,0.15); color: var(--green); padding: 2px 6px; border-radius: 3px; }
+
+    .load-more { display: block; text-align: center; padding: 12px; margin-top: 16px; font-size: 13px; color: var(--orange); cursor: pointer; border: 1px dashed #2a2a2a; border-radius: 8px; }
+    .load-more:hover { border-color: var(--orange); background: rgba(247,147,26,0.04); }
+
+    /* DISPLAY NAME */
+    .input-wrap { margin-bottom: 20px; }
+    .input-label { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; display: block; }
+    .input-field { width: 100%; background: #111; border: 1px solid var(--border); color: var(--white); font-size: 14px; font-family: inherit; padding: 12px 16px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+    .input-field::placeholder { color: var(--muted); }
+    .input-field:focus { border-color: var(--orange); }
+
+    /* SIGNING PREVIEW */
+    .sign-box { background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .sign-box-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .sign-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
+    .sign-row:last-child { border-bottom: none; }
+    .sign-key { font-size: 12px; color: var(--muted); }
+    .sign-val { font-size: 13px; font-weight: 600; color: var(--white); font-family: 'SF Mono', monospace; }
+    .sign-val.orange { color: var(--orange); }
+    .sign-message-raw { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 6px; padding: 12px 14px; margin-top: 12px; font-family: 'SF Mono', monospace; font-size: 12px; color: var(--orange); word-break: break-all; line-height: 1.5; }
+
+    /* SUCCESS */
+    .success-panel { text-align: center; padding: 60px 36px; }
+    .success-icon { font-size: 56px; margin-bottom: 20px; }
+    .success-num { font-size: 64px; font-weight: 900; color: var(--orange); letter-spacing: -2px; margin-bottom: 8px; }
+    .success-label { font-size: 16px; color: var(--dim); margin-bottom: 32px; }
+    .success-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ERROR / INFO */
+    .alert { padding: 14px 18px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .alert.visible { display: block; }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .alert-info { background: rgba(247,147,26,0.08); border: 1px solid rgba(247,147,26,0.25); color: var(--orange); }
+    .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+
+    /* LOADING */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-orange { border-color: rgba(247,147,26,0.2); border-top-color: var(--orange); }
+
+    /* EMPTY / NOTICE */
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+    .empty-state strong { display: block; font-size: 24px; margin-bottom: 8px; }
+
+    /* SEPARATOR */
+    hr.sep { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    /* FOOTER NOTE */
+    .footnote { font-size: 12px; color: #444; line-height: 1.7; margin-top: 16px; }
+    .footnote a { color: var(--muted); text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      .nav-links { gap: 16px; }
+      .panel { padding: 24px 20px; }
+      .inscription-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    OpenNum
+  </a>
+  <div class="nav-links">
+    <a href="/explore">Explorer</a>
+    <a href="/#how-it-works">Protocol</a>
+    <a href="/whitepaper-en">Whitepaper</a>
+    <a href="/register" class="nav-active">Register</a>
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <div class="page-eyebrow">Bitcoin Identity · Phase 2</div>
+  <h1 class="page-title">Claim Your <span>Number</span></h1>
+  <p class="page-desc">Connect your Bitcoin wallet, pick the inscription you own, and sign once. Your number is permanently yours — no gas, no smart contract, no middleman.</p>
+
+  <!-- STEP INDICATORS -->
+  <div class="steps" id="steps">
+    <div class="step-dot active" id="dot1">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot" id="dot2">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot" id="dot3">3</div>
+    <div class="step-line" id="line3"></div>
+    <div class="step-dot" id="dot4">4</div>
+  </div>
+
+  <!-- STEP 1: CONNECT WALLET -->
+  <div id="step1" class="panel">
+    <div class="panel-title">Connect Your Bitcoin Wallet</div>
+    <div class="panel-desc">OpenNum uses <strong>Unisat Wallet</strong> to verify inscription ownership. Your private key never leaves your device — we only request a signature.</div>
+    <div class="alert alert-error" id="err1"></div>
+    <div id="walletStatus" style="display:none">
+      <div class="wallet-row">
+        <div class="wallet-indicator" id="walletDot"></div>
+        <div>
+          <div class="wallet-label" id="walletLabel">Connected</div>
+          <div class="wallet-addr" id="walletAddr"></div>
+        </div>
+      </div>
+      <button class="btn btn-outline" id="disconnectBtn" onclick="disconnect()">Disconnect</button>
+    </div>
+    <div id="connectBtnWrap">
+      <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">
+        Connect Unisat Wallet
+      </button>
+    </div>
+    <p class="footnote" style="margin-top:20px">
+      Don't have Unisat? <a href="https://unisat.io" target="_blank">Download it here</a>.
+      Support for Xverse and Magic Eden wallets coming soon.
+    </p>
+  </div>
+
+  <!-- STEP 2: SELECT INSCRIPTION -->
+  <div id="step2" class="panel" style="display:none">
+    <div class="panel-title">Select Your Inscription</div>
+    <div class="panel-desc">These are the Ordinal inscriptions in your wallet. Choose one to register as your OpenNum identity.</div>
+    <div class="alert alert-error" id="err2"></div>
+    <div class="alert alert-info" id="info2"></div>
+    <div id="inscriptionGrid" class="inscription-grid"></div>
+    <div id="loadMoreWrap" style="display:none">
+      <div class="load-more" onclick="loadMoreInscriptions()">Load more inscriptions…</div>
+    </div>
+    <div id="noInscriptions" class="empty-state" style="display:none">
+      <strong>😕</strong>
+      No inscriptions found in this wallet.<br>
+      You need to own at least one Ordinal inscription to register an OpenNum.
+    </div>
+    <div id="loadingInscriptions" style="padding:32px;text-align:center">
+      <div class="spinner spinner-orange" style="width:24px;height:24px;margin:0 auto 12px"></div>
+      <div style="font-size:13px;color:var(--dim)">Loading your inscriptions…</div>
+    </div>
+    <hr class="sep" id="selectionActions" style="display:none">
+    <div id="selectedInfo" style="display:none;margin-bottom:20px"></div>
+    <button class="btn btn-primary" id="nextToSign" onclick="goToSign()" style="display:none" disabled>
+      Register Selected Number →
+    </button>
+  </div>
+
+  <!-- STEP 3: SIGN & CONFIRM -->
+  <div id="step3" class="panel" style="display:none">
+    <div class="panel-title">Sign & Register</div>
+    <div class="panel-desc">Review your registration details and sign with your wallet. This proves you own inscription <span id="signNum" style="color:var(--orange);font-weight:700"></span>.</div>
+    <div class="alert alert-error" id="err3"></div>
+    <div class="sign-box">
+      <div class="sign-box-label">Registration Preview</div>
+      <div class="sign-row"><span class="sign-key">Inscription Number</span><span class="sign-val orange" id="prevNum"></span></div>
+      <div class="sign-row"><span class="sign-key">Inscription Txid</span><span class="sign-val" id="prevTxid" style="font-size:11px"></span></div>
+      <div class="sign-row"><span class="sign-key">Your Wallet</span><span class="sign-val" id="prevWallet" style="font-size:11px"></span></div>
+      <div class="sign-row"><span class="sign-key">Protocol</span><span class="sign-val">opennum v1.0</span></div>
+      <div class="sign-row"><span class="sign-key">Indexer</span><span class="sign-val">ord-v0.18-mainnet</span></div>
+      <div class="sign-row"><span class="sign-key">Cost</span><span class="sign-val" style="color:var(--green)">Free — no on-chain transaction</span></div>
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="input-label">Display Name <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <input type="text" class="input-field" id="displayNameInput" placeholder="e.g. Satoshi, vince.btc" maxlength="48" />
+    </div>
+    <div class="sign-message-raw" id="signMessagePreview" style="display:none"></div>
+    <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="backToSelect()">← Back</button>
+      <button class="btn btn-primary" id="signBtn" onclick="signAndRegister()">Sign with Unisat →</button>
+    </div>
+    <p class="footnote" style="margin-top:16px">
+      Signing is free and off-chain. Your wallet will show you the exact message before you confirm.
+    </p>
+  </div>
+
+  <!-- STEP 4: SUCCESS -->
+  <div id="step4" class="panel success-panel" style="display:none">
+    <div class="success-icon">⚡</div>
+    <div class="success-num" id="successNum"></div>
+    <div class="success-label">is now your OpenNum identity</div>
+    <div class="success-actions">
+      <a id="profileLink" href="#" class="btn btn-primary">View Your Profile →</a>
+      <a href="/explore" class="btn btn-outline">Browse Registry</a>
+    </div>
+    <p class="footnote" style="margin-top:32px">
+      Your identity is live on opennum.org. Share your profile link or use your number anywhere OpenNum is supported.
+    </p>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+  // ── STATE ──────────────────────────────────────────────────
+  let walletAddr = null;
+  let selectedInscription = null; // { inscriptionId, inscriptionNumber, txid, contentType }
+  let inscriptions = [];
+  let inscriptionOffset = 0;
+  const PAGE_SIZE = 20;
+
+  // ── STEPS UI ───────────────────────────────────────────────
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+      const dot = document.getElementById('dot' + i);
+      if (i < n) { dot.className = 'step-dot done'; dot.textContent = '✓'; }
+      else if (i === n) { dot.className = 'step-dot active'; dot.textContent = i; }
+      else { dot.className = 'step-dot'; dot.textContent = i; }
+    }
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('line' + i).className = 'step-line' + (i < n ? ' done' : '');
+    }
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('step' + i).style.display = i === n ? 'block' : 'none';
+    }
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'alert alert-error visible';
+  }
+  function clearError(id) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.className = 'alert alert-error';
+  }
+  function showInfo(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'alert alert-info visible';
+  }
+
+  // ── WALLET ─────────────────────────────────────────────────
+  async function connectWallet() {
+    clearError('err1');
+    if (!window.unisat) {
+      showError('err1', 'Unisat Wallet extension not found. Please install it from unisat.io and refresh this page.');
+      return;
+    }
+    const btn = document.getElementById('connectBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Connecting…';
+    try {
+      const accounts = await window.unisat.requestAccounts();
+      walletAddr = accounts[0];
+      onWalletConnected();
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Connect Unisat Wallet';
+      if (e.code === 4001) {
+        showError('err1', 'Connection rejected. Please approve the request in your Unisat wallet.');
+      } else {
+        showError('err1', 'Connection failed: ' + (e.message || 'Unknown error'));
+      }
+    }
+  }
+
+  async function onWalletConnected() {
+    document.getElementById('connectBtnWrap').style.display = 'none';
+    document.getElementById('walletStatus').style.display = 'block';
+    document.getElementById('walletDot').className = 'wallet-indicator';
+    document.getElementById('walletLabel').textContent = 'Unisat Wallet Connected';
+    document.getElementById('walletAddr').textContent = walletAddr;
+    setStep(2);
+    await loadInscriptions(true);
+  }
+
+  function disconnect() {
+    walletAddr = null;
+    selectedInscription = null;
+    inscriptions = [];
+    inscriptionOffset = 0;
+    document.getElementById('connectBtnWrap').style.display = 'block';
+    document.getElementById('walletStatus').style.display = 'none';
+    document.getElementById('connectBtn').disabled = false;
+    document.getElementById('connectBtn').textContent = 'Connect Unisat Wallet';
+    setStep(1);
+  }
+
+  // ── INSCRIPTIONS ───────────────────────────────────────────
+  async function loadInscriptions(reset) {
+    if (reset) {
+      inscriptions = [];
+      inscriptionOffset = 0;
+      document.getElementById('inscriptionGrid').innerHTML = '';
+      document.getElementById('loadingInscriptions').style.display = 'block';
+      document.getElementById('noInscriptions').style.display = 'none';
+      document.getElementById('loadMoreWrap').style.display = 'none';
+    }
+    clearError('err2');
+
+    let list = [];
+    let total = 0;
+    try {
+      const result = await window.unisat.getInscriptions(inscriptionOffset, PAGE_SIZE);
+      list = result.list || [];
+      total = result.total || 0;
+    } catch (e) {
+      showError('err2', 'Failed to load inscriptions: ' + (e.message || 'Unknown error'));
+      document.getElementById('loadingInscriptions').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('loadingInscriptions').style.display = 'none';
+
+    if (list.length === 0 && inscriptions.length === 0) {
+      document.getElementById('noInscriptions').style.display = 'block';
+      return;
+    }
+
+    // Check which are already registered
+    const registeredNums = new Set();
+    await Promise.all(list.map(async (ins) => {
+      const num = ins.inscriptionNumber;
+      if (num == null) return;
+      try {
+        const r = await fetch(`/api/resolve?num=${num}`);
+        if (r.status === 200) registeredNums.add(num);
+      } catch (_) {}
+    }));
+
+    inscriptions = inscriptions.concat(list);
+    inscriptionOffset += list.length;
+    renderInscriptions(list, registeredNums);
+
+    const hasMore = total > inscriptionOffset;
+    document.getElementById('loadMoreWrap').style.display = hasMore ? 'block' : 'none';
+  }
+
+  async function loadMoreInscriptions() {
+    document.querySelector('.load-more').textContent = 'Loading…';
+    await loadInscriptions(false);
+    const lm = document.querySelector('.load-more');
+    if (lm) lm.textContent = 'Load more inscriptions…';
+  }
+
+  function renderInscriptions(list, registeredNums) {
+    const grid = document.getElementById('inscriptionGrid');
+    list.forEach(ins => {
+      const num = ins.inscriptionNumber;
+      const alreadyRegistered = registeredNums.has(num);
+      const card = document.createElement('div');
+      card.className = 'insc-card';
+      card.dataset.id = ins.inscriptionId;
+
+      // Content preview
+      const contentType = ins.contentType || '';
+      let previewHTML = '';
+      if (contentType.startsWith('image/')) {
+        previewHTML = `<div class="insc-preview"><img src="https://ordinals.com/content/${ins.inscriptionId}" alt="#${num}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=insc-type>${contentType}</div>'" /></div>`;
+      } else {
+        const label = contentType.split('/')[1] || contentType || 'unknown';
+        previewHTML = `<div class="insc-preview"><div class="insc-type">${label}</div></div>`;
+      }
+
+      card.innerHTML = `
+        ${alreadyRegistered ? '<div class="insc-already">✓ Registered</div>' : ''}
+        ${previewHTML}
+        <div class="insc-num">#${num != null ? num : '?'}</div>
+        <div class="insc-meta">${contentType ? contentType.split('/')[1] || contentType : 'inscription'}</div>
+      `;
+
+      if (!alreadyRegistered && num != null) {
+        card.addEventListener('click', () => selectInscription(ins, card));
+      } else {
+        card.style.opacity = '0.5';
+        card.style.cursor = 'default';
+        card.title = alreadyRegistered ? 'Already registered' : 'No inscription number';
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  function selectInscription(ins, card) {
+    // Deselect previous
+    document.querySelectorAll('.insc-card.selected').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+
+    const txid = ins.inscriptionId.replace(/i\d+$/, '');
+    selectedInscription = {
+      inscriptionId: ins.inscriptionId,
+      inscriptionNumber: ins.inscriptionNumber,
+      txid,
+      contentType: ins.contentType || ''
+    };
+
+    document.getElementById('selectionActions').style.display = 'block';
+    document.getElementById('selectedInfo').style.display = 'block';
+    document.getElementById('selectedInfo').innerHTML = `
+      <div style="font-size:13px;color:var(--dim)">Selected: <span style="color:var(--orange);font-weight:700">#${ins.inscriptionNumber}</span></div>
+    `;
+    document.getElementById('nextToSign').style.display = 'inline-flex';
+    document.getElementById('nextToSign').disabled = false;
+  }
+
+  function goToSign() {
+    if (!selectedInscription) return;
+    const num = selectedInscription.inscriptionNumber;
+    const txid = selectedInscription.txid;
+
+    document.getElementById('signNum').textContent = `#${num}`;
+    document.getElementById('prevNum').textContent = `#${num}`;
+    document.getElementById('prevTxid').textContent = txid;
+    document.getElementById('prevWallet').textContent = walletAddr;
+
+    const ts = Math.floor(Date.now() / 1000);
+    const msg = `opennum:register:${num}:${walletAddr}:${ts}`;
+    document.getElementById('signMessagePreview').textContent = msg;
+    document.getElementById('signMessagePreview').style.display = 'block';
+    document.getElementById('signMessagePreview')._timestamp = ts;
+
+    clearError('err3');
+    setStep(3);
+  }
+
+  function backToSelect() {
+    setStep(2);
+  }
+
+  // ── SIGN & REGISTER ────────────────────────────────────────
+  async function signAndRegister() {
+    clearError('err3');
+    const btn = document.getElementById('signBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Waiting for signature…';
+
+    const num = selectedInscription.inscriptionNumber;
+    const txid = selectedInscription.txid;
+    const displayName = document.getElementById('displayNameInput').value.trim();
+    const ts = document.getElementById('signMessagePreview')._timestamp || Math.floor(Date.now() / 1000);
+    const message = `opennum:register:${num}:${walletAddr}:${ts}`;
+
+    let signature;
+    try {
+      signature = await window.unisat.signMessage(message, 'ecdsa');
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Sign with Unisat →';
+      if (e.code === 4001) {
+        showError('err3', 'Signing rejected. Please approve in your wallet to complete registration.');
+      } else {
+        showError('err3', 'Signing failed: ' + (e.message || 'Unknown error'));
+      }
+      return;
+    }
+
+    btn.innerHTML = '<span class="spinner"></span> Registering…';
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inscription_num: num,
+          inscription_txid: txid,
+          wallet: walletAddr,
+          signature,
+          timestamp: ts,
+          display_name: displayName || undefined
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Sign with Unisat →';
+        showError('err3', data.error || 'Registration failed. Please try again.');
+        return;
+      }
+      // Success
+      document.getElementById('successNum').textContent = '#' + num;
+      document.getElementById('profileLink').href = '/n/' + num;
+      setStep(4);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Sign with Unisat →';
+      showError('err3', 'Network error. Please check your connection and try again.');
+    }
+  }
+
+  // ── INIT ───────────────────────────────────────────────────
+  // Check if Unisat is already connected on page load
+  window.addEventListener('load', async () => {
+    setStep(1);
+    if (window.unisat) {
+      try {
+        const accounts = await window.unisat.getAccounts();
+        if (accounts && accounts.length > 0) {
+          walletAddr = accounts[0];
+          onWalletConnected();
+        }
+      } catch (_) {}
+    }
+  });
+</script>
+
+</body>
+</html>

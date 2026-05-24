@@ -1,0 +1,12 @@
+{
+  "name": "opennum",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "bip322-js": "^2.0.0",
+    "bitcoinjs-lib": "^6.1.5",
+    "tiny-secp256k1": "^2.2.3"
+  }
+}

@@ -2,19 +2,25 @@
   "version": 2,
   "name": "opennum",
   "builds": [
-    { "src": "public/**", "use": "@vercel/static" }
+    { "src": "public/**", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/", "dest": "/public/index.html" },
-    { "src": "/whitepaper", "dest": "/public/whitepaper-cn.html" },
-    { "src": "/whitepaper-cn", "dest": "/public/whitepaper-cn.html" },
-    { "src": "/whitepaper-en", "dest": "/public/whitepaper-en.html" },
-    { "src": "/explore", "dest": "/public/explore.html" },
-    { "src": "/n/2025", "dest": "/public/n/2025.html" },
-    { "src": "/n/9164", "dest": "/public/n/9164.html" },
-    { "src": "/n/60585", "dest": "/public/n/60585.html" },
-    { "src": "/n/(.*)", "dest": "/public/n/$1" },
+    { "src": "/api/register", "dest": "/api/register.js" },
+    { "src": "/api/resolve",  "dest": "/api/resolve.js" },
+    { "src": "/api/profile",  "dest": "/api/profile.js" },
+    { "src": "/api/list",     "dest": "/api/list.js" },
+    { "src": "/",             "dest": "/public/index.html" },
+    { "src": "/register",     "dest": "/public/register.html" },
+    { "src": "/whitepaper",   "dest": "/public/whitepaper-cn.html" },
+    { "src": "/whitepaper-cn","dest": "/public/whitepaper-cn.html" },
+    { "src": "/whitepaper-en","dest": "/public/whitepaper-en.html" },
+    { "src": "/explore",      "dest": "/public/explore.html" },
+    { "src": "/n/2025",       "dest": "/public/n/2025.html" },
+    { "src": "/n/9164",       "dest": "/public/n/9164.html" },
+    { "src": "/n/60585",      "dest": "/public/n/60585.html" },
+    { "src": "/n/(.*)",       "dest": "/public/n/$1" },
     { "src": "/whitepaper/(.*)", "dest": "/public/whitepaper/$1" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/(.*)",         "dest": "/public/$1" }
   ]
 }
