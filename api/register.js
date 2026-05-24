@@ -34,29 +34,37 @@ module.exports = async (req, res) => {
   }
 
   // Verify inscription ownership via ordinals.com (JSON API)
+  // If indexer is unreachable, fall through — signature is the primary proof.
+  let ownershipVerified = false;
   try {
     const inscriptionId = `${inscription_txid}i0`;
     const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(6000)
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'OpenNum-Indexer/1.0 (opennum.org)'
+      },
+      signal: AbortSignal.timeout(8000)
     });
-    if (!ordRes.ok) {
-      return res.status(400).json({ error: 'Could not verify inscription. Check the txid or try again later.' });
-    }
-    const data = await ordRes.json();
-    if (data.address !== wallet) {
-      return res.status(403).json({
-        error: `Wallet does not own this inscription. Current owner: ${data.address.slice(0, 12)}...`
-      });
-    }
-    // Cross-check inscription number
-    if (data.number !== undefined && data.number !== inscription_num) {
-      return res.status(400).json({
-        error: `Inscription number mismatch. Txid belongs to #${data.number}, not #${inscription_num}.`
-      });
+    if (ordRes.ok) {
+      const data = await ordRes.json();
+      if (data.address && data.address !== wallet) {
+        return res.status(403).json({
+          error: `Wallet does not own this inscription. Current owner: ${data.address.slice(0, 12)}...`
+        });
+      }
+      if (data.number !== undefined && data.number !== inscription_num) {
+        return res.status(400).json({
+          error: `Inscription number mismatch. Txid belongs to #${data.number}, not #${inscription_num}.`
+        });
+      }
+      ownershipVerified = true;
+    } else {
+      // Indexer returned error — log and continue; signature is sufficient for MVP
+      console.warn(`ordinals.com returned ${ordRes.status} for ${inscription_txid}i0 — skipping ownership check`);
     }
   } catch (e) {
-    return res.status(502).json({ error: 'Ordinals indexer unreachable. Try again later.' });
+    // Indexer timeout or network error — log and continue
+    console.warn('ordinals.com unreachable:', e.message);
   }
 
   // Verify secp256k1 signature (BIP322 — works for Legacy, SegWit, Taproot)
