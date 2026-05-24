@@ -5,7 +5,7 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-const HIRO_API = 'https://api.hiro.so/ordinals/v1';
+const ORDINALS_API = 'https://ordinals.com';
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,18 +37,19 @@ module.exports = async (req, res) => {
   let metadata = null;
   try {
     const inscriptionId = `${data.inscription_txid}i0`;
-    const hiroRes = await fetch(`${HIRO_API}/inscriptions/${inscriptionId}`, {
+    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
+      headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(4000)
     });
-    if (hiroRes.ok) {
-      const raw = await hiroRes.json();
+    if (ordRes.ok) {
+      const raw = await ordRes.json();
       metadata = {
         content_type: raw.content_type,
-        content_url: `${HIRO_API}/inscriptions/${inscriptionId}/content`,
-        sat_ordinal: raw.sat_ordinal,
-        genesis_block_height: raw.genesis_block_height,
-        genesis_timestamp: raw.genesis_timestamp,
-        sat_rarity: raw.sat_rarity
+        content_url: `${ORDINALS_API}/content/${inscriptionId}`,
+        sat_ordinal: raw.sat,
+        genesis_block_height: raw.height,
+        genesis_timestamp: raw.timestamp,
+        sat_rarity: null
       };
     }
   } catch (_) { /* metadata is optional */ }

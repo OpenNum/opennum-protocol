@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-const HIRO_API = 'https://api.hiro.so/ordinals/v1';
+const ORDINALS_API = 'https://ordinals.com';
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
 
 module.exports = async (req, res) => {
@@ -33,20 +33,23 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
-  // Verify inscription ownership: wallet must currently hold this inscription
+  // Verify inscription ownership via ordinals.com (JSON API)
   try {
     const inscriptionId = `${inscription_txid}i0`;
-    const hiroRes = await fetch(`${HIRO_API}/inscriptions/${inscriptionId}`);
-    if (!hiroRes.ok) {
+    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!ordRes.ok) {
       return res.status(400).json({ error: 'Could not verify inscription. Check the txid or try again later.' });
     }
-    const data = await hiroRes.json();
+    const data = await ordRes.json();
     if (data.address !== wallet) {
       return res.status(403).json({
         error: `Wallet does not own this inscription. Current owner: ${data.address.slice(0, 12)}...`
       });
     }
-    // Cross-check inscription number if Hiro returns it
+    // Cross-check inscription number
     if (data.number !== undefined && data.number !== inscription_num) {
       return res.status(400).json({
         error: `Inscription number mismatch. Txid belongs to #${data.number}, not #${inscription_num}.`
