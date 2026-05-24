@@ -94,7 +94,40 @@ module.exports = async (req, res) => {
     if (existing.wallet_address === wallet) {
       return res.status(409).json({ error: 'This inscription is already registered to your wallet.' });
     }
-    return res.status(409).json({ error: 'This inscription number is already registered by another wallet.' });
+    // Inscription is registered to a different wallet.
+    // If ordinals.com confirmed the current on-chain owner is the requester,
+    // the inscription has changed hands — transfer the registration.
+    if (!ownershipVerified) {
+      return res.status(409).json({
+        error: 'This inscription number is already registered. On-chain ownership could not be verified — please try again.'
+      });
+    }
+    // Verified transfer: update existing row in place (preserves inscription_num uniqueness)
+    const { error: updateError } = await supabase
+      .from('registrations')
+      .update({
+        inscription_txid,
+        wallet_address: wallet,
+        signature,
+        display_name: display_name || null,
+        indexer_ruleset: 'ord-v0.18-mainnet',
+        status: 'active',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+
+    if (updateError) {
+      console.error('DB update error:', updateError);
+      return res.status(500).json({ error: 'Transfer failed. Please try again.' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      transferred: true,
+      inscription_num,
+      wallet,
+      profile_url: `https://opennum.org/n/${inscription_num}`
+    });
   }
 
   const { error: insertError } = await supabase

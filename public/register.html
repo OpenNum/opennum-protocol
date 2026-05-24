@@ -260,14 +260,14 @@
 
   <!-- STEP 4: SUCCESS -->
   <div id="step4" class="panel success-panel" style="display:none">
-    <div class="success-icon">⚡</div>
+    <div class="success-icon" id="successIcon">⚡</div>
     <div class="success-num" id="successNum"></div>
-    <div class="success-label">is now your OpenNum identity</div>
+    <div class="success-label" id="successLabel">is now your OpenNum identity</div>
     <div class="success-actions">
       <a id="profileLink" href="#" class="btn btn-primary">View Your Profile →</a>
       <a href="/explore" class="btn btn-outline">Browse Registry</a>
     </div>
-    <p class="footnote" style="margin-top:32px">
+    <p class="footnote" id="successNote" style="margin-top:32px">
       Your identity is live on opennum.org. Share your profile link or use your number anywhere OpenNum is supported.
     </p>
   </div>
@@ -553,6 +553,12 @@
       // Success
       document.getElementById('successNum').textContent = '#' + num;
       document.getElementById('profileLink').href = '/n/' + num;
+      if (data.transferred) {
+        document.getElementById('successIcon').textContent = '🔄';
+        document.getElementById('successLabel').textContent = 'has been transferred to your wallet';
+        document.getElementById('successNote').textContent =
+          'The previous registration was replaced. Your on-chain ownership is now the active record on OpenNum.';
+      }
       setStep(4);
     } catch (e) {
       btn.disabled = false;
