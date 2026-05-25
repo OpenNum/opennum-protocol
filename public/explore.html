@@ -11,12 +11,35 @@
       </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum Explorer — Bitcoin Identity Registry</title>
+  <title>OpenNum Explorer — Bitcoin Ordinals Identity Registry</title>
   <meta name="description" content="Browse identities registered on the OpenNum protocol. A public index of inscription-based identities on Bitcoin." />
-  <meta property="og:title" content="OpenNum Explorer — Bitcoin Identity Registry" />
+  <link rel="canonical" href="https://opennum.org/explore" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenNum" />
+  <meta property="og:title" content="OpenNum Explorer — Bitcoin Ordinals Identity Registry" />
   <meta property="og:description" content="Browse identities registered on the OpenNum protocol. A public index of inscription-based identities." />
+  <meta property="og:url" content="https://opennum.org/explore" />
+  <meta property="og:image" content="https://opennum.org/img/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
+  <meta name="twitter:title" content="OpenNum Explorer — Bitcoin Ordinals Identity Registry" />
+  <meta name="twitter:description" content="Browse live OpenNum identities registered on Bitcoin Ordinals." />
+  <meta name="twitter:image" content="https://opennum.org/img/logo.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "OpenNum Explorer",
+    "url": "https://opennum.org/explore",
+    "description": "A public registry explorer for OpenNum inscription-based Bitcoin identities.",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "OpenNum",
+      "url": "https://opennum.org/"
+    }
+  }
+  </script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -163,13 +186,13 @@
 <div class="search-wrap">
   <div class="search-box">
     <input type="text" class="search-input" id="search-input"
-      placeholder="Enter a number — try 2025 or #2025..."
+      placeholder="Enter a number — try a live registered number..."
       onkeydown="if(event.key==='Enter')doSearch()"
       oninput="onSearchInput(this.value)" />
     <button class="search-btn" onclick="doSearch()">Search →</button>
   </div>
   <div class="search-hint">
-    Supports <span>#2025</span> or <span>2025</span> — registered numbers navigate directly to their Identity page.
+    Supports <span>#2311</span> or <span>2311</span> — registered numbers navigate directly to their identity page.
   </div>
 </div>
 
@@ -181,12 +204,12 @@
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-label">Total Numbers</div>
-      <div class="stat-value orange">3</div>
+      <div class="stat-value orange" id="statTotal">...</div>
       <div class="stat-sub">Registered on OpenNum</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Active Identities</div>
-      <div class="stat-value" style="color:var(--green)">3</div>
+      <div class="stat-value" style="color:var(--green)" id="statActive">...</div>
       <div class="stat-sub">Currently active</div>
     </div>
     <div class="stat-card">
@@ -196,7 +219,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Recent Registrations</div>
-      <div class="stat-value orange" style="font-size:22px">Mar 2026</div>
+      <div class="stat-value orange" style="font-size:22px" id="statRecent">...</div>
       <div class="stat-sub">Latest activity</div>
     </div>
   </div>
@@ -208,7 +231,7 @@
 <section class="section">
   <div class="section-header">
     <div class="section-title">All Identities</div>
-    <div class="section-meta">3 registered · opennum-mainnet</div>
+    <div class="section-meta" id="allIdentitiesMeta">Loading live registry...</div>
   </div>
   <div class="id-list">
     <div class="id-list-head">
@@ -218,29 +241,12 @@
       <span>Last Updated</span>
       <span></span>
     </div>
-    <!-- #2025 -->
-    <div class="id-list-row" onclick="location.href='/n/2025'" style="cursor:pointer">
-      <div class="cell-number">#2025</div>
-      <div><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
-      <div class="cell-wallet">bc1pys4n4h4...sxkj30m</div>
-      <div class="cell-date">2026-03-08</div>
-      <div class="cell-action"><span class="view-btn" onclick="event.stopPropagation();location.href='/n/2025'">View Profile →</span></div>
-    </div>
-    <!-- #9164 -->
-    <div class="id-list-row" onclick="location.href='/n/9164'" style="cursor:pointer">
-      <div class="cell-number">#9164</div>
-      <div><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
-      <div class="cell-wallet">bc1pz3aulnq...wtfdwz</div>
-      <div class="cell-date">2026-03-08</div>
-      <div class="cell-action"><span class="view-btn" onclick="event.stopPropagation();location.href='/n/9164'">View Profile →</span></div>
-    </div>
-    <!-- #60585 -->
-    <div class="id-list-row" onclick="location.href='/n/60585'" style="cursor:pointer">
-      <div class="cell-number">#60585</div>
-      <div><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
-      <div class="cell-wallet">bc1pdkj0na0...alz08</div>
-      <div class="cell-date">2026-03-08</div>
-      <div class="cell-action"><span class="view-btn" onclick="event.stopPropagation();location.href='/n/60585'">View Profile →</span></div>
+    <div class="id-list-row">
+      <div class="cell-number">...</div>
+      <div><span class="status-pill status-dormant">Loading</span></div>
+      <div class="cell-wallet">Fetching live API data</div>
+      <div class="cell-date">...</div>
+      <div></div>
     </div>
   </div>
 </section>
@@ -251,41 +257,12 @@
 <section class="section">
   <div class="section-header">
     <div class="section-title">Top Numbers</div>
-    <div class="section-meta">Lowest registered inscription numbers</div>
+    <div class="section-meta">Lowest live registered inscription numbers</div>
   </div>
-  <div class="card-grid">
-    <!-- #2025 -->
+  <div class="card-grid" id="topNumbers">
     <div class="id-card">
-      <div class="id-card-num">#2025</div>
-      <span class="status-pill status-active" style="align-self:flex-start"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span>
-      <div class="id-card-wallet">bc1pys4n4h4mhlcqhnu58qhexqnf8fpwl95nx0h8tscjjprkr6h5v93sxkj30m</div>
-      <div class="id-card-date">Registered Mar 2026</div>
-      <div class="id-card-footer">
-        <span style="font-size:11px;color:#333">opennum-mainnet</span>
-        <a href="/n/2025" class="id-card-view">View Profile →</a>
-      </div>
-    </div>
-    <!-- #9164 -->
-    <div class="id-card">
-      <div class="id-card-num">#9164</div>
-      <span class="status-pill status-active" style="align-self:flex-start"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span>
-      <div class="id-card-wallet">bc1pz3aulnqgv2jc9t9j7fz8x097mvuqp4qfclnazvrdcu5lr6u8n4zswtfdwz</div>
-      <div class="id-card-date">Registered Mar 2026</div>
-      <div class="id-card-footer">
-        <span style="font-size:11px;color:#333">opennum-mainnet</span>
-        <a href="/n/9164" class="id-card-view">View Profile →</a>
-      </div>
-    </div>
-    <!-- #60585 -->
-    <div class="id-card">
-      <div class="id-card-num">#60585</div>
-      <span class="status-pill status-active" style="align-self:flex-start"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span>
-      <div class="id-card-wallet">bc1pdkj0na09kxdrej29l7jusxcpjeyn52kg09cusq053car7th8e2zqqalz08</div>
-      <div class="id-card-date">Registered Mar 2026</div>
-      <div class="id-card-footer">
-        <span style="font-size:11px;color:#333">opennum-mainnet</span>
-        <a href="/n/60585" class="id-card-view">View Profile →</a>
-      </div>
+      <div class="id-card-num">...</div>
+      <div class="id-card-wallet">Loading live registry data</div>
     </div>
   </div>
 </section>
@@ -296,7 +273,7 @@
 <section class="section">
   <div class="section-header">
     <div class="section-title">Resolver API</div>
-    <div class="section-meta" style="color:var(--amber)">Coming soon · Phase 2</div>
+    <div class="section-meta" style="color:var(--green)">Live · Phase 2 alpha</div>
   </div>
   <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
     <div style="background:#111;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:8px;">
@@ -306,16 +283,17 @@
       <span style="font-size:12px;color:#555;margin-left:8px;font-family:monospace">opennum-api-v1.0</span>
     </div>
     <pre style="padding:24px 28px;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.9;color:#888;overflow-x:auto"><span style="color:#555"># Resolve a number → wallet / status / inscription</span>
-<span style="color:#f7931a">GET</span> /api/v1/resolve/<span style="color:#7ec8e3">2025</span>
+<span style="color:#f7931a">GET</span> /api/resolve?num=<span style="color:#7ec8e3">2311</span>
+<span style="color:#555"># Compatibility alias</span>
+<span style="color:#f7931a">GET</span> /api/v1/resolve/<span style="color:#7ec8e3">2311</span>
 
 <span style="color:#555"># Response</span>
 {
-  <span style="color:#f7931a">"number"</span>:      <span style="color:#98c379">2025</span>,
-  <span style="color:#f7931a">"status"</span>:      <span style="color:#98c379">"active"</span>,
-  <span style="color:#f7931a">"wallet"</span>:      <span style="color:#98c379">"bc1pys4n4h4...sxkj30m"</span>,
-  <span style="color:#f7931a">"inscription"</span>: <span style="color:#98c379">"d50df8a4...9139i0"</span>,
-  <span style="color:#f7931a">"resolver"</span>:    <span style="color:#98c379">"opennum-mainnet"</span>,
-  <span style="color:#f7931a">"updated_at"</span>:  <span style="color:#98c379">"2026-03-08T00:00:00Z"</span>
+  <span style="color:#f7931a">"inscription_num"</span>: <span style="color:#98c379">2311</span>,
+  <span style="color:#f7931a">"status"</span>:          <span style="color:#98c379">"active"</span>,
+  <span style="color:#f7931a">"wallet"</span>:          <span style="color:#98c379">"bc1p..."</span>,
+  <span style="color:#f7931a">"display_name"</span>:    <span style="color:#98c379">null</span>,
+  <span style="color:#f7931a">"registered_at"</span>:   <span style="color:#98c379">"2026-05-24T05:27:11Z"</span>
 }</pre>
   </div>
 </section>
@@ -375,25 +353,37 @@ function onSearchInput(val) {
 /* Load live registry from API */
 async function loadRegistry() {
   const listEl = document.querySelector('.id-list');
-  const metaEl = document.querySelector('.section-meta');
+  const metaEl = document.getElementById('allIdentitiesMeta');
+  const topEl = document.getElementById('topNumbers');
   if (!listEl) return;
   try {
     const res = await fetch('/api/list?sort=number&order=asc&limit=50');
-    if (!res.ok) return;
+    if (!res.ok) throw new Error('Registry request failed');
     const data = await res.json();
-    if (!data.registrations || data.registrations.length === 0) return;
+    const registrations = data.registrations || [];
 
-    if (metaEl) metaEl.textContent = `${data.total} registered · opennum-mainnet`;
+    document.getElementById('statTotal').textContent = data.total || registrations.length || 0;
+    document.getElementById('statActive').textContent = registrations.length;
+    document.getElementById('statRecent').textContent = registrations[0]?.registered_at
+      ? new Date(registrations[0].registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
+      : 'None yet';
 
-    // Replace hardcoded rows with live data
+    if (metaEl) metaEl.textContent = `${data.total || registrations.length || 0} registered · opennum-mainnet`;
+
     const head = listEl.querySelector('.id-list-head');
     listEl.innerHTML = '';
     if (head) listEl.appendChild(head);
 
-    data.registrations.forEach(r => {
+    if (registrations.length === 0) {
+      listEl.insertAdjacentHTML('beforeend', `<div class="id-list-row"><div class="cell-number">No records</div><div></div><div class="cell-wallet">Register the first OpenNum identity.</div><div></div><div></div></div>`);
+      if (topEl) topEl.innerHTML = `<div class="id-card"><div class="id-card-num">None yet</div><div class="id-card-wallet">The registry is live and waiting for first registrations.</div></div>`;
+      return;
+    }
+
+    registrations.forEach(r => {
       const num = r.inscription_num;
       const wallet = r.wallet;
-      const shortWallet = wallet.length > 20 ? wallet.slice(0, 10) + '…' + wallet.slice(-8) : wallet;
+      const shortWallet = wallet && wallet.length > 20 ? wallet.slice(0, 10) + '…' + wallet.slice(-8) : wallet;
       const date = r.registered_at ? r.registered_at.slice(0, 10) : '—';
       const row = document.createElement('div');
       row.className = 'id-list-row';
@@ -408,7 +398,30 @@ async function loadRegistry() {
       `;
       listEl.appendChild(row);
     });
-  } catch (e) { /* keep static fallback */ }
+
+    if (topEl) {
+      topEl.innerHTML = registrations.slice(0, 6).map((r) => {
+        const date = r.registered_at ? new Date(r.registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }) : 'Unknown date';
+        return `
+          <div class="id-card">
+            <div class="id-card-num">#${r.inscription_num}</div>
+            <span class="status-pill status-active" style="align-self:flex-start"><span class="status-dot-sm" style="background:var(--green)"></span>${r.status || 'active'}</span>
+            <div class="id-card-wallet">${r.wallet || 'wallet unavailable'}</div>
+            <div class="id-card-date">Registered ${date}</div>
+            <div class="id-card-footer">
+              <span style="font-size:11px;color:#333">opennum-mainnet</span>
+              <a href="/n/${r.inscription_num}" class="id-card-view">View Profile →</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (e) {
+    if (metaEl) metaEl.textContent = 'Registry API unavailable';
+    document.getElementById('statTotal').textContent = '!';
+    document.getElementById('statActive').textContent = '!';
+    document.getElementById('statRecent').textContent = 'Retry';
+  }
 }
 
 window.addEventListener('load', loadRegistry);

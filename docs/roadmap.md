@@ -31,9 +31,9 @@ This phase establishes the protocol specification, public documentation, and the
 
 ### Website & Identity Pages
 - [x] `opennum.org` live on Vercel
-- [x] Three live identity pages: `opennum.org/n/2025`, `/n/9164`, `/n/60585`
-- [x] Identity pages include: status badge, linked wallet, inscription ID, state machine lifecycle, share copy, Resolver field
-- [x] `opennum.org/explore` — Explorer page with stats, identity list, card grid, search, and Resolver API preview
+- [x] Dynamic identity pages: `opennum.org/n/:number`, backed by the profile API
+- [x] Identity pages include: status badge, linked wallet, inscription metadata, and resolver-backed profile data
+- [x] `opennum.org/explore` — Explorer page with live stats, identity list, card grid, search, and Resolver API preview
 
 ---
 
@@ -43,16 +43,17 @@ This phase establishes the protocol specification, public documentation, and the
 This phase makes OpenNum a functioning protocol network — real registrations, real resolution.
 
 ### Resolver API
-- [ ] `GET /api/v1/resolve/:number` → returns wallet / status / inscription
-- [ ] `GET /api/v1/profile/:number` → full profile metadata
-- [ ] `GET /api/v1/agents/:number` → list agent wallets registered under a number
-- [ ] Reference indexer deployed, validating registrations against Bitcoin chain state
-- [ ] Explorer connected to live API data (replaces static demo data)
+- [x] `GET /api/resolve?num=:number` → returns wallet / status
+- [x] `GET /api/profile?num=:number` → full profile metadata, with best-effort Ordinals enrichment
+- [x] `GET /api/list` → live registry list for Explorer
+- [x] Compatibility aliases: `/api/v1/resolve/:number`, `/api/v1/profile/:number`, `/api/v1/register`, `/api/v1/list`
+- [x] Reference indexer deployed, validating registrations against Bitcoin chain state where available
+- [x] Explorer connected to live API data
 
 ### Registration Page
-- [ ] `opennum.org/register` — users submit a registration by signing a canonical message with their Bitcoin wallet
-- [ ] Wallet connect flow (compatible with Unisat, Xverse, OKX Wallet)
-- [ ] On-screen signature generation and `POST /api/v1/register` submission
+- [x] `opennum.org/register` — users submit a registration by signing a canonical message with their Bitcoin wallet
+- [x] Wallet connect flow for Unisat
+- [x] On-screen signature generation and `POST /api/register` submission
 - [ ] Registration confirmation — number transitions from unregistered → Active
 
 ### Anti-Spam & Validity
@@ -93,7 +94,7 @@ This phase deepens the protocol and expands what an OpenNum identity can represe
 ### OpenNum Profile
 - [ ] Profile metadata fields: avatar, bio, links, social handles
 - [ ] `opennum.org/n/2025` becomes a full public profile, not just an identity record
-- [ ] `GET /api/v1/profile/:number` serves full structured profile data
+- [ ] `GET /api/profile?num=:number` and `/api/v1/profile/:number` serve full structured profile data
 
 ### AI Agent Identity (Full Ecosystem)
 - [ ] v1.1 agent identity delegation widely deployed: operators can assign inscription-backed identities to autonomous AI agents

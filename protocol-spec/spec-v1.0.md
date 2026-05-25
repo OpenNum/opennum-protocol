@@ -130,7 +130,7 @@ OpenNum treats cursed inscriptions as **first-class citizens**:
 **v1.0:** Registration messages are submitted via HTTP REST API to the reference indexer.
 
 ```
-POST /api/v1/register
+POST /api/register
 Content-Type: application/json
 
 { ...registration message... }
@@ -154,10 +154,12 @@ Since validation rules are deterministic, multiple independent indexers receivin
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v1/register` | POST | Submit a registration message |
-| `/api/v1/resolve/:number` | GET | Resolve number → wallet address + state |
-| `/api/v1/profile/:number` | GET | Full profile metadata |
-| `/api/v1/agents/:number` | GET | List agent wallets registered under a number |
+| `/api/register` | POST | Submit a registration message |
+| `/api/resolve?num=:number` | GET | Resolve number → wallet address + state |
+| `/api/profile?num=:number` | GET | Full profile metadata |
+| `/api/list` | GET | List active registrations |
+
+The hosted reference indexer also exposes compatibility aliases at `/api/v1/register`, `/api/v1/resolve/:number`, `/api/v1/profile/:number`, and `/api/v1/list`.
 
 ---
 

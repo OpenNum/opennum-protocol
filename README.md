@@ -1,169 +1,190 @@
 # OpenNum Protocol
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/OpenNumBTC?style=social)](https://twitter.com/OpenNumBTC)
 [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 [![Website](https://img.shields.io/badge/website-opennum.org-orange)](https://opennum.org)
+[![Twitter Follow](https://img.shields.io/twitter/follow/OpenNumBTC?style=social)](https://twitter.com/OpenNumBTC)
 
-> **Bitcoin's phone book and wallet for the AI era — one number that takes you everywhere on-chain.**
-
----
-
-## What is OpenNum?
-
-OpenNum is an **application-layer identity protocol** built on the Bitcoin Ordinals indexing system. It maps Ordinal inscription numbers to wallet addresses using off-chain secp256k1 signatures — no smart contracts, no new chain, no permission required.
-
-Think of it as **Bitcoin's phone number system**: your inscription number is your permanent on-chain identity.
+OpenNum is an application-layer identity protocol for Bitcoin Ordinals. It maps an inscription number to a wallet address with an off-chain signature, so wallets and apps can resolve a human-readable number before sending BTC or inscriptions.
 
 ```
-// Before OpenNum:
+Before OpenNum:
 Send to: bc1p8dqa4wjvnt890qmfws83te2v3rxd7zr5uu6vsrk8kqnf3cgwwuqszc3qa5
 
-// With OpenNum:
-Send to: #2025
+With OpenNum:
+Send to: #2311
 ```
 
----
+No smart contracts. No sidechain. No on-chain registration transaction. Just Bitcoin ownership, a signed message, and an open resolver.
 
-## Key Features
+## Current Status
 
-| Feature | Description |
-|---------|-------------|
-| 🔢 **Sequential integer ID** | Inscription number = identity. Globally unique, never reused |
-| 🔐 **Zero on-chain cost** | Registration via secp256k1 signature only — no gas, no transaction |
-| 🖼️ **Built-in avatar** | Inscription image automatically becomes your on-chain profile picture |
-| 🔄 **Identity State Machine** | Four states: Active / Dormant / Cooling / Flagged |
-| 🤖 **AI Agent Ready** | v1.1 natively supports AI agent identity (Human-Agent Trust Bridge) |
-| ⛓️ **Dual Anchor** | `inscription_number` + `inscription_txid` — immune to indexer numbering disputes |
-| 😈 **Cursed Inscription Support** | `#c-1234` format — 472,043 early inscriptions treated as first-class citizens |
-| 🌐 **.btc Display Alias** | Auto-reads SNS-format domain inscriptions as display names |
+OpenNum is in Phase 2 alpha.
 
----
+| Surface | Status |
+|---------|--------|
+| Website | Live at [opennum.org](https://opennum.org) |
+| Register | Live alpha, Unisat Wallet only |
+| Resolver API | Live |
+| Explorer | Live, backed by `/api/list` |
+| SDK | Planned |
+| AI agent extension | Spec direction, not the default live registration flow yet |
 
-## Protocol Architecture
+## API Quickstart
 
-```
-Bitcoin L1 (Consensus)
-    └── Ordinals Indexer (ord)
-            └── OpenNum Indexer (Application Layer)
-                    ├── Registration API  (POST /api/v1/register)
-                    ├── Resolution API    (GET  /api/v1/resolve/:number)
-                    └── State Machine     (Active → Dormant → Cooling → Active)
+Full API reference: [docs/api.md](docs/api.md)
+
+### Resolve a number
+
+```bash
+curl "https://opennum.org/api/resolve?num=2311"
 ```
 
-OpenNum **does not modify Bitcoin consensus**. No smart contracts. No sidechains. The protocol runs entirely at the application layer — anyone can run an independent indexer.
+Compatibility alias:
 
----
+```bash
+curl "https://opennum.org/api/v1/resolve/2311"
+```
 
-## Registration Format
+Example response:
 
-### v1.0 — Personal Identity
 ```json
 {
-  "protocol":           "opennum",
-  "version":            "1.0",
-  "inscription_number": 2025,
-  "inscription_txid":   "abc123...def",
-  "indexer_ruleset":    "ord-v0.18-mainnet",
-  "wallet":             "bc1p...",
-  "timestamp":          1735689600,
-  "signature":          "H9k2mN...Xp4q"
+  "inscription_num": 2311,
+  "wallet": "bc1p...",
+  "status": "active",
+  "display_name": null,
+  "registered_at": "2026-05-24T05:27:11.426215+00:00"
 }
 ```
 
-### v1.1 — AI Agent Identity
+### List active registrations
+
+```bash
+curl "https://opennum.org/api/list?sort=number&order=asc&limit=50"
+```
+
+Example response:
+
 ```json
 {
-  "protocol":           "opennum",
-  "version":            "1.1",
-  "inscription_number": 2025,
-  "inscription_txid":   "abc123...def",
-  "wallet":             "bc1p...",
-  "agent_wallet":       "bc1pagent...",
-  "agent_role":         "openclaw",
-  "agent_label":        "Trading Agent #1",
-  "timestamp":          1735689600,
-  "signature":          "H9k2mN...Xp4q"
+  "total": 2,
+  "offset": 0,
+  "limit": 50,
+  "registrations": [
+    {
+      "inscription_num": 2311,
+      "wallet": "bc1p...",
+      "status": "active",
+      "display_name": null,
+      "registered_at": "2026-05-24T05:27:11.426215+00:00"
+    }
+  ]
 }
 ```
 
----
+### Fetch profile metadata
 
-## Identity State Machine
-
-```
-   [inscription transferred]     [new owner registers]
-Active ──────────────► Dormant ◄──────────────────────┐
-  ▲                       │                            │
-  │      [within 72h]     ▼                            │
-  └──────────────── Cooling ───────────────────────────┘
-
-  Any state ──[prior owner disputes]──► Flagged
+```bash
+curl "https://opennum.org/api/profile?num=2311"
 ```
 
-| State | Symbol | Meaning |
-|-------|--------|---------|
-| Active | 🟢 | Valid registration, wallet holds the inscription |
-| Dormant | ⚫ | Inscription transferred, identity suspended |
-| Cooling | 🟠 | 72-hour re-registration lockout after transfer |
-| Flagged | 🔵 | Community-reported, under human review |
+Compatibility alias:
 
----
+```bash
+curl "https://opennum.org/api/v1/profile/2311"
+```
+
+### Register a number
+
+```http
+POST /api/register
+Content-Type: application/json
+```
+
+```json
+{
+  "inscription_num": 2311,
+  "inscription_txid": "64-character-hex-txid",
+  "wallet": "bc1p...",
+  "signature": "BIP322 signature",
+  "timestamp": 1779744378,
+  "display_name": "optional display name"
+}
+```
+
+The signed message is:
+
+```text
+opennum:register:<inscription_num>:<wallet>:<timestamp>
+```
+
+The hosted registration page currently uses Unisat Wallet to list inscriptions, sign the message, and submit the API request.
+
+## Protocol Model
+
+OpenNum uses two anchors:
+
+| Anchor | Purpose |
+|--------|---------|
+| `inscription_num` | Human-readable identity number, such as `#2311` |
+| `inscription_txid` | Bitcoin consensus coordinate for the inscription |
+
+The resolver verifies that the registering wallet controls the inscription, validates the signed message, then stores a public mapping from inscription number to wallet address.
+
+## Identity States
+
+| State | Meaning |
+|-------|---------|
+| Active | Valid registration; wallet currently controls the inscription |
+| Dormant | Inscription moved; new holder has not re-registered |
+| Cooling | Recent transfer window, reserved for transfer-handling policy |
+| Flagged | Dispute or special review state, indexer-specific |
 
 ## Repository Structure
 
 ```
-opennum/
+opennum-protocol/
+├── api/                    # Vercel serverless resolver/register endpoints
+├── public/                 # Static website, Explorer, Register, profile UI
+├── protocol-spec/          # Protocol specification
+├── docs/                   # Roadmap and FAQ
+├── whitepaper/             # Whitepaper source/export files
 ├── README.md
-├── whitepaper/
-│   ├── opennum-whitepaper-en.pdf   # English whitepaper
-│   ├── opennum-whitepaper-cn.pdf   # Chinese whitepaper
-│   ├── whitepaper-en.html          # English whitepaper (web)
-│   └── whitepaper-cn.html          # Chinese whitepaper (web)
-├── protocol-spec/
-│   └── spec-v1.0.md                # Full protocol specification
-├── docs/
-│   └── faq.md                      # Frequently asked questions
-└── research/
-    └── README.md                   # Related projects & references
+├── LICENSE
+└── vercel.json
 ```
 
----
+## Local Development
 
-## Whitepaper
+```bash
+npm install
+npx vercel dev
+```
 
-| Language | PDF | Web |
-|----------|-----|-----|
-| English | [opennum-whitepaper-en.pdf](./whitepaper/opennum-whitepaper-en.pdf) | [Read online](./whitepaper/whitepaper-en.html) |
-| Chinese | [opennum-whitepaper-cn.pdf](./whitepaper/opennum-whitepaper-cn.pdf) | [Read online](./whitepaper/whitepaper-cn.html) |
+Required environment variables:
 
----
+```bash
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+```
 
 ## Roadmap
 
-| Phase | Timeline | Deliverables |
-|-------|----------|--------------|
-| **Phase 1: Foundation** | 2026 Q1 | Protocol spec · GitHub · Whitepaper (EN/CN) |
-| **Phase 2: Explorer** | 2026 Q2 | opennum.org · Number lookup · Profile pages |
-| **Phase 3: Social** | 2026 Q3 | Messaging · Inscription gifting · Social account binding |
-| **Phase 4: SDK** | 2026 Q4 | Open-source wallet SDK · Third-party integrations |
-| **Phase 5: Scale** | 2027+ | Mobile · Multi-language · Global expansion |
+1. Stabilize the hosted resolver and registration flow.
+2. Publish a minimal integration guide for wallets and Ordinals apps.
+3. Ship a small JS/TS resolver SDK.
+4. Add profile metadata and social/account verification.
+5. Extend the protocol for AI agent delegation after the base resolver is reliable.
 
----
+## Links
 
-## Open Protocol
+- Website: [opennum.org](https://opennum.org)
+- Explorer: [opennum.org/explore](https://opennum.org/explore)
+- Register: [opennum.org/register](https://opennum.org/register)
+- Whitepaper EN: [opennum.org/whitepaper-en](https://opennum.org/whitepaper-en)
+- Whitepaper CN: [opennum.org/whitepaper-cn](https://opennum.org/whitepaper-cn)
+- X/Twitter: [@OpenNumBTC](https://twitter.com/OpenNumBTC)
 
-- **License**: MIT — fully open-source, no permission required, no registration fee
-- **Indexers**: Anyone can run an independent indexer; rules are fully deterministic
-- **Zero protocol fee**: Spam resistance comes from the natural cost of minting an inscription
+## License
 
----
-
-## Get Involved
-
-- [GitHub Issues](../../issues) — protocol design discussion
-- [opennum.org](https://opennum.org) — official website
-- [𝕏 @OpenNumBTC](https://twitter.com/OpenNumBTC) — follow us on X / Twitter
-
----
-
-*OpenNum Protocol · MIT License · 2026 · [opennum.org](https://opennum.org) · [@OpenNumBTC](https://twitter.com/OpenNumBTC)*
+MIT. OpenNum is intended as public infrastructure for Bitcoin wallets, Ordinals apps, creators, communities, and future autonomous agents.

@@ -1,0 +1,23 @@
+# OpenNum
+
+OpenNum is an open Bitcoin identity protocol that maps Ordinal inscription numbers to wallet addresses with off-chain signatures.
+
+## Canonical URLs
+
+- Website: https://opennum.org/
+- Explorer: https://opennum.org/explore
+- Register: https://opennum.org/register
+- English whitepaper: https://opennum.org/whitepaper-en
+- Chinese whitepaper: https://opennum.org/whitepaper-cn
+- GitHub repository: https://github.com/OpenNum/opennum-protocol
+
+## API
+
+- Resolve: GET https://opennum.org/api/resolve?num=2311
+- Profile: GET https://opennum.org/api/profile?num=2311
+- List: GET https://opennum.org/api/list
+- Register: POST https://opennum.org/api/register
+
+## Summary
+
+OpenNum uses a dual-anchor model: the human-readable inscription number and the inscription transaction id. Users register by proving wallet control with a signed message. The hosted registry is Phase 2 alpha and currently supports Unisat Wallet registration.

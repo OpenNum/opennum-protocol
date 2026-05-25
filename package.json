@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "engines": { "node": ">=18" },
+  "scripts": {
+    "check": "node --check api/resolve.js && node --check api/register.js && node --check api/list.js && node --check api/profile.js",
+    "dev": "vercel dev"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "bip322-js": "^2.0.0",

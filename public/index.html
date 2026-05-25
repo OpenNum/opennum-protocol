@@ -11,13 +11,40 @@
       </script>
           <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum — Open Bitcoin Identity Protocol</title>
+  <title>OpenNum — Bitcoin Ordinals Identity Protocol</title>
   <meta name="description" content="OpenNum maps Bitcoin Ordinal inscription numbers to wallet addresses. One number. Permanent identity. No smart contracts." />
-  <meta property="og:title" content="OpenNum — Open Bitcoin Identity Protocol" />
+  <link rel="canonical" href="https://opennum.org/" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenNum" />
+  <meta property="og:title" content="OpenNum — Bitcoin Ordinals Identity Protocol" />
   <meta property="og:description" content="One inscription number = your permanent on-chain identity. No smart contracts. No gas. Just Bitcoin." />
-  <meta property="og:url" content="https://opennum.org" />
+  <meta property="og:url" content="https://opennum.org/" />
+  <meta property="og:image" content="https://opennum.org/img/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
+  <meta name="twitter:title" content="OpenNum — Bitcoin Ordinals Identity Protocol" />
+  <meta name="twitter:description" content="Resolve Bitcoin Ordinal inscription numbers to wallet addresses. No smart contracts. No gas. Just Bitcoin." />
+  <meta name="twitter:image" content="https://opennum.org/img/logo.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "OpenNum",
+    "url": "https://opennum.org/",
+    "description": "OpenNum maps Bitcoin Ordinal inscription numbers to wallet addresses with off-chain signatures.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenNum Contributors",
+      "url": "https://opennum.org/",
+      "logo": "https://opennum.org/img/logo.png",
+      "sameAs": [
+        "https://twitter.com/OpenNumBTC",
+        "https://github.com/OpenNum/opennum-protocol"
+      ]
+    }
+  }
+  </script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -407,8 +434,8 @@
     permanent, sovereign, chain-native. No smart contracts. No gas. Just Bitcoin.
   </p>
 <div class="hero-actions">
-    <a href="#whitepaper" class="btn btn-orange">Read the Whitepaper</a>
-    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank" class="btn btn-ghost">View on GitHub →</a>
+    <a href="/register" class="btn btn-orange">Register Your Number</a>
+    <a href="https://github.com/OpenNum/opennum-protocol#api-quickstart" target="_blank" class="btn btn-ghost">Developer Docs →</a>
   </div>
   <div class="hero-demo">
     <div class="demo-comment">// Before OpenNum</div>
@@ -416,6 +443,11 @@
     <br>
     <div class="demo-comment">// With OpenNum</div>
     <div class="demo-after">Send to: #2025</div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:28px;font-size:12px;color:var(--dim)">
+    <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px">API: live</span>
+    <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px">Register: Unisat alpha</span>
+    <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px" id="registry-pill">Registry: loading</span>
   </div>
 </section>
 
@@ -455,18 +487,16 @@
       <div class="code-dot" style="background:#ff5f57"></div>
       <div class="code-dot" style="background:#febc2e"></div>
       <div class="code-dot" style="background:#28c840"></div>
-      <span>opennum-registration-v1.1.json</span>
+      <span>opennum-registration-v1.0.json</span>
     </div>
-    <pre><span class="cm">// OpenNum Registration v1.1 — AI Agent Extension</span>
+    <pre><span class="cm">// OpenNum Registration v1.0 — current hosted API</span>
 {
   <span class="ck">"protocol"</span>:           <span class="cs">"opennum"</span>,
-  <span class="ck">"version"</span>:            <span class="cs">"1.1"</span>,
+  <span class="ck">"version"</span>:            <span class="cs">"1.0"</span>,
   <span class="ck">"inscription_number"</span>: <span class="cv">2025</span>,
   <span class="ck">"inscription_txid"</span>:   <span class="cs">"abc123...def"</span>,      <span class="cm">// Bitcoin consensus GPS</span>
   <span class="ck">"indexer_ruleset"</span>:    <span class="cs">"ord-v0.18-mainnet"</span>, <span class="cm">// dispute immunity</span>
   <span class="ck">"wallet"</span>:             <span class="cs">"bc1p..."</span>,           <span class="cm">// Native SegWit</span>
-  <span class="ck">"agent_did"</span>:          <span class="cs">"did:btc:..."</span>,       <span class="cm">// v1.1 AI agent DID</span>
-  <span class="ck">"capabilities"</span>:      [<span class="cs">"payment"</span>, <span class="cs">"messaging"</span>, <span class="cs">"auth"</span>],
   <span class="ck">"timestamp"</span>:          <span class="cv">1700000000</span>,
   <span class="ck">"signature"</span>:          <span class="cs">"&lt;secp256k1 sig&gt;"</span>
 }</pre>
@@ -493,7 +523,7 @@
     <div class="feature">
       <div class="feature-icon">🤖</div>
       <h3>AI Agent Ready</h3>
-      <p>v1.1 adds <code>agent_did</code> + <code>capabilities</code> fields. Bitcoin's answer to ERC-8004 for the autonomous agent era.</p>
+      <p>v1.1 is reserved for operator-to-agent delegation. The current live network focuses on reliable number resolution first.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">🌐</div>
@@ -579,31 +609,10 @@
 <section class="section" id="explore">
   <div class="section-eyebrow">Live Identities</div>
   <div class="section-title">Explore<br><span>the registry.</span></div>
-  <div class="features">
-    <a href="/n/2025" style="display:block;text-decoration:none;">
-      <div class="feature" style="cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f7931a'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#f7931a;margin-bottom:12px;">OPENNUM #2025</div>
-        <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;">#2025</div>
-        <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#22c55e;border:1px solid #22c55e;padding:4px 10px;border-radius:12px;margin-bottom:14px;"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span>Active</div>
-        <p style="font-size:13px;color:#666;line-height:1.7;">bc1pys4n4h4...sxkj30m</p>
-      </div>
-    </a>
-    <a href="/n/9164" style="display:block;text-decoration:none;">
-      <div class="feature" style="cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f7931a'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#f7931a;margin-bottom:12px;">OPENNUM #9164</div>
-        <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;">#9164</div>
-        <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#22c55e;border:1px solid #22c55e;padding:4px 10px;border-radius:12px;margin-bottom:14px;"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span>Active</div>
-        <p style="font-size:13px;color:#666;line-height:1.7;">bc1pz3aulnq...wtfdwz</p>
-      </div>
-    </a>
-    <a href="/n/60585" style="display:block;text-decoration:none;">
-      <div class="feature" style="cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f7931a'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#f7931a;margin-bottom:12px;">OPENNUM #60585</div>
-        <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;">#60585</div>
-        <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#22c55e;border:1px solid #22c55e;padding:4px 10px;border-radius:12px;margin-bottom:14px;"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span>Active</div>
-        <p style="font-size:13px;color:#666;line-height:1.7;">bc1pdkj0na0...alz08</p>
-      </div>
-    </a>
+  <div class="features" id="live-identities">
+    <div class="feature">
+      <div style="font-size:13px;color:var(--dim)">Loading live registry...</div>
+    </div>
   </div>
 </section>
 
@@ -625,7 +634,7 @@
       <div class="rm-time" style="color:var(--orange)">2026 Q2 →</div>
       <div>
         <div class="rm-phase">Phase 2 — Resolver &amp; Registration</div>
-        <div class="rm-desc">Resolver API (<code>/api/v1/resolve/:number</code>) · Registration page · Live indexer · Explorer connected to real data</div>
+        <div class="rm-desc">Resolver API (<code>/api/resolve?num=2311</code> + v1 aliases) · Registration page · Live indexer · Explorer connected to real data</div>
       </div>
     </div>
     <div class="roadmap-item">
@@ -666,5 +675,49 @@
   </div>
 </footer>
 
+<script>
+function shortWallet(wallet) {
+  if (!wallet) return 'wallet unavailable';
+  return wallet.length > 22 ? wallet.slice(0, 12) + '...' + wallet.slice(-8) : wallet;
+}
+
+async function loadLiveRegistryPreview() {
+  const grid = document.getElementById('live-identities');
+  const pill = document.getElementById('registry-pill');
+  if (!grid) return;
+
+  try {
+    const res = await fetch('/api/list?sort=number&order=asc&limit=3');
+    if (!res.ok) throw new Error('Registry unavailable');
+    const data = await res.json();
+    const registrations = data.registrations || [];
+
+    if (pill) {
+      pill.textContent = `Registry: ${data.total || registrations.length} active`;
+    }
+
+    if (registrations.length === 0) {
+      grid.innerHTML = `<div class="feature"><h3>No active registrations yet</h3><p>The protocol is live. Connect Unisat and register the first visible OpenNum identity.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = registrations.map((r) => `
+      <a href="/n/${r.inscription_num}" style="display:block;text-decoration:none;">
+        <div class="feature" style="cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f7931a'" onmouseout="this.style.borderColor=''">
+          <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#f7931a;margin-bottom:12px;">OPENNUM #${r.inscription_num}</div>
+          <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;">#${r.inscription_num}</div>
+          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#22c55e;border:1px solid #22c55e;padding:4px 10px;border-radius:12px;margin-bottom:14px;"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span>${r.status || 'active'}</div>
+          <p style="font-size:13px;color:#666;line-height:1.7;">${shortWallet(r.wallet)}</p>
+        </div>
+      </a>
+    `).join('');
+  } catch (e) {
+    if (pill) pill.textContent = 'Registry: API unavailable';
+    grid.innerHTML = `<div class="feature"><h3>Registry temporarily unavailable</h3><p>The resolver API could not be reached. Try the Explorer or GitHub docs.</p></div>`;
+  }
+}
+
+window.addEventListener('load', loadLiveRegistryPreview);
+</script>
 </body>
 </html>
