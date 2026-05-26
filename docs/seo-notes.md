@@ -21,6 +21,7 @@ Secondary phrases:
 - AI agent Bitcoin identity
 - Ordinals profile registry
 - Bitcoin inscription marketplace
+- Satflow Ordinals marketplace
 - Bitcoin identity profile
 
 ## Implemented
@@ -34,7 +35,7 @@ Secondary phrases:
 - Added `/llms.txt` for AI crawler and answer-engine discovery.
 - Aligned homepage title around "Bitcoin Ordinals Identity Protocol".
 - Replaced homepage live identity cards with aggregate indexed-number metrics so the homepage does not imply a tiny network.
-- Added `/market` metadata and JSON-LD for external marketplace discovery.
+- Added `/market` metadata and JSON-LD for Satflow-first external marketplace discovery.
 - Added profile guestbook and payment-resolution surfaces that strengthen long-tail `/n/:number` identity pages.
 
 ## Next SEO Tasks

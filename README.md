@@ -26,7 +26,7 @@ OpenNum is in Phase 2 alpha.
 | Register | Live alpha, Unisat Wallet only |
 | Resolver API | Live |
 | Explorer | Live, backed by `/api/list` |
-| Market | Live discovery page, external marketplace links only |
+| Market | Live discovery page, Satflow-first external marketplace links only |
 | Guestbook | Public wallet-signed messages |
 | SDK | Planned |
 | AI agent extension | Spec direction, not the default live registration flow yet |

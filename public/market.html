@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenNum Market — Bitcoin Inscription Identity Numbers</title>
-  <meta name="description" content="Discover registered OpenNum identity numbers, inspect their inscription anchors, and continue trading through external Ordinals marketplaces." />
+  <meta name="description" content="Discover registered OpenNum identity numbers, inspect their inscription anchors, and continue trading through Satflow or external Ordinals marketplaces." />
   <link rel="canonical" href="https://opennum.org/market" />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="OpenNum" />
   <meta property="og:title" content="OpenNum Market — Bitcoin Inscription Identity Numbers" />
-  <meta property="og:description" content="Discover OpenNum identity numbers and inspect inscription-backed ownership before using external marketplaces." />
+  <meta property="og:description" content="Discover OpenNum identity numbers and inspect inscription-backed ownership before using Satflow or external marketplaces." />
   <meta property="og:url" content="https://opennum.org/market" />
   <meta property="og:image" content="https://opennum.org/img/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -24,7 +24,7 @@
     "@type": "CollectionPage",
     "name": "OpenNum Market",
     "url": "https://opennum.org/market",
-    "description": "A discovery surface for OpenNum inscription-backed Bitcoin identity numbers.",
+    "description": "A discovery surface for OpenNum inscription-backed Bitcoin identity numbers with Satflow as the preferred external trading venue.",
     "isPartOf": {
       "@type": "WebSite",
       "name": "OpenNum",
@@ -110,7 +110,7 @@
 <header class="page-header">
   <div class="eyebrow">External Market Discovery</div>
   <h1>Trade the inscription. <span>Keep the identity.</span></h1>
-  <p class="lead">OpenNum does not custody funds or run an order book. This page helps buyers discover registered identity numbers, inspect inscription anchors, and continue on external Ordinals marketplaces.</p>
+  <p class="lead">OpenNum does not custody funds or run an order book. This page helps buyers discover registered identity numbers, inspect inscription anchors, and continue trading on Satflow or other external Ordinals marketplaces.</p>
 </header>
 
 <div class="toolbar">
@@ -226,7 +226,7 @@ function renderMarket() {
       <div class="actions">
         <a class="mini-link" href="/n/${r.inscription_num}">Profile</a>
         ${inscriptionId ? `<a class="mini-link" href="https://ordinals.com/inscription/${inscriptionId}" target="_blank">Ordinals</a>` : ''}
-        <a class="mini-link" href="https://magiceden.us/ordinals" target="_blank">Magic Eden</a>
+        <a class="mini-link" href="https://www.satflow.com/ordinals" target="_blank">Trade on Satflow</a>
       </div>
     </div>`;
   }).join('');
