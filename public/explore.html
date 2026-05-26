@@ -43,13 +43,13 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --black:  #080808;
-      --white:  #f5f5f0;
+      --black:  #f8f6ef;
+      --white:  #102033;
       --orange: #f7931a;
-      --dim:    #888;
-      --muted:  #444;
-      --border: #1e1e1e;
-      --card:   #0f0f0f;
+      --dim:    #536273;
+      --muted:  #8a918f;
+      --border: #e5dfd2;
+      --card:   #fffdf7;
       --green:  #22c55e;
       --amber:  #f59e0b;
     }
@@ -59,7 +59,7 @@
     code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #141414; padding: 2px 8px; border-radius: 3px; color: var(--orange); }
 
     /* NAV */
-    nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(248,246,239,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
     .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
     .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
     .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
@@ -77,7 +77,7 @@
     /* SEARCH */
     .search-wrap { max-width: 1040px; margin: 0 auto; padding: 40px 48px 48px; }
     .search-box { display: flex; gap: 12px; }
-    .search-input { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--white); font-size: 15px; font-family: inherit; padding: 14px 20px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+    .search-input { flex: 1; background: #fffaf0; border: 1px solid var(--border); color: var(--white); font-size: 15px; font-family: inherit; padding: 14px 20px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
     .search-input::placeholder { color: var(--muted); }
     .search-input:focus { border-color: var(--orange); }
     .search-btn { background: var(--orange); color: #000; border: none; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.2s; white-space: nowrap; }
@@ -165,13 +165,11 @@
     OpenNum
   </a>
   <div class="nav-links">
+    <a href="/">Search</a>
     <a href="/explore" class="nav-active">Explorer</a>
     <a href="/market">Market</a>
-    <a href="/#how-it-works">Protocol</a>
     <a href="/whitepaper-en">Whitepaper</a>
     <a href="/register" style="background:var(--orange);color:#000;padding:6px 14px;border-radius:4px;font-weight:700">Register</a>
-    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
-    <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏</a>
   </div>
 </nav>
 
@@ -305,9 +303,7 @@
   <div class="footer-links">
     <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a>
     <a href="/market">Market</a>
-    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
     <a href="/whitepaper-en">Whitepaper</a>
-    <a href="https://github.com/OpenNum/opennum-protocol/blob/main/protocol-spec/spec-v1.0.md" target="_blank">Protocol Spec</a>
     <a href="https://github.com/OpenNum/opennum-protocol/blob/main/docs/roadmap.md" target="_blank">Roadmap</a>
   </div>
 </footer>

@@ -156,6 +156,7 @@ Response:
     {
       "id": "uuid",
       "inscription_num": 2311,
+      "parent_id": null,
       "message": "gm OpenNum",
       "author_wallet": "bc1p...",
       "author_number": 2025,
@@ -175,6 +176,7 @@ Content-Type: application/json
 ```json
 {
   "inscription_num": 2311,
+  "parent_id": "optional parent message uuid",
   "author_wallet": "bc1p...",
   "message": "gm OpenNum",
   "signature": "BIP322 signature",

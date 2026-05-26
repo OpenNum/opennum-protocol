@@ -32,6 +32,7 @@ Guestbook messages are public, off-chain, and wallet-signed.
 create table if not exists guestbook (
   id uuid primary key default gen_random_uuid(),
   inscription_num bigint not null,
+  parent_id uuid references guestbook(id) on delete cascade,
   message text not null check (char_length(message) <= 280),
   author_wallet text not null,
   author_number bigint,
@@ -40,8 +41,14 @@ create table if not exists guestbook (
   created_at timestamptz not null default now()
 );
 
+alter table guestbook
+  add column if not exists parent_id uuid references guestbook(id) on delete cascade;
+
 create index if not exists guestbook_inscription_num_created_at_idx
   on guestbook (inscription_num, created_at desc);
+
+create index if not exists guestbook_parent_id_idx
+  on guestbook (parent_id);
 
 create index if not exists guestbook_author_wallet_idx
   on guestbook (author_wallet);

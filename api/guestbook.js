@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
 
     const { data, error } = await supabase
       .from('guestbook')
-      .select('id, inscription_num, message, author_wallet, author_number, created_at')
+      .select('id, inscription_num, parent_id, message, author_wallet, author_number, created_at')
       .eq('inscription_num', num)
       .order('created_at', { ascending: false })
       .limit(50);
@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { inscription_num, author_wallet, message, signature, timestamp } = req.body || {};
+  const { inscription_num, parent_id, author_wallet, message, signature, timestamp } = req.body || {};
   const num = normalizeNumber(inscription_num);
   const cleanMessage = String(message || '').trim();
 
@@ -105,13 +105,14 @@ module.exports = async (req, res) => {
     .from('guestbook')
     .insert({
       inscription_num: num,
+      parent_id: parent_id || null,
       message: cleanMessage,
       author_wallet,
       author_number: authorNumber,
       signature,
       signed_message: signedMessage
     })
-    .select('id, inscription_num, message, author_wallet, author_number, created_at')
+    .select('id, inscription_num, parent_id, message, author_wallet, author_number, created_at')
     .single();
 
   if (tableMissing(error)) {
