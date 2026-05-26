@@ -226,7 +226,7 @@ function renderMarket() {
       <div class="actions">
         <a class="mini-link" href="/n/${r.inscription_num}">Profile</a>
         ${inscriptionId ? `<a class="mini-link" href="https://ordinals.com/inscription/${inscriptionId}" target="_blank">Ordinals</a>` : ''}
-        <a class="mini-link" href="https://www.satflow.com/ordinals" target="_blank">Trade on Satflow</a>
+        ${inscriptionId ? `<a class="mini-link" href="https://www.satflow.com/ordinal/${inscriptionId}" target="_blank">View/Trade on Satflow</a>` : `<a class="mini-link" href="https://www.satflow.com/ordinals" target="_blank">Satflow</a>`}
       </div>
     </div>`;
   }).join('');
