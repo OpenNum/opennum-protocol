@@ -109,18 +109,29 @@ module.exports = async (req, res) => {
       });
     }
     // Verified transfer: update existing row in place (preserves inscription_num uniqueness)
-    const { error: updateError } = await supabase
+    const updatePayload = {
+      inscription_txid,
+      inscription_id: inscription_id || `${inscription_txid}i0`,
+      wallet_address: wallet,
+      signature,
+      display_name: display_name || null,
+      indexer_ruleset: 'ord-v0.18-mainnet',
+      status: 'active',
+      updated_at: new Date().toISOString()
+    };
+
+    let { error: updateError } = await supabase
       .from('registrations')
-      .update({
-        inscription_txid,
-        wallet_address: wallet,
-        signature,
-        display_name: display_name || null,
-        indexer_ruleset: 'ord-v0.18-mainnet',
-        status: 'active',
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', existing.id);
+
+    if (updateError && /inscription_id/i.test(updateError.message || '')) {
+      delete updatePayload.inscription_id;
+      ({ error: updateError } = await supabase
+        .from('registrations')
+        .update(updatePayload)
+        .eq('id', existing.id));
+    }
 
     if (updateError) {
       console.error('DB update error:', updateError);
@@ -136,17 +147,27 @@ module.exports = async (req, res) => {
     });
   }
 
-  const { error: insertError } = await supabase
+  const insertPayload = {
+    inscription_num,
+    inscription_txid,
+    inscription_id: inscription_id || `${inscription_txid}i0`,
+    wallet_address: wallet,
+    signature,
+    display_name: display_name || null,
+    indexer_ruleset: 'ord-v0.18-mainnet',
+    status: 'active'
+  };
+
+  let { error: insertError } = await supabase
     .from('registrations')
-    .insert({
-      inscription_num,
-      inscription_txid,
-      wallet_address: wallet,
-      signature,
-      display_name: display_name || null,
-      indexer_ruleset: 'ord-v0.18-mainnet',
-      status: 'active'
-    });
+    .insert(insertPayload);
+
+  if (insertError && /inscription_id/i.test(insertError.message || '')) {
+    delete insertPayload.inscription_id;
+    ({ error: insertError } = await supabase
+      .from('registrations')
+      .insert(insertPayload));
+  }
 
   if (insertError) {
     console.error('DB insert error:', insertError);

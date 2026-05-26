@@ -26,6 +26,8 @@ OpenNum is in Phase 2 alpha.
 | Register | Live alpha, Unisat Wallet only |
 | Resolver API | Live |
 | Explorer | Live, backed by `/api/list` |
+| Market | Live discovery page, external marketplace links only |
+| Guestbook | Public wallet-signed messages |
 | SDK | Planned |
 | AI agent extension | Spec direction, not the default live registration flow yet |
 
@@ -73,6 +75,8 @@ Example response:
   "registrations": [
     {
       "inscription_num": 2311,
+      "inscription_id": "64-character-hex-txidi0",
+      "inscription_txid": "64-character-hex-txid",
       "wallet": "bc1p...",
       "status": "active",
       "display_name": null,
@@ -120,6 +124,18 @@ opennum:register:<inscription_num>:<wallet>:<timestamp>
 ```
 
 The hosted registration page currently uses Unisat Wallet to list inscriptions, sign the message, and submit the API request.
+
+### Guestbook messages
+
+```bash
+curl "https://opennum.org/api/guestbook?num=2311"
+```
+
+Public messages are signed by the author's wallet with:
+
+```text
+opennum:guestbook:<inscription_num>:<author_wallet>:<message>:<timestamp>
+```
 
 ## Protocol Model
 
@@ -173,14 +189,15 @@ SUPABASE_ANON_KEY=
 
 1. Stabilize the hosted resolver and registration flow.
 2. Publish a minimal integration guide for wallets and Ordinals apps.
-3. Ship a small JS/TS resolver SDK.
-4. Add profile metadata and social/account verification.
+3. Stabilize profile social surfaces: inscription avatar, guestbook, and external marketplace discovery.
+4. Ship a small JS/TS resolver SDK.
 5. Extend the protocol for AI agent delegation after the base resolver is reliable.
 
 ## Links
 
 - Website: [opennum.org](https://opennum.org)
 - Explorer: [opennum.org/explore](https://opennum.org/explore)
+- Market: [opennum.org/market](https://opennum.org/market)
 - Register: [opennum.org/register](https://opennum.org/register)
 - Whitepaper EN: [opennum.org/whitepaper-en](https://opennum.org/whitepaper-en)
 - Whitepaper CN: [opennum.org/whitepaper-cn](https://opennum.org/whitepaper-cn)

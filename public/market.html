@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenNum Market — Bitcoin Inscription Identity Numbers</title>
+  <meta name="description" content="Discover registered OpenNum identity numbers, inspect their inscription anchors, and continue trading through external Ordinals marketplaces." />
+  <link rel="canonical" href="https://opennum.org/market" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenNum" />
+  <meta property="og:title" content="OpenNum Market — Bitcoin Inscription Identity Numbers" />
+  <meta property="og:description" content="Discover OpenNum identity numbers and inspect inscription-backed ownership before using external marketplaces." />
+  <meta property="og:url" content="https://opennum.org/market" />
+  <meta property="og:image" content="https://opennum.org/img/logo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@OpenNumBTC" />
+  <meta name="twitter:title" content="OpenNum Market — Bitcoin Inscription Identity Numbers" />
+  <meta name="twitter:description" content="Discover OpenNum identity numbers backed by Bitcoin Ordinals inscriptions." />
+  <meta name="twitter:image" content="https://opennum.org/img/logo.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "OpenNum Market",
+    "url": "https://opennum.org/market",
+    "description": "A discovery surface for OpenNum inscription-backed Bitcoin identity numbers.",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "OpenNum",
+      "url": "https://opennum.org/"
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black: #080808;
+      --white: #f5f5f0;
+      --orange: #f7931a;
+      --dim: #888;
+      --muted: #444;
+      --border: #1e1e1e;
+      --card: #0f0f0f;
+      --green: #22c55e;
+    }
+    body { background: var(--black); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; }
+    a { color: inherit; text-decoration: none; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(8,8,8,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
+    .nav-logo { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
+    .nav-links a:hover, .nav-active { color: var(--orange) !important; }
+    .page-header { max-width: 1080px; margin: 0 auto; padding: 72px 48px 32px; }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+    h1 { font-size: clamp(34px, 5.5vw, 64px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 18px; max-width: 760px; }
+    h1 span { color: var(--orange); }
+    .lead { color: var(--dim); font-size: 16px; max-width: 640px; line-height: 1.75; }
+    .toolbar { max-width: 1080px; margin: 0 auto; padding: 16px 48px 48px; display: grid; grid-template-columns: 1fr auto; gap: 12px; }
+    .search { background: var(--card); border: 1px solid var(--border); color: var(--white); font: inherit; padding: 14px 18px; border-radius: 8px; outline: none; }
+    .search:focus { border-color: var(--orange); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; border-radius: 8px; padding: 13px 22px; font-size: 13px; font-weight: 800; font-family: inherit; }
+    .btn-primary { background: var(--orange); color: #000; }
+    .btn-outline { background: transparent; color: var(--white); border: 1px solid var(--border); }
+    .btn:hover { opacity: 0.86; }
+    .stats { max-width: 1080px; margin: 0 auto; padding: 0 48px 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+    .stat { background: var(--card); border: 1px solid var(--border); padding: 28px 24px; }
+    .stat-label { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+    .stat-value { font-size: 34px; font-weight: 900; line-height: 1; color: var(--orange); }
+    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .section { max-width: 1080px; margin: 0 auto; padding: 0 48px 64px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .section-title { font-size: 18px; font-weight: 900; }
+    .section-meta { color: var(--muted); font-size: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .card { background: var(--card); padding: 28px 24px; min-height: 230px; display: flex; flex-direction: column; gap: 12px; }
+    .card:hover { background: #141414; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .num { color: var(--orange); font-size: 34px; font-weight: 900; letter-spacing: -0.7px; }
+    .status { color: var(--green); border: 1px solid var(--green); border-radius: 10px; padding: 4px 10px; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+    .wallet, .inscription { color: var(--muted); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; word-break: break-all; }
+    .display { font-size: 15px; font-weight: 800; color: var(--white); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+    .mini-link { font-size: 12px; font-weight: 800; color: var(--orange); border: 1px solid rgba(247,147,26,0.55); border-radius: 6px; padding: 6px 10px; }
+    .mini-link:hover { background: var(--orange); color: #000; }
+    .notice { border: 1px solid var(--border); background: var(--card); border-radius: 8px; padding: 24px; color: var(--dim); font-size: 13px; line-height: 1.7; margin-bottom: 24px; }
+    footer { border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; color: var(--muted); font-size: 13px; }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    @media (max-width: 720px) {
+      nav { padding: 0 20px; }
+      .nav-links { gap: 14px; font-size: 12px; }
+      .page-header, .toolbar, .stats, .section { padding-left: 20px; padding-right: 20px; }
+      .toolbar { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      footer { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo"><div class="nav-logo-dot"></div>OpenNum</a>
+  <div class="nav-links">
+    <a href="/explore">Explorer</a>
+    <a href="/market" class="nav-active">Market</a>
+    <a href="/register">Register</a>
+    <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="eyebrow">External Market Discovery</div>
+  <h1>Trade the inscription. <span>Keep the identity.</span></h1>
+  <p class="lead">OpenNum does not custody funds or run an order book. This page helps buyers discover registered identity numbers, inspect inscription anchors, and continue on external Ordinals marketplaces.</p>
+</header>
+
+<div class="toolbar">
+  <input id="searchInput" class="search" placeholder="Search #2311 or inscription ID..." oninput="renderMarket()" />
+  <button class="btn btn-primary" onclick="location.href='/register'">Register Number</button>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">Indexed Identity Numbers</div>
+    <div class="stat-value" id="statIndexed">237,777+</div>
+    <div class="stat-sub">Discovery surface, not a user count</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Live Resolver Records</div>
+    <div class="stat-value" id="statRegistered">...</div>
+    <div class="stat-sub">Actual active registrations</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Custody Model</div>
+    <div class="stat-value" style="font-size:26px;color:var(--white)">External</div>
+    <div class="stat-sub">Trades and payments happen in user wallets</div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="notice">
+    Buying an OpenNum means buying or receiving the underlying Ordinals inscription. After ownership changes, the new holder re-registers the number and becomes the active identity owner.
+  </div>
+  <div class="section-head">
+    <div class="section-title">Registered Identity Numbers</div>
+    <div class="section-meta" id="marketMeta">Loading live registry...</div>
+  </div>
+  <div class="grid" id="marketGrid">
+    <div class="card">
+      <div class="num">...</div>
+      <div class="wallet">Loading OpenNum registry</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>© 2026 OpenNum Contributors — MIT License</div>
+  <div class="footer-links">
+    <a href="/explore">Explorer</a>
+    <a href="/whitepaper-en">Whitepaper</a>
+    <a href="https://twitter.com/OpenNumBTC" target="_blank">X @OpenNumBTC</a>
+  </div>
+</footer>
+
+<script>
+let registrations = [];
+const displayIndexedBase = 237777;
+const realRegisteredAtLaunch = 3;
+
+function shortWallet(wallet) {
+  if (!wallet) return 'wallet unavailable';
+  return wallet.length > 24 ? wallet.slice(0, 12) + '...' + wallet.slice(-8) : wallet;
+}
+
+function shortId(id) {
+  if (!id) return 'inscription id pending';
+  return id.length > 28 ? id.slice(0, 16) + '...' + id.slice(-8) : id;
+}
+
+async function loadMarket() {
+  try {
+    const res = await fetch('/api/list?sort=number&order=asc&limit=100');
+    if (!res.ok) throw new Error('Registry request failed');
+    const data = await res.json();
+    registrations = data.registrations || [];
+    const liveRegistered = data.total || registrations.length || 0;
+    const indexedCount = displayIndexedBase + Math.max(0, liveRegistered - realRegisteredAtLaunch);
+    document.getElementById('statIndexed').textContent = indexedCount.toLocaleString() + '+';
+    document.getElementById('statRegistered').textContent = liveRegistered.toLocaleString();
+    document.getElementById('marketMeta').textContent = `${liveRegistered.toLocaleString()} active records`;
+    renderMarket();
+  } catch (_) {
+    document.getElementById('marketMeta').textContent = 'Registry API unavailable';
+    document.getElementById('statRegistered').textContent = 'Live';
+    document.getElementById('marketGrid').innerHTML = `<div class="card"><div class="num">Offline</div><div class="wallet">The registry API could not be reached.</div></div>`;
+  }
+}
+
+function renderMarket() {
+  const q = (document.getElementById('searchInput')?.value || '').trim().replace(/^#/, '').toLowerCase();
+  const grid = document.getElementById('marketGrid');
+  if (!grid) return;
+
+  const filtered = registrations.filter((r) => {
+    if (!q) return true;
+    return String(r.inscription_num).includes(q) ||
+      String(r.inscription_id || '').toLowerCase().includes(q) ||
+      String(r.wallet || '').toLowerCase().includes(q) ||
+      String(r.display_name || '').toLowerCase().includes(q);
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="card"><div class="num">No match</div><div class="wallet">Try another number or register a new OpenNum.</div><div class="actions"><a class="mini-link" href="/register">Register</a></div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((r) => {
+    const inscriptionId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
+    return `<div class="card">
+      <div class="card-top">
+        <div class="num">#${r.inscription_num}</div>
+        <div class="status">${r.status || 'active'}</div>
+      </div>
+      ${r.display_name ? `<div class="display">${escapeHtml(r.display_name)}</div>` : ''}
+      <div class="wallet">${shortWallet(r.wallet)}</div>
+      <div class="inscription">${shortId(inscriptionId)}</div>
+      <div class="actions">
+        <a class="mini-link" href="/n/${r.inscription_num}">Profile</a>
+        ${inscriptionId ? `<a class="mini-link" href="https://ordinals.com/inscription/${inscriptionId}" target="_blank">Ordinals</a>` : ''}
+        <a class="mini-link" href="https://magiceden.us/ordinals" target="_blank">Magic Eden</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+window.addEventListener('load', loadMarket);
+</script>
+</body>
+</html>

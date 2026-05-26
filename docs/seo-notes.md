@@ -1,6 +1,6 @@
 # OpenNum SEO Notes
 
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 ## Primary Search Intent
 
@@ -20,18 +20,22 @@ Secondary phrases:
 - Open Bitcoin identity protocol
 - AI agent Bitcoin identity
 - Ordinals profile registry
+- Bitcoin inscription marketplace
+- Bitcoin identity profile
 
 ## Implemented
 
 - Added `/robots.txt` with a sitemap reference.
-- Added `/sitemap.xml` with canonical public URLs and `lastmod`.
+- Added `/sitemap.xml` with canonical public URLs and `lastmod`, including `/market`.
 - Added canonical tags to homepage, Explorer, Register, and whitepaper pages.
 - Added Open Graph and Twitter Card metadata.
 - Added JSON-LD structured data for homepage, Explorer, and Register.
 - Added `hreflang` alternates between English and Chinese whitepapers.
 - Added `/llms.txt` for AI crawler and answer-engine discovery.
 - Aligned homepage title around "Bitcoin Ordinals Identity Protocol".
-- Replaced static registry claims with live API-driven registry previews.
+- Replaced homepage live identity cards with aggregate indexed-number metrics so the homepage does not imply a tiny network.
+- Added `/market` metadata and JSON-LD for external marketplace discovery.
+- Added profile guestbook and payment-resolution surfaces that strengthen long-tail `/n/:number` identity pages.
 
 ## Next SEO Tasks
 
@@ -41,6 +45,7 @@ Secondary phrases:
 - Publish one canonical explainer article: "Bitcoin Ordinals Identity Protocol: What OpenNum Does".
 - Add a developer docs page targeting "inscription number to wallet address API".
 - Add stable profile metadata for `/n/:number` pages after profile fields are finalized.
+- Add dynamic sitemap generation for registered `/n/:number` profile pages once the registry is larger.
 
 ## Official Guidance Used
 

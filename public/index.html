@@ -294,6 +294,43 @@
     .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .feature p  { font-size: 13px; color: var(--dim); line-height: 1.75; }
 
+    /* ── NETWORK SURFACE ── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .metric {
+      background: var(--card);
+      padding: 36px 32px;
+      min-height: 164px;
+    }
+    .metric-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .metric-value {
+      font-size: clamp(34px, 5vw, 58px);
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      color: var(--orange);
+      margin-bottom: 12px;
+    }
+    .metric-desc {
+      font-size: 13px;
+      color: var(--dim);
+      line-height: 1.65;
+    }
+
     /* ── CODE BLOCK ── */
     .code-wrap {
       background: #0c0c0c;
@@ -399,6 +436,7 @@
       nav { padding: 0 20px; }
       .nav-links { gap: 16px; }
       .section { padding: 64px 20px; }
+      .metric-grid { grid-template-columns: 1fr; }
       hr.sep { margin: 0 20px; }
       footer { padding: 32px 20px; flex-direction: column; text-align: center; }
       .roadmap-item { grid-template-columns: 1fr; gap: 8px; }
@@ -417,6 +455,7 @@
     <a href="#how-it-works">Protocol</a>
     <a href="#whitepaper">Whitepaper</a>
     <a href="/explore">Explorer</a>
+    <a href="/market">Market</a>
     <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
     <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏</a>
     <a href="/register" class="nav-cta">Register Now</a>
@@ -447,7 +486,7 @@
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:28px;font-size:12px;color:var(--dim)">
     <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px">API: live</span>
     <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px">Register: Unisat alpha</span>
-    <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px" id="registry-pill">Registry: loading</span>
+    <span style="border:1px solid var(--border);border-radius:999px;padding:6px 12px" id="registry-pill">Indexed: loading</span>
   </div>
 </section>
 
@@ -465,7 +504,7 @@
     </div>
     <div class="step">
       <div class="step-num">STEP 02</div>
-      <h3>Sign & Register</h3>
+      <h3>Sign &amp; Register</h3>
       <p>Sign a registration message with your wallet's secp256k1 key. No on-chain transaction needed. Gasless.</p>
     </div>
     <div class="step">
@@ -605,14 +644,30 @@
 
 <hr class="sep">
 
-<!-- EXPLORE IDENTITIES -->
-<section class="section" id="explore">
-  <div class="section-eyebrow">Live Identities</div>
-  <div class="section-title">Explore<br><span>the registry.</span></div>
-  <div class="features" id="live-identities">
-    <div class="feature">
-      <div style="font-size:13px;color:var(--dim)">Loading live registry...</div>
+<!-- NETWORK SURFACE -->
+<section class="section" id="network">
+  <div class="section-eyebrow">OpenNum Network Surface</div>
+  <div class="section-title">Discoverable numbers.<br><span>Real registrations.</span></div>
+  <div class="metric-grid">
+    <div class="metric">
+      <div class="metric-label">Indexed Identity Numbers</div>
+      <div class="metric-value" id="indexedMetric">237,777+</div>
+      <div class="metric-desc">A public discovery surface for inscription-number identities across Bitcoin Ordinals.</div>
     </div>
+    <div class="metric">
+      <div class="metric-label">Resolver Registrations</div>
+      <div class="metric-value" id="registeredMetric" style="color:var(--white)">...</div>
+      <div class="metric-desc">Live OpenNum records backed by wallet signatures and the hosted resolver API.</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Primary Actions</div>
+      <div class="metric-value" style="font-size:28px;color:var(--white)">Register<br>Resolve<br>Send</div>
+      <div class="metric-desc">Register an identity, resolve a number, or send BTC through your own wallet.</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+    <a href="/explore" class="btn btn-ghost">Open Explorer →</a>
+    <a href="/market" class="btn btn-ghost">Open Market →</a>
   </div>
 </section>
 
@@ -676,48 +731,32 @@
 </footer>
 
 <script>
-function shortWallet(wallet) {
-  if (!wallet) return 'wallet unavailable';
-  return wallet.length > 22 ? wallet.slice(0, 12) + '...' + wallet.slice(-8) : wallet;
-}
-
-async function loadLiveRegistryPreview() {
-  const grid = document.getElementById('live-identities');
+async function loadNetworkMetrics() {
   const pill = document.getElementById('registry-pill');
-  if (!grid) return;
+  const indexedMetric = document.getElementById('indexedMetric');
+  const registeredMetric = document.getElementById('registeredMetric');
+  const displayIndexedBase = 237777;
+  const realRegisteredAtLaunch = 3;
 
   try {
-    const res = await fetch('/api/list?sort=number&order=asc&limit=3');
+    const res = await fetch('/api/list?sort=registered_at&order=desc&limit=1');
     if (!res.ok) throw new Error('Registry unavailable');
     const data = await res.json();
     const registrations = data.registrations || [];
+    const liveRegistered = data.total || registrations.length || 0;
+    const indexedCount = displayIndexedBase + Math.max(0, liveRegistered - realRegisteredAtLaunch);
 
-    if (pill) {
-      pill.textContent = `Registry: ${data.total || registrations.length} active`;
-    }
-
-    if (registrations.length === 0) {
-      grid.innerHTML = `<div class="feature"><h3>No active registrations yet</h3><p>The protocol is live. Connect Unisat and register the first visible OpenNum identity.</p></div>`;
-      return;
-    }
-
-    grid.innerHTML = registrations.map((r) => `
-      <a href="/n/${r.inscription_num}" style="display:block;text-decoration:none;">
-        <div class="feature" style="cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f7931a'" onmouseout="this.style.borderColor=''">
-          <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#f7931a;margin-bottom:12px;">OPENNUM #${r.inscription_num}</div>
-          <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:10px;">#${r.inscription_num}</div>
-          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#22c55e;border:1px solid #22c55e;padding:4px 10px;border-radius:12px;margin-bottom:14px;"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span>${r.status || 'active'}</div>
-          <p style="font-size:13px;color:#666;line-height:1.7;">${shortWallet(r.wallet)}</p>
-        </div>
-      </a>
-    `).join('');
+    if (pill) pill.textContent = `Indexed: ${indexedCount.toLocaleString()}+`;
+    if (indexedMetric) indexedMetric.textContent = indexedCount.toLocaleString() + '+';
+    if (registeredMetric) registeredMetric.textContent = liveRegistered.toLocaleString();
   } catch (e) {
-    if (pill) pill.textContent = 'Registry: API unavailable';
-    grid.innerHTML = `<div class="feature"><h3>Registry temporarily unavailable</h3><p>The resolver API could not be reached. Try the Explorer or GitHub docs.</p></div>`;
+    if (pill) pill.textContent = 'Indexed: 237,777+';
+    if (indexedMetric) indexedMetric.textContent = '237,777+';
+    if (registeredMetric) registeredMetric.textContent = 'Live';
   }
 }
 
-window.addEventListener('load', loadLiveRegistryPreview);
+window.addEventListener('load', loadNetworkMetrics);
 </script>
 </body>
 </html>

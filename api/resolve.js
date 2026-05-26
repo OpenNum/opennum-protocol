@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
 
   const { data, error } = await supabase
     .from('registrations')
-    .select('inscription_num, wallet_address, status, display_name, registered_at')
+    .select('*')
     .eq('inscription_num', num)
     .order('registered_at', { ascending: false })
     .limit(1)
@@ -33,6 +33,8 @@ module.exports = async (req, res) => {
 
   return res.status(200).json({
     inscription_num: data.inscription_num,
+    inscription_id: data.inscription_id || (data.inscription_txid ? `${data.inscription_txid}i0` : null),
+    inscription_txid: data.inscription_txid,
     wallet: data.wallet_address,
     status: data.status,
     display_name: data.display_name,

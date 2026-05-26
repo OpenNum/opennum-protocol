@@ -33,10 +33,11 @@ module.exports = async (req, res) => {
     return res.status(404).json({ status: 'unregistered', inscription_num: num });
   }
 
-  // Enrich with Hiro inscription metadata (best-effort, non-blocking)
+  const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
+
+  // Enrich with Ordinals metadata (best-effort, non-blocking)
   let metadata = null;
   try {
-    const inscriptionId = `${data.inscription_txid}i0`;
     const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
       headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(4000)
@@ -56,10 +57,12 @@ module.exports = async (req, res) => {
 
   return res.status(200).json({
     inscription_num: data.inscription_num,
+    inscription_id: inscriptionId,
     inscription_txid: data.inscription_txid,
     wallet: data.wallet_address,
     status: data.status,
     display_name: data.display_name,
+    bio: data.bio || null,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     metadata

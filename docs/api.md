@@ -23,6 +23,8 @@ Response:
 ```json
 {
   "inscription_num": 2311,
+  "inscription_id": "64-character-hex-txidi0",
+  "inscription_txid": "64-character-hex-txid",
   "wallet": "bc1p...",
   "status": "active",
   "display_name": null,
@@ -55,7 +57,9 @@ GET /api/v1/profile/2311
 
 Response includes the resolver record plus:
 
+- `inscription_id`
 - `inscription_txid`
+- `bio`
 - `indexer_ruleset`
 - `metadata.content_type`
 - `metadata.content_url`
@@ -128,3 +132,60 @@ Validation:
 - When Ordinals metadata is reachable, the inscription owner and number must match.
 - `inscription_id` is optional for compatibility, but should be sent by wallets because one Bitcoin transaction can contain multiple inscriptions (`i0`, `i1`, `i2`, ...).
 - Existing active registrations can be transferred only when on-chain ownership is verified.
+
+## Guestbook
+
+Fetch public wallet-signed messages for an identity.
+
+```http
+GET /api/guestbook?num=2311
+```
+
+Compatibility alias:
+
+```http
+GET /api/v1/guestbook/2311
+```
+
+Response:
+
+```json
+{
+  "inscription_num": 2311,
+  "messages": [
+    {
+      "id": "uuid",
+      "inscription_num": 2311,
+      "message": "gm OpenNum",
+      "author_wallet": "bc1p...",
+      "author_number": 2025,
+      "created_at": "2026-05-26T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+Post a signed public message:
+
+```http
+POST /api/guestbook
+Content-Type: application/json
+```
+
+```json
+{
+  "inscription_num": 2311,
+  "author_wallet": "bc1p...",
+  "message": "gm OpenNum",
+  "signature": "BIP322 signature",
+  "timestamp": 1779744378
+}
+```
+
+Signed message:
+
+```text
+opennum:guestbook:<inscription_num>:<author_wallet>:<message>:<timestamp>
+```
+
+Messages are off-chain and public. OpenNum verifies the wallet signature but does not provide private chat in this version.

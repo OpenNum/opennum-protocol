@@ -59,6 +59,7 @@
     .profile-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 8px; }
     .profile-number { font-size: clamp(40px, 8vw, 72px); font-weight: 900; letter-spacing: -2px; line-height: 1; color: var(--orange); margin-bottom: 8px; }
     .profile-name { font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .profile-bio { font-size: 14px; color: var(--dim); line-height: 1.65; max-width: 460px; margin-bottom: 12px; }
     .profile-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; border-radius: 10px; }
     .status-active  { color: var(--green); border: 1px solid var(--green); }
     .status-dormant { color: #666; border: 1px solid #333; }
@@ -89,6 +90,25 @@
     .btn-primary { background: var(--orange); color: #000; }
     .btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--border); }
 
+    .social-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .panel-heading { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .send-panel { display: none; }
+    .send-panel.visible { display: block; }
+    .send-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .input, .textarea { width: 100%; background: #111; border: 1px solid var(--border); color: var(--white); font: inherit; border-radius: 8px; outline: none; }
+    .input { padding: 12px 14px; max-width: 180px; }
+    .textarea { min-height: 92px; resize: vertical; padding: 14px; }
+    .input:focus, .textarea:focus { border-color: var(--orange); }
+    .muted-copy { font-size: 12px; color: var(--muted); line-height: 1.65; }
+    .alert { display: none; padding: 12px 14px; border-radius: 8px; font-size: 12px; margin-top: 12px; }
+    .alert.visible { display: block; }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+    .message-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .message-item { background: #111; border: 1px solid #191919; border-radius: 8px; padding: 14px; }
+    .message-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; margin-bottom: 8px; }
+    .message-body { color: var(--white); font-size: 14px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+
     /* FOOTER */
     footer { border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
 
@@ -96,6 +116,7 @@
       nav { padding: 0 20px; }
       .profile-header { flex-direction: column; gap: 20px; }
       .profile-avatar { width: 80px; height: 80px; }
+      .nav-links { gap: 14px; font-size: 12px; }
     }
   </style>
 </head>
@@ -105,6 +126,7 @@
   <a href="/" class="nav-logo"><div class="nav-logo-dot"></div>OpenNum</a>
   <div class="nav-links">
     <a href="/explore">Explorer</a>
+    <a href="/market">Market</a>
     <a href="/#how-it-works">Protocol</a>
     <a href="/register" style="background:var(--orange);color:#000;padding:6px 14px;border-radius:4px;font-weight:700">Register</a>
     <a href="https://github.com/OpenNum/opennum-protocol" target="_blank">GitHub</a>
@@ -135,6 +157,7 @@
         <div class="profile-eyebrow">OpenNum Identity</div>
         <div class="profile-number" id="profileNum"></div>
         <div class="profile-name" id="profileName" style="display:none"></div>
+        <div class="profile-bio" id="profileBio" style="display:none"></div>
         <span class="profile-status status-active" id="profileStatus">
           <span class="status-dot"></span>
           Active
@@ -144,8 +167,28 @@
 
     <!-- ACTIONS -->
     <div class="actions">
+      <button id="sendBtcBtn" class="btn btn-primary" onclick="toggleSendPanel()">Send BTC to this number</button>
       <a id="ordLink" href="#" target="_blank" class="btn btn-outline">View on Ordinals.com ↗</a>
       <a href="/explore" class="btn btn-outline">← Explorer</a>
+    </div>
+
+    <!-- SEND BTC -->
+    <div class="social-panel send-panel" id="sendPanel">
+      <div class="panel-heading">Non-custodial Payment</div>
+      <div class="muted-copy">
+        OpenNum resolves this number to the current wallet below. Funds are sent by your own Bitcoin wallet; OpenNum never holds custody.
+      </div>
+      <div class="data-row" style="padding-left:0;padding-right:0;margin-top:10px">
+        <span class="data-key">Recipient Wallet</span>
+        <span class="data-val mono" id="sendWallet"></span>
+      </div>
+      <div class="send-row">
+        <input class="input" id="sendSats" type="number" min="1" step="1" placeholder="sats amount" />
+        <button class="btn btn-primary" onclick="sendWithUnisat()">Send with Unisat</button>
+        <button class="btn btn-outline" onclick="copyRecipientWallet()">Copy Wallet</button>
+      </div>
+      <div class="alert alert-error" id="sendError"></div>
+      <div class="alert alert-success" id="sendSuccess"></div>
     </div>
 
     <!-- INSCRIPTION CONTENT -->
@@ -159,6 +202,10 @@
       <div class="data-row">
         <span class="data-key">Inscription Number</span>
         <span class="data-val orange" id="dNum"></span>
+      </div>
+      <div class="data-row">
+        <span class="data-key">Inscription ID</span>
+        <span class="data-val mono" id="dInscriptionId"></span>
       </div>
       <div class="data-row">
         <span class="data-key">Wallet Address</span>
@@ -179,6 +226,24 @@
       <div class="data-row">
         <span class="data-key">Indexer</span>
         <span class="data-val" id="dIndexer"></span>
+      </div>
+    </div>
+
+    <!-- GUESTBOOK -->
+    <div class="social-panel" id="guestbookPanel">
+      <div class="panel-heading">OpenNum Guestbook</div>
+      <div class="muted-copy">Leave a public, wallet-signed message for this identity. Messages are off-chain and public.</div>
+      <div style="margin-top:16px">
+        <textarea class="textarea" id="guestbookMessage" maxlength="280" placeholder="Write a public message..."></textarea>
+      </div>
+      <div class="send-row">
+        <button class="btn btn-primary" onclick="signGuestbookMessage()">Sign &amp; Post</button>
+        <button class="btn btn-outline" onclick="loadGuestbook()">Refresh</button>
+      </div>
+      <div class="alert alert-error" id="guestbookError"></div>
+      <div class="alert alert-success" id="guestbookSuccess"></div>
+      <div class="message-list" id="guestbookList">
+        <div class="muted-copy">Loading messages...</div>
       </div>
     </div>
 
@@ -213,12 +278,16 @@
 </footer>
 
 <script>
+let currentProfile = null;
+let currentNumber = null;
+
 (async () => {
   // Extract inscription number from URL path: /n/9727
   const path = window.location.pathname;
   const match = path.match(/\/n\/(\d+)/);
   if (!match) { showNotFound('?'); return; }
   const num = parseInt(match[1], 10);
+  currentNumber = num;
 
   document.title = `#${num} — OpenNum Identity`;
 
@@ -230,6 +299,7 @@
     if (!res.ok) { showNotFound(num); return; }
 
     renderProfile(num, data);
+    loadGuestbook();
   } catch (e) {
     showNotFound(num);
   }
@@ -243,6 +313,7 @@ function showNotFound(num) {
 }
 
 function renderProfile(num, data) {
+  currentProfile = data;
   document.getElementById('loading').style.display = 'none';
   document.getElementById('profile').style.display = 'block';
 
@@ -254,6 +325,11 @@ function renderProfile(num, data) {
     nameEl.style.display = 'block';
     document.title = `${data.display_name} (#${num}) — OpenNum`;
   }
+  if (data.bio) {
+    const bioEl = document.getElementById('profileBio');
+    bioEl.textContent = data.bio;
+    bioEl.style.display = 'block';
+  }
 
   // Status
   const statusEl = document.getElementById('profileStatus');
@@ -262,11 +338,14 @@ function renderProfile(num, data) {
   statusEl.innerHTML = `<span class="status-dot"></span>${s.charAt(0).toUpperCase() + s.slice(1)}`;
 
   // Ordinals link
-  document.getElementById('ordLink').href = `https://ordinals.com/inscription/${data.inscription_txid}i0`;
+  const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
+  document.getElementById('ordLink').href = `https://ordinals.com/inscription/${inscriptionId}`;
 
   // Identity data
   document.getElementById('dNum').textContent = '#' + num;
+  document.getElementById('dInscriptionId').textContent = inscriptionId;
   document.getElementById('dWallet').textContent = data.wallet || '—';
+  document.getElementById('sendWallet').textContent = data.wallet || '—';
   document.getElementById('dStatus').textContent = s.charAt(0).toUpperCase() + s.slice(1);
   document.getElementById('dDate').textContent = data.registered_at ? new Date(data.registered_at).toLocaleDateString('en-AU', { year:'numeric', month:'long', day:'numeric' }) : '—';
   document.getElementById('dIndexer').textContent = data.indexer_ruleset || 'ord-v0.18-mainnet';
@@ -295,6 +374,119 @@ function renderProfile(num, data) {
   } else {
     document.getElementById('avatarFallback').textContent = '#' + num;
   }
+}
+
+function setAlert(id, message, visible = true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message || '';
+  el.classList.toggle('visible', visible && !!message);
+}
+
+function shortWallet(wallet) {
+  if (!wallet) return 'unknown wallet';
+  return wallet.length > 22 ? wallet.slice(0, 10) + '...' + wallet.slice(-8) : wallet;
+}
+
+function toggleSendPanel() {
+  document.getElementById('sendPanel').classList.toggle('visible');
+}
+
+async function copyRecipientWallet() {
+  setAlert('sendError', '');
+  setAlert('sendSuccess', '');
+  if (!currentProfile?.wallet) return setAlert('sendError', 'Recipient wallet is unavailable.');
+  try {
+    await navigator.clipboard.writeText(currentProfile.wallet);
+    setAlert('sendSuccess', 'Recipient wallet copied.');
+  } catch (_) {
+    setAlert('sendError', 'Copy failed. Select and copy the wallet address manually.');
+  }
+}
+
+async function sendWithUnisat() {
+  setAlert('sendError', '');
+  setAlert('sendSuccess', '');
+  const sats = parseInt(document.getElementById('sendSats').value, 10);
+  if (!currentProfile?.wallet) return setAlert('sendError', 'Recipient wallet is unavailable.');
+  if (!window.unisat) return setAlert('sendError', 'Unisat Wallet is not installed. Copy the wallet address and send from your wallet.');
+  if (!Number.isInteger(sats) || sats <= 0) return setAlert('sendError', 'Enter a positive sats amount.');
+  if (typeof window.unisat.sendBitcoin !== 'function') return setAlert('sendError', 'Your Unisat version does not expose sendBitcoin. Copy the wallet address instead.');
+  try {
+    const txid = await window.unisat.sendBitcoin(currentProfile.wallet, sats);
+    setAlert('sendSuccess', `Transaction submitted: ${txid}`);
+  } catch (e) {
+    setAlert('sendError', e?.message || 'Wallet rejected or failed to submit the transaction.');
+  }
+}
+
+async function loadGuestbook() {
+  const list = document.getElementById('guestbookList');
+  if (!list || currentNumber == null) return;
+  list.innerHTML = '<div class="muted-copy">Loading messages...</div>';
+  try {
+    const res = await fetch(`/api/guestbook?num=${currentNumber}`);
+    const data = await res.json();
+    const messages = data.messages || [];
+    if (messages.length === 0) {
+      list.innerHTML = '<div class="muted-copy">No public messages yet.</div>';
+      return;
+    }
+    list.innerHTML = messages.map((m) => {
+      const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
+      const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      return `<div class="message-item">
+        <div class="message-meta"><span>${author}</span><span>${date}</span></div>
+        <div class="message-body">${escapeHtml(m.message)}</div>
+      </div>`;
+    }).join('');
+  } catch (_) {
+    list.innerHTML = '<div class="muted-copy">Guestbook is temporarily unavailable.</div>';
+  }
+}
+
+async function signGuestbookMessage() {
+  setAlert('guestbookError', '');
+  setAlert('guestbookSuccess', '');
+  const text = document.getElementById('guestbookMessage').value.trim();
+  if (!text) return setAlert('guestbookError', 'Write a message first.');
+  if (!window.unisat) return setAlert('guestbookError', 'Unisat Wallet is required to sign public messages.');
+
+  try {
+    const accounts = await window.unisat.requestAccounts();
+    const authorWallet = accounts[0];
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signedMessage = `opennum:guestbook:${currentNumber}:${authorWallet}:${text}:${timestamp}`;
+    const signature = await window.unisat.signMessage(signedMessage, 'ecdsa');
+    const res = await fetch('/api/guestbook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inscription_num: currentNumber,
+        author_wallet: authorWallet,
+        message: text,
+        signature,
+        timestamp
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) return setAlert('guestbookError', data.error || 'Message could not be posted.');
+    document.getElementById('guestbookMessage').value = '';
+    setAlert('guestbookSuccess', 'Message posted.');
+    loadGuestbook();
+  } catch (e) {
+    setAlert('guestbookError', e?.message || 'Signing failed.');
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
 }
 </script>
 

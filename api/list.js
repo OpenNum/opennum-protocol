@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
 
   const { data, error, count } = await supabase
     .from('registrations')
-    .select('inscription_num, wallet_address, status, display_name, registered_at', { count: 'exact' })
+    .select('*', { count: 'exact' })
     .eq('status', 'active')
     .order(sort, { ascending: order })
     .range(offset, offset + limit - 1);
@@ -32,6 +32,8 @@ module.exports = async (req, res) => {
     limit,
     registrations: (data || []).map(r => ({
       inscription_num: r.inscription_num,
+      inscription_id: r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : null),
+      inscription_txid: r.inscription_txid,
       wallet: r.wallet_address,
       status: r.status,
       display_name: r.display_name,
