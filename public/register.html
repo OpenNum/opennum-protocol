@@ -261,6 +261,7 @@
     <div class="sign-box">
       <div class="sign-box-label">Registration Preview</div>
       <div class="sign-row"><span class="sign-key">Inscription Number</span><span class="sign-val orange" id="prevNum"></span></div>
+      <div class="sign-row"><span class="sign-key">Inscription ID</span><span class="sign-val" id="prevInscriptionId" style="font-size:11px"></span></div>
       <div class="sign-row"><span class="sign-key">Inscription Txid</span><span class="sign-val" id="prevTxid" style="font-size:11px"></span></div>
       <div class="sign-row"><span class="sign-key">Your Wallet</span><span class="sign-val" id="prevWallet" style="font-size:11px"></span></div>
       <div class="sign-row"><span class="sign-key">Protocol</span><span class="sign-val">opennum v1.0</span></div>
@@ -508,6 +509,7 @@
 
     document.getElementById('signNum').textContent = `#${num}`;
     document.getElementById('prevNum').textContent = `#${num}`;
+    document.getElementById('prevInscriptionId').textContent = selectedInscription.inscriptionId;
     document.getElementById('prevTxid').textContent = txid;
     document.getElementById('prevWallet').textContent = walletAddr;
 
@@ -561,6 +563,7 @@
         body: JSON.stringify({
           inscription_num: num,
           inscription_txid: txid,
+          inscription_id: selectedInscription.inscriptionId,
           wallet: walletAddr,
           signature,
           timestamp: ts,

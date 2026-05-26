@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { inscription_num, inscription_txid, wallet, signature, timestamp, display_name } = req.body || {};
+  const { inscription_num, inscription_txid, inscription_id, wallet, signature, timestamp, display_name } = req.body || {};
 
   if (!inscription_num && inscription_num !== 0 || !inscription_txid || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, inscription_txid, wallet, signature, timestamp' });
@@ -26,6 +26,12 @@ module.exports = async (req, res) => {
   }
   if (!/^[0-9a-f]{64}$/i.test(inscription_txid)) {
     return res.status(400).json({ error: 'inscription_txid must be a 64-character hex string' });
+  }
+  if (inscription_id && !/^[0-9a-f]{64}i\d+$/i.test(inscription_id)) {
+    return res.status(400).json({ error: 'inscription_id must use the format <64-character-txid>i<index>' });
+  }
+  if (inscription_id && !inscription_id.toLowerCase().startsWith(inscription_txid.toLowerCase() + 'i')) {
+    return res.status(400).json({ error: 'inscription_id does not match inscription_txid' });
   }
 
   const now = Date.now();
@@ -37,7 +43,7 @@ module.exports = async (req, res) => {
   // If indexer is unreachable, fall through — signature is the primary proof.
   let ownershipVerified = false;
   try {
-    const inscriptionId = `${inscription_txid}i0`;
+    const inscriptionId = inscription_id || `${inscription_txid}i0`;
     const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
       headers: {
         'Accept': 'application/json',
@@ -60,7 +66,7 @@ module.exports = async (req, res) => {
       ownershipVerified = true;
     } else {
       // Indexer returned error — log and continue; signature is sufficient for MVP
-      console.warn(`ordinals.com returned ${ordRes.status} for ${inscription_txid}i0 — skipping ownership check`);
+      console.warn(`ordinals.com returned ${ordRes.status} for ${inscriptionId} — skipping ownership check`);
     }
   } catch (e) {
     // Indexer timeout or network error — log and continue

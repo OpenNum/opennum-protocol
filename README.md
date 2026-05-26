@@ -105,6 +105,7 @@ Content-Type: application/json
 {
   "inscription_num": 2311,
   "inscription_txid": "64-character-hex-txid",
+  "inscription_id": "64-character-hex-txidi0",
   "wallet": "bc1p...",
   "signature": "BIP322 signature",
   "timestamp": 1779744378,

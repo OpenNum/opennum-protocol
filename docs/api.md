@@ -107,6 +107,7 @@ Body:
 {
   "inscription_num": 2311,
   "inscription_txid": "64-character-hex-txid",
+  "inscription_id": "64-character-hex-txidi0",
   "wallet": "bc1p...",
   "signature": "BIP322 signature",
   "timestamp": 1779744378,
@@ -125,4 +126,5 @@ Validation:
 - The timestamp must be fresh.
 - The signature must verify for the submitted wallet.
 - When Ordinals metadata is reachable, the inscription owner and number must match.
+- `inscription_id` is optional for compatibility, but should be sent by wallets because one Bitcoin transaction can contain multiple inscriptions (`i0`, `i1`, `i2`, ...).
 - Existing active registrations can be transferred only when on-chain ownership is verified.
