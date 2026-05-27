@@ -47,22 +47,22 @@
       <div class="shell">
         <div class="section-head">
           <div>
-            <h2>Trade the number, keep the identity.</h2>
-            <p class="section-copy" style="margin-top:18px">OpenNum does not custody funds or run an order book. The market helps you inspect registered numbers and jump to the exact Satflow ordinal page for the underlying inscription.</p>
+            <h2>Find a number. Buy it on Satflow.</h2>
+            <p class="section-copy" style="margin-top:18px">Search any inscription number to see who owns it. If you want to buy it, click "View on Satflow" to check if it's listed for sale. If you own one and want to sell, list it on Satflow yourself — then the buyer re-registers here.</p>
           </div>
           <a class="btn btn-primary" href="/register">Register Number</a>
         </div>
 
         <form class="search-card" onsubmit="searchOrFilter(event)" style="margin:0 0 22px">
-          <input id="searchInput" class="search-input" placeholder="Search #2311, wallet, display name, or inscription ID" oninput="renderMarket()" />
+          <input id="searchInput" class="search-input" placeholder="Search #1, #8888, wallet, or display name…" oninput="renderMarket()" />
           <button class="btn btn-primary" type="submit">Search</button>
           <a class="btn" href="/">Pay by Number</a>
         </form>
 
         <div class="metrics" style="margin-bottom:28px">
           <div class="panel metric">
-            <div class="metric-value" id="statIndexed">237,777+</div>
-            <div class="metric-label">Eligible inscription numbers</div>
+            <div class="metric-value" id="statIndexed">7,777</div>
+            <div class="metric-label">Tracked inscription numbers</div>
           </div>
           <div class="panel metric">
             <div class="metric-value" id="statRegistered">...</div>
@@ -100,7 +100,7 @@
     }
 
     let registrations = [];
-    const displayIndexedBase = 237777;
+    const displayIndexedBase = 7777;
     const realRegisteredAtLaunch = 3;
 
     function searchOrFilter(event) {
@@ -129,7 +129,7 @@
         registrations = data.registrations || [];
         const liveRegistered = data.total || registrations.length || 0;
         const indexedCount = displayIndexedBase + Math.max(0, liveRegistered - realRegisteredAtLaunch);
-        document.getElementById('statIndexed').textContent = indexedCount.toLocaleString() + '+';
+        document.getElementById('statIndexed').textContent = indexedCount.toLocaleString();
         document.getElementById('statRegistered').textContent = liveRegistered.toLocaleString();
         renderMarket();
       } catch (_) {
@@ -167,7 +167,7 @@
           <div class="small mono">${shortId(inscriptionId)}</div>
           <div class="card-actions">
             <a class="btn" href="/n/${r.inscription_num}">Profile</a>
-            ${inscriptionId ? `<a class="btn btn-primary" href="https://www.satflow.com/ordinal/${inscriptionId}" target="_blank">Trade on Satflow</a>` : '<a class="btn btn-primary" href="https://www.satflow.com/ordinals" target="_blank">Satflow</a>'}
+            ${inscriptionId ? `<a class="btn btn-primary" href="https://www.satflow.com/ordinal/${inscriptionId}" target="_blank">View on Satflow ↗</a>` : '<a class="btn btn-primary" href="https://www.satflow.com" target="_blank">Satflow ↗</a>'}
           </div>
         </article>`;
       }).join('');

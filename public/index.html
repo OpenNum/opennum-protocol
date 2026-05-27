@@ -53,21 +53,21 @@
     <section class="hero">
       <div class="shell hero-grid">
         <div>
-          <h1>Bitcoin identity, simple as <span>#2311</span>.</h1>
-          <p class="lead">Search an OpenNum to view the profile, send BTC to the current owner, trade the inscription on Satflow, or leave a public wallet-signed message.</p>
+          <h1>Your Bitcoin identity. One number, forever.</h1>
+          <p class="lead">Search any inscription number to view the profile, send BTC, or see if it's available to claim. Low numbers like <span style="color:var(--gold-deep);font-weight:800">#1</span> are the most coveted.</p>
           <form class="search-card" onsubmit="searchNumber(event)">
-            <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Enter #2311 to view, pay, or trade" />
-            <button class="btn btn-primary" type="submit">Search Number</button>
-            <a class="btn btn-ghost" href="/register">Register</a>
+            <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #1, #8888, #100000…" />
+            <button class="btn btn-primary" type="submit">Search</button>
+            <a class="btn btn-ghost" href="/register">Claim Yours</a>
           </form>
           <div class="metrics">
             <div class="panel metric">
-              <div class="metric-value" id="indexedMetric">237,777+</div>
-              <div class="metric-label">Eligible inscription numbers</div>
+              <div class="metric-value" id="indexedMetric">7,777</div>
+              <div class="metric-label">Tracked inscription numbers</div>
             </div>
             <div class="panel metric">
               <div class="metric-value" id="registeredMetric">...</div>
-              <div class="metric-label">Live resolver records</div>
+              <div class="metric-label">Registered identities</div>
             </div>
             <div class="panel metric">
               <div class="metric-value">BTC</div>
@@ -78,16 +78,15 @@
         <aside class="hero-side" aria-label="OpenNum preview">
           <div class="panel identity-preview">
             <div class="preview-top">
-              <div class="avatar" id="heroAvatar">#</div>
+              <div class="avatar">#</div>
               <div style="text-align:right">
-                <div class="status">Active</div>
-                <div class="number" id="heroNum">#—</div>
+                <div class="status" id="heroStatus">Unclaimed</div>
+                <div class="number" id="heroNum">#1</div>
               </div>
             </div>
-            <div class="wallet-line" id="heroWallet">Loading…</div>
-            <div class="preview-actions">
-              <a class="btn btn-primary" id="heroProfileBtn" href="/register">Open Profile</a>
-              <a class="btn" id="heroTradeBtn" href="/market">Trade</a>
+            <div class="wallet-line" id="heroWallet">Search a number to see its identity</div>
+            <div class="preview-actions" id="heroActions">
+              <a class="btn btn-primary" href="/register">Claim a Number →</a>
             </div>
           </div>
           <div class="panel" style="padding:22px">
@@ -126,11 +125,11 @@
     <section class="section">
       <div class="shell">
         <div class="section-head">
-          <h2>Live identity market</h2>
-          <p class="section-copy">A simple discovery layer for OpenNum profiles. Search first, inspect the owner and inscription, then trade through Satflow.</p>
+          <h2>Registered identities</h2>
+          <p class="section-copy">Numbers already claimed. Search any number above — if it's taken you'll see the profile, if it's free you can register it.</p>
         </div>
         <div class="grid" id="homeMarket">
-          <div class="market-card"><div class="number">...</div><div class="small">Loading live records</div></div>
+          <div class="market-card"><div class="number">...</div><div class="small">Loading records</div></div>
         </div>
       </div>
     </section>
@@ -154,7 +153,7 @@
       btn.setAttribute('aria-expanded', open);
     }
 
-    const displayIndexedBase = 237777;
+    const displayIndexedBase = 7777;
     const realRegisteredAtLaunch = 3;
 
     function searchNumber(event) {
@@ -169,6 +168,44 @@
       return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
     }
 
+    // Live search preview in hero card
+    async function previewNumber(raw) {
+      const num = parseInt(raw.replace(/^#/, ''), 10);
+      if (!Number.isInteger(num) || num < 0) return;
+      document.getElementById('heroNum').textContent = '#' + num;
+      document.getElementById('heroWallet').textContent = 'Looking up…';
+      document.getElementById('heroStatus').textContent = '…';
+      try {
+        const r = await fetch(`/api/resolve?num=${num}`);
+        const d = await r.json();
+        if (r.status === 404 || d.status === 'unregistered') {
+          document.getElementById('heroStatus').textContent = 'Available';
+          document.getElementById('heroStatus').style.color = 'var(--green)';
+          document.getElementById('heroWallet').textContent = 'This number is free to register.';
+          document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/register">Claim #${num} →</a>`;
+        } else {
+          document.getElementById('heroStatus').textContent = 'Registered';
+          document.getElementById('heroStatus').style.color = 'var(--gold-deep)';
+          document.getElementById('heroWallet').textContent = shortWallet(d.wallet) + ' — resolves through OpenNum';
+          document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/n/${num}">View Profile →</a>`;
+        }
+      } catch (_) {
+        document.getElementById('heroWallet').textContent = 'Could not load status.';
+      }
+    }
+
+    document.getElementById('homeSearch').addEventListener('input', (e) => {
+      const v = e.target.value.trim().replace(/^#/, '');
+      if (/^\d+$/.test(v)) previewNumber(v);
+      else {
+        document.getElementById('heroNum').textContent = '#?';
+        document.getElementById('heroStatus').textContent = 'Unclaimed';
+        document.getElementById('heroStatus').style.color = '';
+        document.getElementById('heroWallet').textContent = 'Search a number to see its identity';
+        document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/register">Claim a Number →</a>`;
+      }
+    });
+
     async function loadHome() {
       try {
         const res = await fetch('/api/list?sort=number&order=asc&limit=6');
@@ -177,35 +214,15 @@
         const registrations = data.registrations || [];
         const total = data.total || registrations.length || 0;
         const indexed = displayIndexedBase + Math.max(0, total - realRegisteredAtLaunch);
-        document.getElementById('indexedMetric').textContent = indexed.toLocaleString() + '+';
+        document.getElementById('indexedMetric').textContent = indexed.toLocaleString();
         document.getElementById('registeredMetric').textContent = total.toLocaleString();
-
-        // Populate hero preview with the lowest-numbered registered identity
-        if (registrations.length) {
-          const hero = registrations[0];
-          const heroInscId = hero.inscription_id || (hero.inscription_txid ? `${hero.inscription_txid}i0` : null);
-          document.getElementById('heroNum').textContent = '#' + hero.inscription_num;
-          document.getElementById('heroWallet').textContent = shortWallet(hero.wallet) + ' — resolves through OpenNum';
-          document.getElementById('heroProfileBtn').href = `/n/${hero.inscription_num}`;
-          document.getElementById('heroProfileBtn').textContent = `Open #${hero.inscription_num}`;
-          if (heroInscId) document.getElementById('heroTradeBtn').href = `https://www.satflow.com/ordinal/${heroInscId}`;
-          // Load avatar if it's an image inscription
-          if (heroInscId) {
-            const img = new Image();
-            img.onload = () => { document.getElementById('heroAvatar').innerHTML = `<img src="https://ordinals.com/content/${heroInscId}" alt="#${hero.inscription_num}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`; };
-            img.src = `https://ordinals.com/content/${heroInscId}`;
-          }
-        }
 
         const grid = document.getElementById('homeMarket');
         if (!registrations.length) {
-          grid.innerHTML = '<div class="market-card"><div class="number">Open</div><div class="small">Register the first visible OpenNum identity.</div></div>';
+          grid.innerHTML = '<div class="market-card"><div class="number" style="font-size:28px">Be first</div><div class="small" style="margin-top:8px">No identities registered yet. Yours could be #1.</div><div class="card-actions" style="margin-top:16px"><a class="btn btn-primary" href="/register">Register Now</a></div></div>';
           return;
         }
-        grid.innerHTML = registrations.slice(0, 6).map((r) => {
-          const inscId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : null);
-          const satflowUrl = inscId ? `https://www.satflow.com/ordinal/${inscId}` : '/market';
-          return `
+        grid.innerHTML = registrations.slice(0, 6).map((r) => `
           <article class="market-card">
             <div class="card-row">
               <div class="number">#${r.inscription_num}</div>
@@ -213,13 +230,11 @@
             </div>
             <div class="small mono">${shortWallet(r.wallet)}</div>
             <div class="card-actions">
-              <a class="btn" href="/n/${r.inscription_num}">Profile</a>
-              <a class="btn btn-primary" href="${satflowUrl}" target="_blank">Trade on Satflow</a>
+              <a class="btn btn-primary" href="/n/${r.inscription_num}">View Profile</a>
             </div>
-          </article>`;
-        }).join('');
+          </article>`).join('');
       } catch (_) {
-        document.getElementById('registeredMetric').textContent = 'Live';
+        document.getElementById('registeredMetric').textContent = '—';
       }
     }
 
