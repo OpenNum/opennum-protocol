@@ -37,7 +37,10 @@
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
       <a class="brand" href="/"><span class="brand-mark">ON</span><span>OpenNum</span></a>
-      <div class="nav-links">
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a class="active" href="/">Search</a>
         <a href="/register">Register</a>
         <a href="/market">Market</a>
@@ -60,7 +63,7 @@
           <div class="metrics">
             <div class="panel metric">
               <div class="metric-value" id="indexedMetric">237,777+</div>
-              <div class="metric-label">Indexed identity numbers</div>
+              <div class="metric-label">Eligible inscription numbers</div>
             </div>
             <div class="panel metric">
               <div class="metric-value" id="registeredMetric">...</div>
@@ -144,6 +147,13 @@
   </footer>
 
   <script>
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+
     const displayIndexedBase = 237777;
     const realRegisteredAtLaunch = 3;
 

@@ -19,7 +19,10 @@
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
       <a class="brand" href="/"><span class="brand-mark">ON</span><span>OpenNum</span></a>
-      <div class="nav-links">
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
         <a href="/market">Market</a>
@@ -56,14 +59,21 @@
         </div>
 
         <div class="send-panel" id="sendPanel">
-          <div class="small">OpenNum resolves this number to the current owner wallet. Funds are sent by your wallet; OpenNum never holds custody.</div>
+          <div class="small">OpenNum resolves this number to the current owner wallet. Funds are sent by your own wallet — OpenNum never holds custody.</div>
           <div class="data-list" style="margin-top:12px">
             <div class="data-row"><div class="data-key">Recipient</div><div class="data-val mono" id="sendWallet"></div></div>
           </div>
-          <div class="form-row">
+          <!-- Desktop: Unisat send -->
+          <div class="form-row" id="unisatRow">
             <input class="input amount-input" id="sendSats" type="number" min="1" step="1" placeholder="sats amount" />
             <button class="btn btn-primary" onclick="sendWithUnisat()">Send with Unisat</button>
-            <button class="btn" onclick="copyRecipientWallet()">Copy Wallet</button>
+            <button class="btn" onclick="copyRecipientWallet()">Copy Address</button>
+          </div>
+          <!-- Mobile fallback: copy address + open in wallet app -->
+          <div class="form-row" id="mobileRow" style="display:none;flex-direction:column;gap:8px">
+            <div class="small" style="margin-bottom:4px">Unisat is a desktop browser extension. On mobile, copy the address and paste it into your wallet app.</div>
+            <button class="btn btn-primary" style="width:100%" onclick="copyRecipientWallet()">Copy Recipient Address</button>
+            <a class="btn" id="bitcoinUriLink" href="#" style="width:100%;text-align:center">Open in Wallet App</a>
           </div>
           <div class="alert alert-error" id="sendError"></div>
           <div class="alert alert-success" id="sendSuccess"></div>
@@ -154,6 +164,7 @@
       document.getElementById('dNum').textContent = `#${num}`;
       document.getElementById('dWallet').textContent = data.wallet || '—';
       document.getElementById('sendWallet').textContent = data.wallet || '—';
+      if (data.wallet) document.getElementById('bitcoinUriLink').href = `bitcoin:${data.wallet}`;
       document.getElementById('dInscriptionId').textContent = inscriptionId;
       document.getElementById('dDate').textContent = data.registered_at ? new Date(data.registered_at).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
       document.getElementById('dStatus').textContent = data.status || 'active';
@@ -180,8 +191,23 @@
       }
     }
 
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+
+    function isMobile() {
+      return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 600;
+    }
+
     function toggleSendPanel() {
       document.getElementById('sendPanel').classList.toggle('visible');
+      // Switch UI based on device
+      const mobile = isMobile();
+      document.getElementById('unisatRow').style.display = mobile ? 'none' : '';
+      document.getElementById('mobileRow').style.display = mobile ? '' : 'none';
     }
 
     function setAlert(id, message) {
