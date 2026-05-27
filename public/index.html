@@ -78,16 +78,16 @@
         <aside class="hero-side" aria-label="OpenNum preview">
           <div class="panel identity-preview">
             <div class="preview-top">
-              <div class="avatar">#</div>
+              <div class="avatar" id="heroAvatar">#</div>
               <div style="text-align:right">
                 <div class="status">Active</div>
-                <div class="number">#2311</div>
+                <div class="number" id="heroNum">#—</div>
               </div>
             </div>
-            <div class="wallet-line">bc1p... resolves through OpenNum</div>
+            <div class="wallet-line" id="heroWallet">Loading…</div>
             <div class="preview-actions">
-              <a class="btn btn-primary" href="/n/2311">Open Profile</a>
-              <a class="btn" href="/market">Trade</a>
+              <a class="btn btn-primary" id="heroProfileBtn" href="/register">Open Profile</a>
+              <a class="btn" id="heroTradeBtn" href="/market">Trade</a>
             </div>
           </div>
           <div class="panel" style="padding:22px">
@@ -179,12 +179,33 @@
         const indexed = displayIndexedBase + Math.max(0, total - realRegisteredAtLaunch);
         document.getElementById('indexedMetric').textContent = indexed.toLocaleString() + '+';
         document.getElementById('registeredMetric').textContent = total.toLocaleString();
+
+        // Populate hero preview with the lowest-numbered registered identity
+        if (registrations.length) {
+          const hero = registrations[0];
+          const heroInscId = hero.inscription_id || (hero.inscription_txid ? `${hero.inscription_txid}i0` : null);
+          document.getElementById('heroNum').textContent = '#' + hero.inscription_num;
+          document.getElementById('heroWallet').textContent = shortWallet(hero.wallet) + ' — resolves through OpenNum';
+          document.getElementById('heroProfileBtn').href = `/n/${hero.inscription_num}`;
+          document.getElementById('heroProfileBtn').textContent = `Open #${hero.inscription_num}`;
+          if (heroInscId) document.getElementById('heroTradeBtn').href = `https://www.satflow.com/ordinal/${heroInscId}`;
+          // Load avatar if it's an image inscription
+          if (heroInscId) {
+            const img = new Image();
+            img.onload = () => { document.getElementById('heroAvatar').innerHTML = `<img src="https://ordinals.com/content/${heroInscId}" alt="#${hero.inscription_num}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">`; };
+            img.src = `https://ordinals.com/content/${heroInscId}`;
+          }
+        }
+
         const grid = document.getElementById('homeMarket');
         if (!registrations.length) {
           grid.innerHTML = '<div class="market-card"><div class="number">Open</div><div class="small">Register the first visible OpenNum identity.</div></div>';
           return;
         }
-        grid.innerHTML = registrations.slice(0, 6).map((r) => `
+        grid.innerHTML = registrations.slice(0, 6).map((r) => {
+          const inscId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : null);
+          const satflowUrl = inscId ? `https://www.satflow.com/ordinal/${inscId}` : '/market';
+          return `
           <article class="market-card">
             <div class="card-row">
               <div class="number">#${r.inscription_num}</div>
@@ -193,10 +214,10 @@
             <div class="small mono">${shortWallet(r.wallet)}</div>
             <div class="card-actions">
               <a class="btn" href="/n/${r.inscription_num}">Profile</a>
-              <a class="btn btn-primary" href="/market">Market</a>
+              <a class="btn btn-primary" href="${satflowUrl}" target="_blank">Trade on Satflow</a>
             </div>
-          </article>
-        `).join('');
+          </article>`;
+        }).join('');
       } catch (_) {
         document.getElementById('registeredMetric').textContent = 'Live';
       }

@@ -159,9 +159,17 @@
     .footnote { font-size: 12px; color: #444; line-height: 1.7; margin-top: 16px; }
     .footnote a { color: var(--muted); text-decoration: underline; }
 
+    .nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); cursor: pointer; padding: 8px 9px; flex-shrink: 0; }
+    .nav-toggle span { display: block; height: 2px; background: var(--white); border-radius: 2px; transition: transform 0.2s, opacity 0.2s; }
+    .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
     @media (max-width: 600px) {
       nav { padding: 0 20px; }
-      .nav-links { gap: 16px; }
+      .nav-toggle { display: flex; }
+      .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; gap: 2px; padding: 10px 12px 14px; background: rgba(248,246,239,0.98); border-bottom: 1px solid var(--border); box-shadow: 0 12px 32px rgba(16,32,51,0.10); z-index: 40; }
+      .nav-links.open { display: flex; }
+      .nav-links a { padding: 11px 14px; border-radius: 8px; font-size: 15px; }
       .panel { padding: 24px 20px; }
       .inscription-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -174,7 +182,10 @@
     <div class="nav-logo-dot"></div>
     OpenNum
   </a>
-  <div class="nav-links">
+  <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="navLinks">
     <a href="/">Search</a>
     <a href="/market">Market</a>
     <a href="/whitepaper-en">Whitepaper</a>
@@ -299,6 +310,13 @@
 </div><!-- /page-wrap -->
 
 <script>
+  function toggleNav(btn) {
+    const links = document.getElementById('navLinks');
+    const open = links.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+  }
+
   // ── STATE ──────────────────────────────────────────────────
   let walletAddr = null;
   let selectedInscription = null; // { inscriptionId, inscriptionNumber, txid, contentType }
