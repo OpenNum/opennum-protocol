@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="action-stack">
+        <div class="action-stack" id="send">
           <button class="btn btn-primary" onclick="toggleSendPanel()">Send BTC to this number</button>
           <a class="btn" id="satflowLink" href="#" target="_blank">Trade on Satflow</a>
           <a class="btn" id="ordLink" href="#" target="_blank">View Inscription</a>
@@ -94,7 +94,7 @@
           <div id="inscriptionContent" style="display:grid;place-items:center;min-height:280px;background:#fffaf0;border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
         </div>
 
-        <div class="profile-card">
+        <div class="profile-card" id="messages">
           <div class="section-head" style="margin-bottom:10px">
             <div>
               <h2 style="font-size:32px">Public messages</h2>
@@ -144,6 +144,13 @@
         if (res.status === 404 || !res.ok) return showNotFound(num);
         renderProfile(num, data);
         loadGuestbook();
+        // Auto-open send panel or scroll to messages if deep-linked
+        const hash = window.location.hash;
+        if (hash === '#send') {
+          setTimeout(() => { toggleSendPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+        } else if (hash === '#messages') {
+          setTimeout(() => { document.getElementById('messages').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+        }
       } catch (_) {
         showNotFound(num);
       }

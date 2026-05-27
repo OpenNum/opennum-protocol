@@ -163,6 +163,10 @@
       if (Number.isInteger(num) && num >= 0) location.href = `/n/${num}`;
     }
 
+    function escapeHtml(v) {
+      return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
     function shortWallet(wallet) {
       if (!wallet) return 'wallet unavailable';
       return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
@@ -222,17 +226,29 @@
           grid.innerHTML = '<div class="market-card"><div class="number" style="font-size:28px">Be first</div><div class="small" style="margin-top:8px">No identities registered yet. Yours could be #1.</div><div class="card-actions" style="margin-top:16px"><a class="btn btn-primary" href="/register">Register Now</a></div></div>';
           return;
         }
-        grid.innerHTML = registrations.slice(0, 6).map((r) => `
-          <article class="market-card">
-            <div class="card-row">
-              <div class="number">#${r.inscription_num}</div>
-              <div class="status">${r.status || 'active'}</div>
+        grid.innerHTML = registrations.slice(0, 6).map((r) => {
+          const inscId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
+          const contentUrl = inscId ? `https://ordinals.com/content/${inscId}` : '';
+          const thumbHtml = contentUrl
+            ? `<img src="${contentUrl}" loading="lazy" alt="#${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
+            : '#';
+          return `<article class="market-card">
+            <div class="card-top">
+              <div class="insc-thumb">${thumbHtml}</div>
+              <div class="card-meta">
+                <div class="status">${r.status || 'active'}</div>
+                <div class="number">#${r.inscription_num}</div>
+                ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
+                <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
+              </div>
             </div>
-            <div class="small mono">${shortWallet(r.wallet)}</div>
             <div class="card-actions">
-              <a class="btn btn-primary" href="/n/${r.inscription_num}">View Profile</a>
+              <a class="btn" href="/n/${r.inscription_num}">Profile</a>
+              <a class="btn" href="/n/${r.inscription_num}#send">Send</a>
+              <a class="btn" href="/n/${r.inscription_num}#messages">Message</a>
             </div>
-          </article>`).join('');
+          </article>`;
+        }).join('');
       } catch (_) {
         document.getElementById('registeredMetric').textContent = '—';
       }

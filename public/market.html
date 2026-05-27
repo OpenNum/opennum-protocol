@@ -154,20 +154,26 @@
       }
       grid.innerHTML = filtered.map((r) => {
         const inscriptionId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
+        const contentUrl = inscriptionId ? `https://ordinals.com/content/${inscriptionId}` : '';
+        const thumbHtml = contentUrl
+          ? `<img src="${contentUrl}" loading="lazy" alt="#${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
+          : '#';
+        const satflowUrl = inscriptionId ? `https://www.satflow.com/ordinal/${inscriptionId}` : 'https://www.satflow.com';
         return `<article class="market-card">
-          <div class="card-row">
-            <div class="avatar" style="width:54px;height:54px;font-size:18px">#</div>
-            <div style="text-align:right">
+          <div class="card-top">
+            <div class="insc-thumb">${thumbHtml}</div>
+            <div class="card-meta">
               <div class="status">${r.status || 'active'}</div>
-              <div class="number" style="font-size:34px">#${r.inscription_num}</div>
+              <div class="number">#${r.inscription_num}</div>
+              ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
+              <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
             </div>
           </div>
-          ${r.display_name ? `<div style="font-weight:850">${escapeHtml(r.display_name)}</div>` : ''}
-          <div class="small mono">${shortWallet(r.wallet)}</div>
-          <div class="small mono">${shortId(inscriptionId)}</div>
           <div class="card-actions">
             <a class="btn" href="/n/${r.inscription_num}">Profile</a>
-            ${inscriptionId ? `<a class="btn btn-primary" href="https://www.satflow.com/ordinal/${inscriptionId}" target="_blank">View on Satflow ↗</a>` : '<a class="btn btn-primary" href="https://www.satflow.com" target="_blank">Satflow ↗</a>'}
+            <a class="btn" href="/n/${r.inscription_num}#send">Send</a>
+            <a class="btn" href="/n/${r.inscription_num}#messages">Message</a>
+            <a class="btn btn-primary" href="${satflowUrl}" target="_blank">Satflow ↗</a>
           </div>
         </article>`;
       }).join('');
