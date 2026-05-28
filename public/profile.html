@@ -34,8 +34,11 @@
 
     <div id="notFound" class="panel" style="display:none;margin:72px auto;padding:42px;max-width:680px;text-align:center">
       <div class="number" id="nfNum"></div>
-      <p class="lead" style="margin:18px auto 26px">This OpenNum has not been registered yet.</p>
-      <a class="btn btn-primary" href="/register">Register a Number</a>
+      <div id="nfInscription" style="display:none;margin:22px auto;max-width:320px;aspect-ratio:1;background:var(--wash);border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
+      <p class="lead" id="nfText" style="margin:18px auto 26px">This OpenNum has not been registered yet.</p>
+      <div class="preview-actions" id="nfActions" style="justify-content:center">
+        <a class="btn btn-primary" href="/register">Register a Number</a>
+      </div>
     </div>
 
     <section id="profile" class="profile-layout" style="display:none">
@@ -105,6 +108,10 @@
               <input class="input" id="editInstagram" type="url" placeholder="https://instagram.com/yourhandle" />
             </div>
             <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">OnlyFans URL</label>
+              <input class="input" id="editOnlyFans" type="url" placeholder="https://onlyfans.com/yourhandle" />
+            </div>
+            <div>
               <label class="data-key" style="display:block;margin-bottom:4px">Telegram URL</label>
               <input class="input" id="editTelegram" type="url" placeholder="https://t.me/yourhandle" />
             </div>
@@ -140,7 +147,7 @@
           <div class="section-head" style="margin-bottom:10px">
             <div>
               <h2 style="font-size:32px">Public messages</h2>
-              <p class="small">Leave a wallet-signed message or reply. Everything here is public and off-chain.</p>
+              <p class="small">Only wallets with an active OpenNum ID can leave public signed messages. Everything here is public and off-chain.</p>
             </div>
           </div>
 
@@ -198,10 +205,26 @@
       }
     })();
 
-    function showNotFound(num) {
+    async function showNotFound(num) {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('notFound').style.display = 'block';
       document.getElementById('nfNum').textContent = `#${num}`;
+      try {
+        const res = await fetch(`/api/inscription?num=${num}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('nfText').textContent = 'This inscription exists on Bitcoin, but it has not been registered as an OpenNum ID yet.';
+        if (data.content_type?.startsWith('image/') && data.content_url) {
+          const box = document.getElementById('nfInscription');
+          box.style.display = 'block';
+          box.innerHTML = `<img src="${data.content_url}" alt="#${num}" style="width:100%;height:100%;object-fit:contain" />`;
+        }
+        document.getElementById('nfActions').innerHTML = `
+          <a class="btn btn-primary" href="/register">Register a Number</a>
+          <a class="btn" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View Inscription</a>
+          ${data.inscription_id ? `<a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make Offer</a>` : ''}
+        `;
+      } catch (_) {}
     }
 
     function renderProfile(num, data) {
@@ -246,6 +269,7 @@
       const linkDefs = [
         { key: 'x', label: '𝕏 Twitter' },
         { key: 'instagram', label: 'Instagram' },
+        { key: 'onlyfans', label: 'OnlyFans' },
         { key: 'telegram', label: 'Telegram' },
         { key: 'website', label: 'Website' }
       ];
@@ -304,6 +328,7 @@
           const links = currentProfile.links || {};
           document.getElementById('editX').value = links.x || '';
           document.getElementById('editInstagram').value = links.instagram || '';
+          document.getElementById('editOnlyFans').value = links.onlyfans || '';
           document.getElementById('editTelegram').value = links.telegram || '';
           document.getElementById('editWebsite').value = links.website || '';
         }
@@ -327,10 +352,12 @@
         const links = {};
         const x = document.getElementById('editX').value.trim();
         const ig = document.getElementById('editInstagram').value.trim();
+        const of = document.getElementById('editOnlyFans').value.trim();
         const tg = document.getElementById('editTelegram').value.trim();
         const ws = document.getElementById('editWebsite').value.trim();
         if (x) links.x = x;
         if (ig) links.instagram = ig;
+        if (of) links.onlyfans = of;
         if (tg) links.telegram = tg;
         if (ws) links.website = ws;
 

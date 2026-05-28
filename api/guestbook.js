@@ -100,6 +100,9 @@ module.exports = async (req, res) => {
     .limit(1)
     .maybeSingle();
   if (author) authorNumber = author.inscription_num;
+  if (!authorNumber) {
+    return res.status(403).json({ error: 'You need an active OpenNum ID before you can leave public messages.' });
+  }
 
   const { data, error } = await supabase
     .from('guestbook')

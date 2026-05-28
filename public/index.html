@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum — Your Bitcoin Identity Number</title>
-  <meta name="description" content="Search any Bitcoin Ordinals inscription number, view the identity profile, send BTC, or register your own." />
+  <title>OpenNum — Bitcoin Ordinals Identity</title>
+  <meta name="description" content="Register an Ordinals inscription as your OpenNum identity, search any number, leave signed messages, or mint a new inscription." />
   <link rel="canonical" href="https://opennum.org/" />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="OpenNum" />
-  <meta property="og:title" content="OpenNum — Bitcoin identity numbers" />
-  <meta property="og:description" content="One inscription number. One identity. Search, pay, and trade Bitcoin identity numbers." />
+  <meta property="og:title" content="OpenNum — Bitcoin Ordinals Identity" />
+  <meta property="og:description" content="Your inscription is your identity. Register, search, message, and trade Bitcoin identity numbers." />
   <meta property="og:url" content="https://opennum.org/" />
   <meta property="og:image" content="https://opennum.org/img/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
-  <meta name="twitter:title" content="OpenNum — Bitcoin identity numbers" />
-  <meta name="twitter:description" content="Search, pay, and trade Bitcoin identity numbers." />
+  <meta name="twitter:title" content="OpenNum — Bitcoin Ordinals Identity" />
+  <meta name="twitter:description" content="Register, search, message, and trade Bitcoin identity numbers." />
   <meta name="twitter:image" content="https://opennum.org/img/logo.png" />
   <link rel="stylesheet" href="/app.css" />
   <script type="application/ld+json">
@@ -41,53 +41,111 @@
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
-        <a class="active" href="/">Search</a>
+        <a class="active" href="/">Home</a>
+        <a href="/explore">Explore</a>
         <a href="/register">Register</a>
+        <a href="/market">Market</a>
       </div>
     </nav>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="shell hero-grid">
-        <div>
-          <h1>Your Bitcoin identity. One number, forever.</h1>
-          <p class="lead">Search any inscription number to view the profile, send BTC, or claim it as your own.</p>
-          <form class="search-card" onsubmit="searchNumber(event)">
-            <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #1, #8888, #100000…" />
+    <section class="home-hero">
+      <div class="shell home-grid">
+        <div class="home-copy">
+          <h1>Your inscription is your identity.</h1>
+          <p class="lead">Turn an Ordinals inscription number into a public Bitcoin identity page: profile links, signed messages, wallet resolution, and market offers in one place.</p>
+          <form class="command-search" onsubmit="searchNumber(event)">
+            <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search an inscription number, e.g. 9164" />
             <button class="btn btn-primary" type="submit">Search</button>
-            <a class="btn btn-ghost" href="/register">Claim Yours</a>
           </form>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="/register">Register my ID</a>
+            <button class="btn" type="button" onclick="connectWallet()">Login with Unisat</button>
+            <a class="btn btn-ghost" href="https://ordinalsbot.com/inscribe" target="_blank" rel="noopener noreferrer">Mint new inscription</a>
+          </div>
+          <div id="walletState" class="wallet-mini">Wallet not connected. Connect only when you want to register or post.</div>
         </div>
-        <aside class="hero-side" aria-label="OpenNum preview">
-          <div class="panel identity-preview">
-            <div class="preview-top">
-              <div class="avatar">#</div>
-              <div style="text-align:right">
-                <div class="status" id="heroStatus">Unclaimed</div>
-                <div class="number" id="heroNum">#1</div>
-              </div>
-            </div>
-            <div class="wallet-line" id="heroWallet">Search a number to see its identity</div>
-            <div class="preview-actions" id="heroActions">
-              <a class="btn btn-primary" href="/register">Claim a Number →</a>
+
+        <aside class="result-console" aria-label="Search result preview">
+          <div class="console-top">
+            <span id="resultStatus" class="status">Ready</span>
+            <span id="resultNum" class="console-number">#9164</span>
+          </div>
+          <div class="console-main">
+            <div id="resultAvatar" class="avatar avatar-large">#</div>
+            <div>
+              <div id="resultName" class="profile-name">Search any number</div>
+              <div id="resultWallet" class="wallet-line">Preview its inscription, profile owner, and next action.</div>
             </div>
           </div>
-          <div class="panel" style="padding:22px">
-            <div class="small">One inscription number becomes a public identity page, a BTC payment target, and a social contact point.</div>
+          <div class="preview-actions" id="resultActions">
+            <a class="btn btn-primary" href="/n/9164">View example</a>
+            <a class="btn" href="/register">Register yours</a>
           </div>
         </aside>
+      </div>
+    </section>
+
+    <section class="home-strip">
+      <div class="shell workflow-grid">
+        <a class="workflow-item" href="/register">
+          <span>01</span>
+          <strong>Register</strong>
+          <p>Connect Unisat, choose an inscription you own, sign once, and make the number your OpenNum ID.</p>
+        </a>
+        <a class="workflow-item" href="/explore">
+          <span>02</span>
+          <strong>Search</strong>
+          <p>Look up a familiar number, inspect the inscription image, owner wallet, profile links, and message board.</p>
+        </a>
+        <a class="workflow-item" href="https://ordinalsbot.com/inscribe" target="_blank" rel="noopener noreferrer">
+          <span>03</span>
+          <strong>Mint</strong>
+          <p>If the number is good but the avatar is not yours, mint a new inscription and bring your own image.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell split-section">
+        <div>
+          <div class="section-head compact">
+            <h2>Recently registered</h2>
+            <a class="btn btn-ghost" href="/explore">Open explorer</a>
+          </div>
+          <div id="recentList" class="compact-list">
+            <div class="empty">Loading live registry...</div>
+          </div>
+        </div>
+        <div class="profile-card linktree-preview">
+          <div class="preview-top">
+            <div class="avatar">ON</div>
+            <div style="text-align:right">
+              <div class="status">Profile</div>
+              <div class="number" style="font-size:46px">#180</div>
+            </div>
+          </div>
+          <div class="profile-name">One number, all links</div>
+          <p class="profile-bio">OpenNum profiles work like a Bitcoin-native Linktree: X, Instagram, OnlyFans, personal site, market page, and public signed messages.</p>
+          <div class="link-stack">
+            <a href="/register">X / Twitter</a>
+            <a href="/register">Instagram</a>
+            <a href="/register">OnlyFans</a>
+            <a href="/register">Website</a>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="shell">
-      <div>OpenNum is non-custodial. Wallets send funds; OpenNum resolves identity.</div>
+      <div>OpenNum is non-custodial. Wallets sign and send; OpenNum resolves identity.</div>
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
         <a href="/market">Market</a>
-        <a href="https://twitter.com/OpenNumBTC" target="_blank">X</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
       </div>
     </div>
   </footer>
@@ -100,11 +158,10 @@
       btn.setAttribute('aria-expanded', open);
     }
 
-    function searchNumber(event) {
-      event.preventDefault();
-      const raw = document.getElementById('homeSearch').value.trim().replace(/^#/, '');
-      const num = parseInt(raw, 10);
-      if (Number.isInteger(num) && num >= 0) location.href = `/n/${num}`;
+    function normalizeNumber(value) {
+      const q = String(value || '').trim().replace(/^#/, '');
+      const num = parseInt(q, 10);
+      return Number.isInteger(num) && num >= 0 ? num : null;
     }
 
     function shortWallet(wallet) {
@@ -112,42 +169,116 @@
       return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
     }
 
-    async function previewNumber(raw) {
-      const num = parseInt(raw.replace(/^#/, ''), 10);
-      if (!Number.isInteger(num) || num < 0) return;
-      document.getElementById('heroNum').textContent = '#' + num;
-      document.getElementById('heroWallet').textContent = 'Looking up…';
-      document.getElementById('heroStatus').textContent = '…';
+    function searchNumber(event) {
+      event.preventDefault();
+      const num = normalizeNumber(document.getElementById('homeSearch').value);
+      if (num !== null) location.href = `/n/${num}`;
+    }
+
+    async function connectWallet() {
+      const state = document.getElementById('walletState');
+      if (!window.unisat) {
+        state.textContent = 'Unisat extension not found. Install it before registering or posting.';
+        return;
+      }
       try {
-        const r = await fetch(`/api/resolve?num=${num}`);
-        const d = await r.json();
-        if (r.status === 404 || d.status === 'unregistered') {
-          document.getElementById('heroStatus').textContent = 'Available';
-          document.getElementById('heroStatus').style.color = 'var(--green)';
-          document.getElementById('heroWallet').textContent = 'This number is free to register.';
-          document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/register">Claim #${num} →</a>`;
-        } else {
-          document.getElementById('heroStatus').textContent = 'Registered';
-          document.getElementById('heroStatus').style.color = 'var(--gold-deep)';
-          document.getElementById('heroWallet').textContent = shortWallet(d.wallet) + ' — resolves through OpenNum';
-          document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/n/${num}">View Profile →</a>`;
-        }
-      } catch (_) {
-        document.getElementById('heroWallet').textContent = 'Could not load status.';
+        const accounts = await window.unisat.requestAccounts();
+        state.textContent = `Connected: ${shortWallet(accounts[0])}`;
+      } catch (e) {
+        state.textContent = e?.message || 'Wallet connection was cancelled.';
       }
     }
 
-    document.getElementById('homeSearch').addEventListener('input', (e) => {
-      const v = e.target.value.trim().replace(/^#/, '');
-      if (/^\d+$/.test(v)) previewNumber(v);
-      else {
-        document.getElementById('heroNum').textContent = '#?';
-        document.getElementById('heroStatus').textContent = 'Unclaimed';
-        document.getElementById('heroStatus').style.color = '';
-        document.getElementById('heroWallet').textContent = 'Search a number to see its identity';
-        document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/register">Claim a Number →</a>`;
+    async function previewNumber(value) {
+      const num = normalizeNumber(value);
+      if (num === null) return;
+      const status = document.getElementById('resultStatus');
+      const numEl = document.getElementById('resultNum');
+      const nameEl = document.getElementById('resultName');
+      const walletEl = document.getElementById('resultWallet');
+      const avatar = document.getElementById('resultAvatar');
+      const actions = document.getElementById('resultActions');
+      numEl.textContent = `#${num}`;
+      status.textContent = 'Looking up';
+      nameEl.textContent = 'Checking registry...';
+      walletEl.textContent = 'Resolving OpenNum status.';
+      avatar.textContent = '#';
+      try {
+        const res = await fetch(`/api/profile?num=${num}`);
+        const data = await res.json();
+        if (res.status === 404 || data.status === 'unregistered') {
+          let inscription = null;
+          try {
+            const insRes = await fetch(`/api/inscription?num=${num}`);
+            if (insRes.ok) inscription = await insRes.json();
+          } catch (_) {}
+          status.textContent = 'Available';
+          nameEl.textContent = `#${num} is not registered`;
+          walletEl.textContent = inscription?.address
+            ? `${shortWallet(inscription.address)} owns the inscription on Bitcoin`
+            : 'If you own this inscription, register it as your OpenNum ID.';
+          if (inscription?.content_type?.startsWith('image/') && inscription.content_url) {
+            avatar.innerHTML = `<img src="${inscription.content_url}" alt="#${num}" />`;
+          } else {
+            avatar.textContent = `#${num}`;
+          }
+          actions.innerHTML = `
+            <a class="btn btn-primary" href="/register">Register #${num}</a>
+            <a class="btn" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View inscription</a>
+            ${inscription?.inscription_id ? `<a class="btn" href="https://www.satflow.com/ordinal/${inscription.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>` : ''}
+          `;
+          return;
+        }
+        status.textContent = data.status || 'Active';
+        nameEl.textContent = data.display_name || `OpenNum #${num}`;
+        walletEl.textContent = `${shortWallet(data.wallet)} owns this identity`;
+        const inscriptionId = data.inscription_id || (data.inscription_txid ? `${data.inscription_txid}i0` : '');
+        if (data.metadata?.content_type?.startsWith('image/') && data.metadata.content_url) {
+          avatar.innerHTML = `<img src="${data.metadata.content_url}" alt="#${num}" />`;
+        } else {
+          avatar.textContent = `#${num}`;
+        }
+        actions.innerHTML = `
+          <a class="btn btn-primary" href="/n/${num}">View profile</a>
+          <a class="btn" href="/n/${num}#messages">Leave message</a>
+          ${inscriptionId ? `<a class="btn" href="https://www.satflow.com/ordinal/${inscriptionId}" target="_blank" rel="noopener noreferrer">Make offer</a>` : ''}
+        `;
+      } catch (_) {
+        status.textContent = 'Offline';
+        nameEl.textContent = 'Lookup failed';
+        walletEl.textContent = 'Try again in a moment.';
       }
+    }
+
+    async function loadRecent() {
+      const list = document.getElementById('recentList');
+      try {
+        const res = await fetch('/api/list?sort=registered_at&order=desc&limit=6');
+        const data = await res.json();
+        const rows = data.registrations || [];
+        if (!rows.length) {
+          list.innerHTML = '<div class="empty">No registered identities yet.</div>';
+          return;
+        }
+        list.innerHTML = rows.map((r) => `
+          <a class="compact-row" href="/n/${r.inscription_num}">
+            <strong>#${r.inscription_num}</strong>
+            <span>${r.display_name || shortWallet(r.wallet)}</span>
+            <em>${r.registered_at ? new Date(r.registered_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }) : 'active'}</em>
+          </a>
+        `).join('');
+      } catch (_) {
+        list.innerHTML = '<div class="empty">Registry unavailable.</div>';
+      }
+    }
+
+    let previewTimer = null;
+    document.getElementById('homeSearch').addEventListener('input', (event) => {
+      clearTimeout(previewTimer);
+      const value = event.target.value;
+      previewTimer = setTimeout(() => previewNumber(value), 220);
     });
+    window.addEventListener('load', loadRecent);
   </script>
 </body>
 </html>
