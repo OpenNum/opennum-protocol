@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { inscription_num, inscription_txid, inscription_id, wallet, signature, timestamp, display_name } = req.body || {};
+  const { inscription_num, inscription_txid, inscription_id, wallet, signature, timestamp, display_name, links } = req.body || {};
 
   if (!inscription_num && inscription_num !== 0 || !inscription_txid || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, inscription_txid, wallet, signature, timestamp' });
@@ -119,6 +119,8 @@ module.exports = async (req, res) => {
       status: 'active',
       updated_at: new Date().toISOString()
     };
+    // links is optional — only include if provided (requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}')
+    if (links && typeof links === 'object') updatePayload.links = links;
 
     let { error: updateError } = await supabase
       .from('registrations')
@@ -157,6 +159,8 @@ module.exports = async (req, res) => {
     indexer_ruleset: 'ord-v0.18-mainnet',
     status: 'active'
   };
+  // links is optional — only include if provided (requires DB migration)
+  if (links && typeof links === 'object') insertPayload.links = links;
 
   let { error: insertError } = await supabase
     .from('registrations')

@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum — Search, Pay, and Trade Bitcoin Identity Numbers</title>
-  <meta name="description" content="OpenNum turns Bitcoin Ordinals inscription numbers into searchable identities for profiles, payments, trading, and public messages." />
+  <title>OpenNum — Your Bitcoin Identity Number</title>
+  <meta name="description" content="Search any Bitcoin Ordinals inscription number, view the identity profile, send BTC, or register your own." />
   <link rel="canonical" href="https://opennum.org/" />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="OpenNum" />
-  <meta property="og:title" content="OpenNum — Bitcoin identity numbers for everyday use" />
-  <meta property="og:description" content="Register an inscription number, search any OpenNum, send BTC, trade on Satflow, and leave wallet-signed messages." />
+  <meta property="og:title" content="OpenNum — Bitcoin identity numbers" />
+  <meta property="og:description" content="One inscription number. One identity. Search, pay, and trade Bitcoin identity numbers." />
   <meta property="og:url" content="https://opennum.org/" />
   <meta property="og:image" content="https://opennum.org/img/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
   <meta name="twitter:title" content="OpenNum — Bitcoin identity numbers" />
-  <meta name="twitter:description" content="Search, pay, trade, and message Bitcoin identities by number." />
+  <meta name="twitter:description" content="Search, pay, and trade Bitcoin identity numbers." />
   <meta name="twitter:image" content="https://opennum.org/img/logo.png" />
   <link rel="stylesheet" href="/app.css" />
   <script type="application/ld+json">
@@ -43,8 +43,6 @@
       <div class="nav-links" id="navLinks">
         <a class="active" href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/market">Market</a>
-        <a href="/whitepaper-en">Whitepaper</a>
       </div>
     </nav>
   </header>
@@ -54,26 +52,12 @@
       <div class="shell hero-grid">
         <div>
           <h1>Your Bitcoin identity. One number, forever.</h1>
-          <p class="lead">Search any inscription number to view the profile, send BTC, or see if it's available to claim. Low numbers like <span style="color:var(--gold-deep);font-weight:800">#1</span> are the most coveted.</p>
+          <p class="lead">Search any inscription number to view the profile, send BTC, or claim it as your own.</p>
           <form class="search-card" onsubmit="searchNumber(event)">
             <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #1, #8888, #100000…" />
             <button class="btn btn-primary" type="submit">Search</button>
             <a class="btn btn-ghost" href="/register">Claim Yours</a>
           </form>
-          <div class="metrics">
-            <div class="panel metric">
-              <div class="metric-value" id="indexedMetric">7,777</div>
-              <div class="metric-label">Tracked inscription numbers</div>
-            </div>
-            <div class="panel metric">
-              <div class="metric-value" id="registeredMetric">...</div>
-              <div class="metric-label">Registered identities</div>
-            </div>
-            <div class="panel metric">
-              <div class="metric-value">BTC</div>
-              <div class="metric-label">Paid by your own wallet</div>
-            </div>
-          </div>
         </div>
         <aside class="hero-side" aria-label="OpenNum preview">
           <div class="panel identity-preview">
@@ -95,44 +79,6 @@
         </aside>
       </div>
     </section>
-
-    <section class="section">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Register. Pay. Trade. Talk.</h2>
-          <p class="section-copy">OpenNum is built for normal people to use Bitcoin identity without reading protocol docs. The protocol stays underneath; the number becomes the interface.</p>
-        </div>
-        <div class="flow">
-          <div class="panel flow-card">
-            <div class="flow-num">1</div>
-            <strong>Register your number</strong>
-            <p>Connect Unisat, choose an inscription you own, and sign once. No on-chain registration transaction.</p>
-          </div>
-          <div class="panel flow-card">
-            <div class="flow-num">2</div>
-            <strong>Use it as your BTC identity</strong>
-            <p>Anyone can search your number, view your profile, and send BTC to the current owner wallet.</p>
-          </div>
-          <div class="panel flow-card">
-            <div class="flow-num">3</div>
-            <strong>Trade the identity asset</strong>
-            <p>The identity follows the inscription. Trade it on Satflow, then the new owner re-registers.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Registered identities</h2>
-          <p class="section-copy">Numbers already claimed. Search any number above — if it's taken you'll see the profile, if it's free you can register it.</p>
-        </div>
-        <div class="grid" id="homeMarket">
-          <div class="market-card"><div class="number">...</div><div class="small">Loading records</div></div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">
@@ -140,6 +86,7 @@
       <div>OpenNum is non-custodial. Wallets send funds; OpenNum resolves identity.</div>
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
+        <a href="/market">Market</a>
         <a href="https://twitter.com/OpenNumBTC" target="_blank">X</a>
       </div>
     </div>
@@ -153,9 +100,6 @@
       btn.setAttribute('aria-expanded', open);
     }
 
-    const displayIndexedBase = 7777;
-    const realRegisteredAtLaunch = 3;
-
     function searchNumber(event) {
       event.preventDefault();
       const raw = document.getElementById('homeSearch').value.trim().replace(/^#/, '');
@@ -163,16 +107,11 @@
       if (Number.isInteger(num) && num >= 0) location.href = `/n/${num}`;
     }
 
-    function escapeHtml(v) {
-      return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
     function shortWallet(wallet) {
       if (!wallet) return 'wallet unavailable';
       return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
     }
 
-    // Live search preview in hero card
     async function previewNumber(raw) {
       const num = parseInt(raw.replace(/^#/, ''), 10);
       if (!Number.isInteger(num) || num < 0) return;
@@ -209,52 +148,6 @@
         document.getElementById('heroActions').innerHTML = `<a class="btn btn-primary" href="/register">Claim a Number →</a>`;
       }
     });
-
-    async function loadHome() {
-      try {
-        const res = await fetch('/api/list?sort=number&order=asc&limit=6');
-        if (!res.ok) throw new Error('Registry unavailable');
-        const data = await res.json();
-        const registrations = data.registrations || [];
-        const total = data.total || registrations.length || 0;
-        const indexed = displayIndexedBase + Math.max(0, total - realRegisteredAtLaunch);
-        document.getElementById('indexedMetric').textContent = indexed.toLocaleString();
-        document.getElementById('registeredMetric').textContent = total.toLocaleString();
-
-        const grid = document.getElementById('homeMarket');
-        if (!registrations.length) {
-          grid.innerHTML = '<div class="market-card"><div class="number" style="font-size:28px">Be first</div><div class="small" style="margin-top:8px">No identities registered yet. Yours could be #1.</div><div class="card-actions" style="margin-top:16px"><a class="btn btn-primary" href="/register">Register Now</a></div></div>';
-          return;
-        }
-        grid.innerHTML = registrations.slice(0, 6).map((r) => {
-          const inscId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
-          const contentUrl = inscId ? `https://ordinals.com/content/${inscId}` : '';
-          const thumbHtml = contentUrl
-            ? `<img src="${contentUrl}" loading="lazy" alt="#${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
-            : '#';
-          return `<article class="market-card">
-            <div class="card-top">
-              <div class="insc-thumb">${thumbHtml}</div>
-              <div class="card-meta">
-                <div class="status">${r.status || 'active'}</div>
-                <div class="number">#${r.inscription_num}</div>
-                ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
-                <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
-              </div>
-            </div>
-            <div class="card-actions">
-              <a class="btn" href="/n/${r.inscription_num}">Profile</a>
-              <a class="btn" href="/n/${r.inscription_num}#send">Send</a>
-              <a class="btn" href="/n/${r.inscription_num}#messages">Message</a>
-            </div>
-          </article>`;
-        }).join('');
-      } catch (_) {
-        document.getElementById('registeredMetric').textContent = '—';
-      }
-    }
-
-    window.addEventListener('load', loadHome);
   </script>
 </body>
 </html>

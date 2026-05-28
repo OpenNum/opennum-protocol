@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenNum Identity</title>
-  <meta name="description" content="View an OpenNum Bitcoin identity profile, send BTC, trade the inscription, and leave wallet-signed messages." />
+  <meta name="description" content="View an OpenNum Bitcoin identity profile, send BTC, trade the inscription, and connect via social links." />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="profile" />
   <meta property="og:site_name" content="OpenNum" />
@@ -25,8 +25,6 @@
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/market">Market</a>
-        <a href="/whitepaper-en">Whitepaper</a>
       </div>
     </nav>
   </header>
@@ -52,24 +50,31 @@
           </div>
         </div>
 
-        <div class="action-stack" id="send">
+        <!-- Social links (rendered from data.links) -->
+        <div id="socialLinks" style="display:none;margin-top:20px">
+          <div class="small" style="margin-bottom:8px;font-weight:760;color:var(--ink)">Links</div>
+          <div id="socialGrid" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
+
+        <div class="action-stack" id="send" style="margin-top:20px">
           <button class="btn btn-primary" onclick="toggleSendPanel()">Send BTC to this number</button>
           <a class="btn" id="satflowLink" href="#" target="_blank">Trade on Satflow</a>
           <a class="btn" id="ordLink" href="#" target="_blank">View Inscription</a>
+          <!-- Only visible to current wallet owner -->
+          <button class="btn" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit Profile</button>
         </div>
 
+        <!-- Send BTC panel -->
         <div class="send-panel" id="sendPanel">
           <div class="small">OpenNum resolves this number to the current owner wallet. Funds are sent by your own wallet — OpenNum never holds custody.</div>
           <div class="data-list" style="margin-top:12px">
             <div class="data-row"><div class="data-key">Recipient</div><div class="data-val mono" id="sendWallet"></div></div>
           </div>
-          <!-- Desktop: Unisat send -->
           <div class="form-row" id="unisatRow">
             <input class="input amount-input" id="sendSats" type="number" min="1" step="1" placeholder="sats amount" />
             <button class="btn btn-primary" onclick="sendWithUnisat()">Send with Unisat</button>
             <button class="btn" onclick="copyRecipientWallet()">Copy Address</button>
           </div>
-          <!-- Mobile fallback: copy address + open in wallet app -->
           <div class="form-row" id="mobileRow" style="display:none;flex-direction:column;gap:8px">
             <div class="small" style="margin-bottom:4px">Unisat is a desktop browser extension. On mobile, copy the address and paste it into your wallet app.</div>
             <button class="btn btn-primary" style="width:100%" onclick="copyRecipientWallet()">Copy Recipient Address</button>
@@ -77,6 +82,43 @@
           </div>
           <div class="alert alert-error" id="sendError"></div>
           <div class="alert alert-success" id="sendSuccess"></div>
+        </div>
+
+        <!-- Edit Profile panel (owner only) -->
+        <div class="send-panel" id="editPanel">
+          <div style="font-weight:780;margin-bottom:16px;color:var(--ink)">Edit Profile</div>
+          <div style="display:grid;gap:12px">
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Display Name</label>
+              <input class="input" id="editName" type="text" maxlength="48" placeholder="e.g. Satoshi" />
+            </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Bio</label>
+              <textarea class="textarea" id="editBio" maxlength="200" rows="2" placeholder="Short bio..."></textarea>
+            </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">𝕏 / Twitter URL</label>
+              <input class="input" id="editX" type="url" placeholder="https://x.com/yourhandle" />
+            </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Instagram URL</label>
+              <input class="input" id="editInstagram" type="url" placeholder="https://instagram.com/yourhandle" />
+            </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Telegram URL</label>
+              <input class="input" id="editTelegram" type="url" placeholder="https://t.me/yourhandle" />
+            </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Website</label>
+              <input class="input" id="editWebsite" type="url" placeholder="https://yoursite.com" />
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:16px">
+            <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+            <button class="btn" onclick="toggleEditPanel()">Cancel</button>
+          </div>
+          <div class="alert alert-error" id="editError"></div>
+          <div class="alert alert-success" id="editSuccess"></div>
         </div>
 
         <div class="data-list" style="margin-top:24px">
@@ -123,6 +165,7 @@
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
         <a href="/market">Market</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank">X</a>
       </div>
     </div>
   </footer>
@@ -144,7 +187,6 @@
         if (res.status === 404 || !res.ok) return showNotFound(num);
         renderProfile(num, data);
         loadGuestbook();
-        // Auto-open send panel or scroll to messages if deep-linked
         const hash = window.location.hash;
         if (hash === '#send') {
           setTimeout(() => { toggleSendPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
@@ -188,6 +230,8 @@
         document.getElementById('profileBio').textContent = data.bio;
         document.getElementById('profileBio').style.display = 'block';
       }
+
+      // Inscription image
       const m = data.metadata;
       if (m?.content_type?.startsWith('image/') && m.content_url) {
         document.getElementById('avatarWrap').innerHTML = `<img src="${m.content_url}" alt="#${num}" onerror="this.parentElement.textContent='#${num}'" />`;
@@ -196,6 +240,26 @@
       } else {
         document.getElementById('avatarFallback').textContent = `#${num}`;
       }
+
+      // Social links
+      const links = data.links || {};
+      const linkDefs = [
+        { key: 'x', label: '𝕏 Twitter' },
+        { key: 'instagram', label: 'Instagram' },
+        { key: 'telegram', label: 'Telegram' },
+        { key: 'website', label: 'Website' }
+      ];
+      const activeBtns = linkDefs
+        .filter(l => links[l.key])
+        .map(l => `<a class="btn" href="${escapeHtml(links[l.key])}" target="_blank" rel="noopener noreferrer">${l.label}</a>`)
+        .join('');
+      if (activeBtns) {
+        document.getElementById('socialLinks').style.display = 'block';
+        document.getElementById('socialGrid').innerHTML = activeBtns;
+      }
+
+      // Check if connected wallet is the owner → show Edit Profile
+      checkOwnership(data.wallet);
     }
 
     function toggleNav(btn) {
@@ -210,17 +274,86 @@
     }
 
     function toggleSendPanel() {
+      document.getElementById('editPanel').classList.remove('visible');
       document.getElementById('sendPanel').classList.toggle('visible');
-      // Switch UI based on device
       const mobile = isMobile();
       document.getElementById('unisatRow').style.display = mobile ? 'none' : '';
       document.getElementById('mobileRow').style.display = mobile ? '' : 'none';
+    }
+
+    function toggleEditPanel() {
+      document.getElementById('sendPanel').classList.remove('visible');
+      document.getElementById('editPanel').classList.toggle('visible');
     }
 
     function setAlert(id, message) {
       const el = document.getElementById(id);
       el.textContent = message || '';
       el.classList.toggle('visible', !!message);
+    }
+
+    async function checkOwnership(profileWallet) {
+      if (!profileWallet || !window.unisat) return;
+      try {
+        const accounts = await window.unisat.getAccounts();
+        if (accounts && accounts[0] && accounts[0] === profileWallet) {
+          document.getElementById('editProfileBtn').style.display = '';
+          // Pre-fill edit form
+          document.getElementById('editName').value = currentProfile.display_name || '';
+          document.getElementById('editBio').value = currentProfile.bio || '';
+          const links = currentProfile.links || {};
+          document.getElementById('editX').value = links.x || '';
+          document.getElementById('editInstagram').value = links.instagram || '';
+          document.getElementById('editTelegram').value = links.telegram || '';
+          document.getElementById('editWebsite').value = links.website || '';
+        }
+      } catch (_) { /* not connected, ignore */ }
+    }
+
+    async function saveProfile() {
+      setAlert('editError', '');
+      setAlert('editSuccess', '');
+      if (!window.unisat) return setAlert('editError', 'Unisat Wallet is required to save your profile.');
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        const wallet = accounts[0];
+        if (wallet !== currentProfile.wallet) {
+          return setAlert('editError', 'Connected wallet does not match this profile owner.');
+        }
+        const timestamp = Math.floor(Date.now() / 1000);
+        const message = `opennum:update:${currentNumber}:${wallet}:${timestamp}`;
+        const signature = await window.unisat.signMessage(message, 'ecdsa');
+
+        const links = {};
+        const x = document.getElementById('editX').value.trim();
+        const ig = document.getElementById('editInstagram').value.trim();
+        const tg = document.getElementById('editTelegram').value.trim();
+        const ws = document.getElementById('editWebsite').value.trim();
+        if (x) links.x = x;
+        if (ig) links.instagram = ig;
+        if (tg) links.telegram = tg;
+        if (ws) links.website = ws;
+
+        const res = await fetch('/api/update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            inscription_num: currentNumber,
+            wallet,
+            signature,
+            timestamp,
+            display_name: document.getElementById('editName').value.trim() || null,
+            bio: document.getElementById('editBio').value.trim() || null,
+            links
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) return setAlert('editError', data.error || 'Save failed. Please try again.');
+        setAlert('editSuccess', 'Profile updated. Reloading...');
+        setTimeout(() => location.reload(), 1200);
+      } catch (e) {
+        setAlert('editError', e?.message || 'Failed to save profile.');
+      }
     }
 
     async function copyRecipientWallet() {

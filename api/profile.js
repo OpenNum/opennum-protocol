@@ -63,6 +63,7 @@ module.exports = async (req, res) => {
     status: data.status,
     display_name: data.display_name,
     bio: data.bio || null,
+    links: data.links || {},
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     metadata
