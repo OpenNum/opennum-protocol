@@ -36,7 +36,7 @@
 <body>
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
-      <a class="brand" href="/"><span class="brand-mark">ON</span><span>OpenNum</span></a>
+      <a class="brand" href="/"><span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span><span>OpenNum</span></a>
       <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
         <span></span><span></span><span></span>
       </button>
@@ -70,7 +70,7 @@
         <aside class="result-console" aria-label="Search result preview">
           <div class="console-top">
             <span id="resultStatus" class="status">Ready</span>
-            <span id="resultNum" class="console-number">#9164</span>
+            <span id="resultNum" class="console-number">#8888</span>
           </div>
           <div class="console-main">
             <div id="resultAvatar" class="avatar avatar-large">#</div>
@@ -207,25 +207,13 @@
         const res = await fetch(`/api/profile?num=${num}`);
         const data = await res.json();
         if (res.status === 404 || data.status === 'unregistered') {
-          let inscription = null;
-          try {
-            const insRes = await fetch(`/api/inscription?num=${num}`);
-            if (insRes.ok) inscription = await insRes.json();
-          } catch (_) {}
           status.textContent = 'Available';
           nameEl.textContent = `#${num} is not registered`;
-          walletEl.textContent = inscription?.address
-            ? `${shortWallet(inscription.address)} owns the inscription on Bitcoin`
-            : 'If you own this inscription, register it as your OpenNum ID.';
-          if (inscription?.content_type?.startsWith('image/') && inscription.content_url) {
-            avatar.innerHTML = `<img src="${inscription.content_url}" alt="#${num}" />`;
-          } else {
-            avatar.textContent = `#${num}`;
-          }
+          walletEl.textContent = 'If you own this inscription, register it as your OpenNum ID.';
+          avatar.textContent = `#${num}`;
           actions.innerHTML = `
             <a class="btn btn-primary" href="/register">Register #${num}</a>
             <a class="btn" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View inscription</a>
-            ${inscription?.inscription_id ? `<a class="btn" href="https://www.satflow.com/ordinal/${inscription.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>` : ''}
           `;
           return;
         }
