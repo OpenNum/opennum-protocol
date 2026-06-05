@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum — Bitcoin Ordinals Identity</title>
-  <meta name="description" content="Register an Ordinals inscription as your OpenNum identity, search any number, leave signed messages, or mint a new inscription." />
+  <title>OpenNum — Bitcoin Number Identity</title>
+  <meta name="description" content="Register, find, message, and trade inscription-backed OpenNum IDs." />
   <link rel="canonical" href="https://opennum.org/" />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="OpenNum" />
-  <meta property="og:title" content="OpenNum — Bitcoin Ordinals Identity" />
-  <meta property="og:description" content="Your inscription is your identity. Register, search, message, and trade Bitcoin identity numbers." />
+  <meta property="og:title" content="OpenNum — Bitcoin Number Identity" />
+  <meta property="og:description" content="Your number is your Bitcoin identity." />
   <meta property="og:url" content="https://opennum.org/" />
-  <meta property="og:image" content="https://opennum.org/img/logo.png" />
+  <meta property="og:image" content="https://opennum.org/img/opennum-mark-final.svg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
-  <meta name="twitter:title" content="OpenNum — Bitcoin Ordinals Identity" />
-  <meta name="twitter:description" content="Register, search, message, and trade Bitcoin identity numbers." />
-  <meta name="twitter:image" content="https://opennum.org/img/logo.png" />
   <link rel="stylesheet" href="/app.css" />
   <script type="application/ld+json">
   {
@@ -36,15 +33,19 @@
 <body>
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
-      <a class="brand" href="/"><span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span><span>OpenNum</span></a>
+      <a class="brand" href="/">
+        <span class="brand-mark"><img src="/img/opennum-mark-final.svg" alt="" /></span>
+        <span>OpenNum</span>
+      </a>
       <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
-        <a class="active" href="/">Home</a>
-        <a href="/explore">Explore</a>
+        <a class="active" href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/market">Market</a>
+        <a href="/market">Buy</a>
+        <a href="/market?sell=1">Sell</a>
+        <button class="btn btn-small" type="button" onclick="connectWallet()">Connect</button>
       </div>
     </nav>
   </header>
@@ -53,30 +54,35 @@
     <section class="home-hero">
       <div class="shell home-grid">
         <div class="home-copy">
-          <h1>Your inscription is your identity.</h1>
-          <p class="lead">Turn an Ordinals inscription number into a public Bitcoin identity page: profile links, signed messages, wallet resolution, and market offers in one place.</p>
-          <form class="command-search" onsubmit="searchNumber(event)">
-            <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search an inscription number, e.g. 9164" />
-            <button class="btn btn-primary" type="submit">Search</button>
+          <h1>Your number is your Bitcoin identity.</h1>
+          <p class="lead">Register, find, message, and trade inscription-backed OpenNum IDs. OpenNum resolves identity; Satflow handles the market.</p>
+
+          <form class="number-desk" onsubmit="searchNumber(event)">
+            <label class="desk-label" for="homeSearch">Search an inscription number</label>
+            <div class="desk-row">
+              <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #99, #7777, birthday number..." oninput="previewNumber(this.value)" />
+              <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+            <div class="desk-actions">
+              <a class="btn btn-primary" href="/register">Register a Number</a>
+              <a class="btn" href="/market">Buy a Number</a>
+              <a class="btn" href="/market?sell=1">Sell a Number</a>
+            </div>
           </form>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="/register">Register my ID</a>
-            <button class="btn" type="button" onclick="connectWallet()">Login with Unisat</button>
-            <a class="btn btn-ghost" href="https://ordinalsbot.com/inscribe" target="_blank" rel="noopener noreferrer">Mint new inscription</a>
-          </div>
-          <div id="walletState" class="wallet-mini">Wallet not connected. Connect only when you want to register or post.</div>
+
+          <div id="walletState" class="wallet-mini">Connect only when you register, claim, edit, or leave a signed message.</div>
         </div>
 
-        <aside class="result-console" aria-label="Search result preview">
-          <div class="console-top">
+        <aside class="number-preview" aria-label="Number preview">
+          <div class="preview-head">
             <span id="resultStatus" class="status">Ready</span>
-            <span id="resultNum" class="console-number">#8888</span>
+            <span id="resultNum" class="console-number">#99</span>
           </div>
-          <div class="console-main">
-            <div id="resultAvatar" class="avatar avatar-large">#</div>
+          <div class="preview-body">
+            <div id="resultAvatar" class="avatar avatar-large">ON</div>
             <div>
-              <div id="resultName" class="profile-name">Search any number</div>
-              <div id="resultWallet" class="wallet-line">Preview its inscription, profile owner, and next action.</div>
+              <div id="resultName" class="profile-name">Find any number</div>
+              <div id="resultWallet" class="wallet-line">View its inscription, holder status, public messages, and Satflow offer route.</div>
             </div>
           </div>
           <div class="preview-actions" id="resultActions">
@@ -90,50 +96,31 @@
     <section class="home-strip">
       <div class="shell workflow-grid">
         <a class="workflow-item" href="/register">
-          <span>01</span>
-          <strong>Register</strong>
-          <p>Connect Unisat, choose an inscription you own, sign once, and make the number your OpenNum ID.</p>
+          <span>Register</span>
+          <strong>Claim a number you own.</strong>
+          <p>Connect Unisat, choose an inscription, sign once, and make the inscription number your OpenNum ID.</p>
         </a>
-        <a class="workflow-item" href="/explore">
-          <span>02</span>
-          <strong>Search</strong>
-          <p>Look up a familiar number, inspect the inscription image, owner wallet, profile links, and message board.</p>
+        <a class="workflow-item" href="/market">
+          <span>Buy</span>
+          <strong>Find the number you want.</strong>
+          <p>Search familiar numbers, leave a signed message, and make an offer through Satflow when the inscription is tradable.</p>
         </a>
-        <a class="workflow-item" href="https://ordinalsbot.com/inscribe" target="_blank" rel="noopener noreferrer">
-          <span>03</span>
-          <strong>Mint</strong>
-          <p>If the number is good but the avatar is not yours, mint a new inscription and bring your own image.</p>
+        <a class="workflow-item" href="/market?sell=1">
+          <span>Sell</span>
+          <strong>Mark a number open to offers.</strong>
+          <p>Owners can show selling intent on the OpenNum page while the actual transaction stays non-custodial on Satflow.</p>
         </a>
       </div>
     </section>
 
-    <section class="section">
-      <div class="shell split-section">
+    <section class="section logo-story-band">
+      <div class="shell story-grid">
         <div>
-          <div class="section-head compact">
-            <h2>Recently registered</h2>
-            <a class="btn btn-ghost" href="/explore">Open explorer</a>
-          </div>
-          <div id="recentList" class="compact-list">
-            <div class="empty">Loading live registry...</div>
-          </div>
+          <img class="story-mark" src="/img/opennum-mark-final.svg" alt="OpenNum ON mark" />
         </div>
-        <div class="profile-card linktree-preview">
-          <div class="preview-top">
-            <div class="avatar">ON</div>
-            <div style="text-align:right">
-              <div class="status">Profile</div>
-              <div class="number" style="font-size:46px">#180</div>
-            </div>
-          </div>
-          <div class="profile-name">One number, all links</div>
-          <p class="profile-bio">OpenNum profiles work like a Bitcoin-native Linktree: X, Instagram, OnlyFans, personal site, market page, and public signed messages.</p>
-          <div class="link-stack">
-            <a href="/register">X / Twitter</a>
-            <a href="/register">Instagram</a>
-            <a href="/register">OnlyFans</a>
-            <a href="/register">Website</a>
-          </div>
+        <div>
+          <h2>An open number, anchored to identity.</h2>
+          <p class="section-copy">The open O and connected N share four anchor points: number, inscription, wallet, and profile. The mark says what OpenNum does: one memorable number becomes a verifiable place to find, pay, message, and recognize someone on Bitcoin.</p>
         </div>
       </div>
     </section>
@@ -141,7 +128,7 @@
 
   <footer class="footer">
     <div class="shell">
-      <div>OpenNum is non-custodial. Wallets sign and send; OpenNum resolves identity.</div>
+      <div>OpenNum is non-custodial. Ownership follows the inscription on Bitcoin.</div>
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
         <a href="/market">Market</a>
@@ -166,7 +153,7 @@
 
     function shortWallet(wallet) {
       if (!wallet) return 'wallet unavailable';
-      return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
+      return wallet.length > 24 ? `${wallet.slice(0, 10)}...${wallet.slice(-8)}` : wallet;
     }
 
     function searchNumber(event) {
@@ -198,75 +185,63 @@
       const walletEl = document.getElementById('resultWallet');
       const avatar = document.getElementById('resultAvatar');
       const actions = document.getElementById('resultActions');
+
       numEl.textContent = `#${num}`;
       status.textContent = 'Looking up';
       nameEl.textContent = 'Checking registry...';
       walletEl.textContent = 'Resolving OpenNum status.';
-      avatar.textContent = '#';
+      avatar.innerHTML = 'ON';
+
       try {
         const res = await fetch(`/api/profile?num=${num}`);
         const data = await res.json();
         if (res.status === 404 || data.status === 'unregistered') {
-          status.textContent = 'Available';
-          nameEl.textContent = `#${num} is not registered`;
-          walletEl.textContent = 'If you own this inscription, register it as your OpenNum ID.';
-          avatar.textContent = `#${num}`;
-          actions.innerHTML = `
-            <a class="btn btn-primary" href="/register">Register #${num}</a>
-            <a class="btn" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View inscription</a>
-          `;
-          return;
+          return previewUnregistered(num, status, nameEl, walletEl, avatar, actions);
         }
-        status.textContent = data.status || 'Active';
+
+        const dormant = data.status === 'dormant' || data.claim_required;
+        status.textContent = dormant ? 'Dormant' : (data.for_sale ? 'For sale' : 'Active');
         nameEl.textContent = data.display_name || `OpenNum #${num}`;
-        walletEl.textContent = `${shortWallet(data.wallet)} owns this identity`;
-        const inscriptionId = data.inscription_id || (data.inscription_txid ? `${data.inscription_txid}i0` : '');
+        walletEl.textContent = dormant
+          ? `Moved on-chain. Current holder must claim it again.`
+          : `${shortWallet(data.wallet)} is the active owner`;
         if (data.metadata?.content_type?.startsWith('image/') && data.metadata.content_url) {
           avatar.innerHTML = `<img src="${data.metadata.content_url}" alt="#${num}" />`;
         } else {
           avatar.textContent = `#${num}`;
         }
+        const tradeUrl = data.satflow_url || (data.inscription_id ? `https://www.satflow.com/ordinal/${data.inscription_id}` : 'https://www.satflow.com');
         actions.innerHTML = `
-          <a class="btn btn-primary" href="/n/${num}">View profile</a>
-          <a class="btn" href="/n/${num}#messages">Leave message</a>
-          ${inscriptionId ? `<a class="btn" href="https://www.satflow.com/ordinal/${inscriptionId}" target="_blank" rel="noopener noreferrer">Make offer</a>` : ''}
+          <a class="btn btn-primary" href="/n/${num}">Open profile</a>
+          ${dormant ? '<a class="btn" href="/register">Claim</a>' : `<a class="btn" href="/n/${num}#messages">Message</a>`}
+          <a class="btn" href="${tradeUrl}" target="_blank" rel="noopener noreferrer">Satflow</a>
         `;
       } catch (_) {
-        status.textContent = 'Offline';
-        nameEl.textContent = 'Lookup failed';
-        walletEl.textContent = 'Try again in a moment.';
+        previewUnregistered(num, status, nameEl, walletEl, avatar, actions);
       }
     }
 
-    async function loadRecent() {
-      const list = document.getElementById('recentList');
+    async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions) {
+      status.textContent = 'Unregistered';
+      nameEl.textContent = `#${num} has no OpenNum ID yet`;
+      walletEl.textContent = 'If you own the inscription, register or claim it.';
+      avatar.textContent = `#${num}`;
       try {
-        const res = await fetch('/api/list?sort=registered_at&order=desc&limit=6');
-        const data = await res.json();
-        const rows = data.registrations || [];
-        if (!rows.length) {
-          list.innerHTML = '<div class="empty">No registered identities yet.</div>';
+        const res = await fetch(`/api/inscription?num=${num}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.content_type?.startsWith('image/') && data.content_url) {
+            avatar.innerHTML = `<img src="${data.content_url}" alt="#${num}" />`;
+          }
+          actions.innerHTML = `
+            <a class="btn btn-primary" href="/register">Register</a>
+            <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
+          `;
           return;
         }
-        list.innerHTML = rows.map((r) => `
-          <a class="compact-row" href="/n/${r.inscription_num}">
-            <strong>#${r.inscription_num}</strong>
-            <span>${r.display_name || shortWallet(r.wallet)}</span>
-            <em>${r.registered_at ? new Date(r.registered_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }) : 'active'}</em>
-          </a>
-        `).join('');
-      } catch (_) {
-        list.innerHTML = '<div class="empty">Registry unavailable.</div>';
-      }
+      } catch (_) {}
+      actions.innerHTML = '<a class="btn btn-primary" href="/register">Register</a><a class="btn" href="/market">Market</a>';
     }
-
-    let previewTimer = null;
-    document.getElementById('homeSearch').addEventListener('input', (event) => {
-      clearTimeout(previewTimer);
-      const value = event.target.value;
-      previewTimer = setTimeout(() => previewNumber(value), 220);
-    });
-    window.addEventListener('load', loadRecent);
   </script>
 </body>
 </html>

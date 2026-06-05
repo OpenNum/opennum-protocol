@@ -3,79 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum Market — Trade Bitcoin Identity Numbers</title>
-  <meta name="description" content="Discover OpenNum identity numbers, inspect their inscription anchors, and trade the underlying Ordinals inscription on Satflow." />
+  <title>OpenNum Market — Buy and Sell Bitcoin Identity Numbers</title>
+  <meta name="description" content="Discover OpenNum identity numbers, inspect their inscription anchors, and trade through Satflow." />
   <link rel="canonical" href="https://opennum.org/market" />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="OpenNum" />
-  <meta property="og:title" content="OpenNum Market — Trade Bitcoin Identity Numbers" />
+  <meta property="og:title" content="OpenNum Market — Bitcoin Identity Numbers" />
   <meta property="og:description" content="Find OpenNum profiles and trade inscription-backed identity numbers through Satflow." />
   <meta property="og:url" content="https://opennum.org/market" />
-  <meta property="og:image" content="https://opennum.org/img/logo.png" />
+  <meta property="og:image" content="https://opennum.org/img/opennum-mark-final.svg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
   <link rel="stylesheet" href="/app.css" />
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "OpenNum Market",
-    "url": "https://opennum.org/market",
-    "description": "A Satflow-first discovery surface for OpenNum inscription-backed Bitcoin identity numbers."
-  }
-  </script>
 </head>
 <body>
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
-      <a class="brand" href="/"><span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span><span>OpenNum</span></a>
+      <a class="brand" href="/">
+        <span class="brand-mark"><img src="/img/opennum-mark-final.svg" alt="" /></span>
+        <span>OpenNum</span>
+      </a>
       <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
-        <a class="active" href="/market">Market</a>
+        <a class="active" href="/market">Buy</a>
+        <a href="/market?sell=1">Sell</a>
         <a href="/whitepaper-en">Whitepaper</a>
       </div>
     </nav>
   </header>
 
   <main>
-    <section class="section" style="padding-top:74px">
+    <section class="market-hero">
       <div class="shell">
         <div class="section-head">
           <div>
-            <h2>Find a number. Buy it on Satflow.</h2>
-            <p class="section-copy" style="margin-top:18px">Search any inscription number to see who owns it. If you want to buy it, click "View on Satflow" to check if it's listed for sale. If you own one and want to sell, list it on Satflow yourself — then the buyer re-registers here.</p>
+            <h2>Find a number. Make the offer on Satflow.</h2>
+            <p class="section-copy" style="margin-top:18px">OpenNum is the identity and discovery layer. The inscription trade stays non-custodial through Satflow or the owner’s chosen market link.</p>
           </div>
-          <a class="btn btn-primary" href="/register">Register Number</a>
+          <a class="btn btn-primary" href="/register">Register / Claim</a>
         </div>
 
-        <form class="search-card" onsubmit="searchOrFilter(event)" style="margin:0 0 22px">
-          <input id="searchInput" class="search-input" placeholder="Search #1, #8888, wallet, or display name…" oninput="renderMarket()" />
+        <form class="search-card" onsubmit="searchOrOpen(event)">
+          <input id="searchInput" class="search-input" placeholder="Search #99, #7777, wallet, or display name..." oninput="renderMarket()" />
           <button class="btn btn-primary" type="submit">Search</button>
-          <a class="btn" href="/">Pay by Number</a>
+          <a class="btn" href="/market?sell=1">Sell yours</a>
         </form>
 
-        <div class="metrics" style="margin-bottom:28px">
-          <div class="panel metric">
-            <div class="metric-value" id="statIndexed">7,777</div>
-            <div class="metric-label">Tracked inscription numbers</div>
+        <div class="market-toolbar">
+          <div class="toggle-group" aria-label="Market filter">
+            <button id="filterAll" class="active" type="button" onclick="setFilter('all')">All active</button>
+            <button id="filterSale" type="button" onclick="setFilter('sale')">Open to offers</button>
           </div>
-          <div class="panel metric">
-            <div class="metric-value" id="statRegistered">...</div>
-            <div class="metric-label">Live resolver records</div>
-          </div>
-          <div class="panel metric">
-            <div class="metric-value">Satflow</div>
-            <div class="metric-label">Preferred trading venue</div>
-          </div>
+          <div class="small" id="marketSummary">Loading live OpenNum records...</div>
         </div>
 
         <div class="grid" id="marketGrid">
-          <div class="market-card"><div class="number">...</div><div class="small">Loading live OpenNum records</div></div>
+          <div class="market-card"><div class="number">...</div><div class="small">Loading live registry</div></div>
         </div>
       </div>
     </section>
@@ -86,12 +74,15 @@
       <div>Buying an OpenNum means buying or receiving the underlying Ordinals inscription.</div>
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
-        <a href="https://twitter.com/OpenNumBTC" target="_blank">X</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
       </div>
     </div>
   </footer>
 
   <script>
+    let registrations = [];
+    let filter = new URLSearchParams(location.search).has('sell') ? 'sale' : 'all';
+
     function toggleNav(btn) {
       const links = document.getElementById('navLinks');
       const open = links.classList.toggle('open');
@@ -99,41 +90,35 @@
       btn.setAttribute('aria-expanded', open);
     }
 
-    let registrations = [];
-    const displayIndexedBase = 7777;
-    const realRegisteredAtLaunch = 3;
+    function setFilter(next) {
+      filter = next;
+      document.getElementById('filterAll').classList.toggle('active', filter === 'all');
+      document.getElementById('filterSale').classList.toggle('active', filter === 'sale');
+      renderMarket();
+    }
 
-    function searchOrFilter(event) {
+    function searchOrOpen(event) {
       event.preventDefault();
       const raw = document.getElementById('searchInput').value.trim().replace(/^#/, '');
-      const exact = registrations.find((r) => String(r.inscription_num) === raw);
-      if (exact) location.href = `/n/${exact.inscription_num}`;
+      if (/^\d+$/.test(raw)) location.href = `/n/${raw}`;
       else renderMarket();
     }
 
     function shortWallet(wallet) {
       if (!wallet) return 'wallet unavailable';
-      return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
-    }
-
-    function shortId(id) {
-      if (!id) return 'inscription id pending';
-      return id.length > 30 ? `${id.slice(0, 18)}...${id.slice(-8)}` : id;
+      return wallet.length > 24 ? `${wallet.slice(0, 10)}...${wallet.slice(-8)}` : wallet;
     }
 
     async function loadMarket() {
+      if (filter === 'sale') setFilter('sale');
       try {
         const res = await fetch('/api/list?sort=number&order=asc&limit=100');
         if (!res.ok) throw new Error('Registry request failed');
         const data = await res.json();
         registrations = data.registrations || [];
-        const liveRegistered = data.total || registrations.length || 0;
-        const indexedCount = displayIndexedBase + Math.max(0, liveRegistered - realRegisteredAtLaunch);
-        document.getElementById('statIndexed').textContent = indexedCount.toLocaleString();
-        document.getElementById('statRegistered').textContent = liveRegistered.toLocaleString();
         renderMarket();
       } catch (_) {
-        document.getElementById('statRegistered').textContent = 'Live';
+        document.getElementById('marketSummary').textContent = 'Registry unavailable';
         document.getElementById('marketGrid').innerHTML = '<div class="market-card"><div class="number">Offline</div><div class="small">The registry API could not be reached.</div></div>';
       }
     }
@@ -141,42 +126,51 @@
     function renderMarket() {
       const q = (document.getElementById('searchInput')?.value || '').trim().replace(/^#/, '').toLowerCase();
       const filtered = registrations.filter((r) => {
+        if (filter === 'sale' && !r.for_sale) return false;
         if (!q) return true;
         return String(r.inscription_num).includes(q) ||
           String(r.inscription_id || '').toLowerCase().includes(q) ||
           String(r.wallet || '').toLowerCase().includes(q) ||
           String(r.display_name || '').toLowerCase().includes(q);
       });
+      const saleCount = registrations.filter(r => r.for_sale).length;
+      document.getElementById('marketSummary').textContent = `${registrations.length} active IDs · ${saleCount} open to offers`;
       const grid = document.getElementById('marketGrid');
       if (!filtered.length) {
-        grid.innerHTML = '<div class="market-card"><div class="number">No match</div><div class="small">Try another number, wallet, or inscription ID.</div><div class="card-actions"><a class="btn btn-primary" href="/register">Register</a></div></div>';
+        grid.innerHTML = `<div class="market-card">
+          <div class="number">No match</div>
+          <div class="small">Search a number directly, or register one you already own.</div>
+          <div class="card-actions"><a class="btn btn-primary" href="/register">Register</a><a class="btn" href="/">Search</a></div>
+        </div>`;
         return;
       }
-      grid.innerHTML = filtered.map((r) => {
-        const inscriptionId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
-        const contentUrl = inscriptionId ? `https://ordinals.com/content/${inscriptionId}` : '';
-        const thumbHtml = contentUrl
-          ? `<img src="${contentUrl}" loading="lazy" alt="#${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
-          : '#';
-        const satflowUrl = inscriptionId ? `https://www.satflow.com/ordinal/${inscriptionId}` : 'https://www.satflow.com';
-        return `<article class="market-card">
-          <div class="card-top">
-            <div class="insc-thumb">${thumbHtml}</div>
-            <div class="card-meta">
-              <div class="status">${r.status || 'active'}</div>
-              <div class="number">#${r.inscription_num}</div>
-              ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
-              <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
-            </div>
+      grid.innerHTML = filtered.map(renderCard).join('');
+    }
+
+    function renderCard(r) {
+      const inscriptionId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
+      const contentUrl = inscriptionId ? `https://ordinals.com/content/${inscriptionId}` : '';
+      const tradeUrl = r.satflow_url || (inscriptionId ? `https://www.satflow.com/ordinal/${inscriptionId}` : 'https://www.satflow.com');
+      const thumbHtml = contentUrl
+        ? `<img src="${contentUrl}" loading="lazy" alt="#${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
+        : '#';
+      return `<article class="market-card">
+        <div class="card-top">
+          <div class="insc-thumb">${thumbHtml}</div>
+          <div class="card-meta">
+            <div class="status ${r.for_sale ? 'sale' : ''}">${r.for_sale ? 'Open to offers' : (r.status || 'Active')}</div>
+            <div class="number">#${r.inscription_num}</div>
+            ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
+            <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
           </div>
-          <div class="card-actions">
-            <a class="btn" href="/n/${r.inscription_num}">Profile</a>
-            <a class="btn" href="/n/${r.inscription_num}#send">Send</a>
-            <a class="btn" href="/n/${r.inscription_num}#messages">Message</a>
-            <a class="btn btn-primary" href="${satflowUrl}" target="_blank">Satflow ↗</a>
-          </div>
-        </article>`;
-      }).join('');
+        </div>
+        ${r.ask_note ? `<div class="sale-note" style="margin-top:0">${escapeHtml(r.ask_note)}</div>` : ''}
+        <div class="card-actions">
+          <a class="btn" href="/n/${r.inscription_num}">Profile</a>
+          <a class="btn" href="/n/${r.inscription_num}#messages">Message</a>
+          <a class="btn btn-primary" href="${tradeUrl}" target="_blank" rel="noopener noreferrer">Satflow</a>
+        </div>
+      </article>`;
     }
 
     function escapeHtml(value) {

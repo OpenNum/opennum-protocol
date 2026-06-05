@@ -7,6 +7,18 @@ const supabase = createClient(
 
 const ORDINALS_API = 'https://ordinals.com';
 
+async function fetchInscription(inscriptionId) {
+  const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
+    },
+    signal: AbortSignal.timeout(5000)
+  });
+  if (!ordRes.ok) return null;
+  return ordRes.json();
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
@@ -35,15 +47,15 @@ module.exports = async (req, res) => {
 
   const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
 
-  // Enrich with Ordinals metadata (best-effort, non-blocking)
+  // Enrich with Ordinals metadata and current owner (best-effort).
   let metadata = null;
+  let currentOwner = null;
+  let ownershipVerified = false;
   try {
-    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(4000)
-    });
-    if (ordRes.ok) {
-      const raw = await ordRes.json();
+    const raw = await fetchInscription(inscriptionId);
+    if (raw) {
+      currentOwner = raw.address || null;
+      ownershipVerified = !!raw.address;
       metadata = {
         content_type: raw.content_type,
         content_url: `${ORDINALS_API}/content/${inscriptionId}`,
@@ -55,15 +67,26 @@ module.exports = async (req, res) => {
     }
   } catch (_) { /* metadata is optional */ }
 
+  const ownerMismatch = ownershipVerified && currentOwner && data.wallet_address && currentOwner !== data.wallet_address;
+  const effectiveStatus = ownerMismatch ? 'dormant' : data.status;
+
   return res.status(200).json({
     inscription_num: data.inscription_num,
     inscription_id: inscriptionId,
     inscription_txid: data.inscription_txid,
-    wallet: data.wallet_address,
-    status: data.status,
+    wallet: ownerMismatch ? null : data.wallet_address,
+    registered_wallet: data.wallet_address,
+    current_owner: currentOwner,
+    ownership_verified: ownershipVerified,
+    owner_mismatch: ownerMismatch,
+    claim_required: ownerMismatch,
+    status: effectiveStatus,
     display_name: data.display_name,
     bio: data.bio || null,
     links: data.links || {},
+    for_sale: !!data.for_sale,
+    ask_note: data.ask_note || null,
+    satflow_url: data.satflow_url || null,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     metadata

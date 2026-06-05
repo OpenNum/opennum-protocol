@@ -1,0 +1,18 @@
+<svg width="980" height="300" viewBox="0 0 980 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">OpenNum Logo Lockup</title>
+  <desc id="desc">OpenNum horizontal logo lockup with the refined ON mark and wordmark.</desc>
+  <rect width="980" height="300" rx="48" fill="#F8FAFA"/>
+
+  <g transform="translate(52 34) scale(0.45)">
+    <path d="M 202 106 C 122 112 78 182 78 256 C 78 330 122 400 202 406" fill="none" stroke="#214D5C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 310 106 C 390 112 434 182 434 256 C 434 330 390 400 310 406" fill="none" stroke="#214D5C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 202 406 L 202 106 L 310 406 L 310 106" fill="none" stroke="#214D5C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="202" cy="106" r="4.8" fill="#C9872F"/>
+    <circle cx="310" cy="106" r="4.8" fill="#C9872F"/>
+    <circle cx="202" cy="406" r="4.8" fill="#C9872F"/>
+    <circle cx="310" cy="406" r="4.8" fill="#C9872F"/>
+  </g>
+
+  <text x="330" y="146" fill="#183746" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="78" font-weight="750" letter-spacing="-2">OpenNum</text>
+  <text x="335" y="194" fill="#6C7A83" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="500" letter-spacing="0.4">One number takes you everywhere.</text>
+</svg>

@@ -13,11 +13,16 @@ module.exports = async (req, res) => {
   const offset = parseInt(req.query.offset || '0', 10);
   const sort = req.query.sort === 'number' ? 'inscription_num' : 'registered_at';
   const order = req.query.order === 'asc';
+  const market = req.query.market === '1' || req.query.market === 'true';
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('registrations')
     .select('*', { count: 'exact' })
-    .eq('status', 'active')
+    .eq('status', 'active');
+
+  if (market) query = query.eq('for_sale', true);
+
+  const { data, error, count } = await query
     .order(sort, { ascending: order })
     .range(offset, offset + limit - 1);
 
@@ -37,6 +42,11 @@ module.exports = async (req, res) => {
       wallet: r.wallet_address,
       status: r.status,
       display_name: r.display_name,
+      bio: r.bio || null,
+      links: r.links || {},
+      for_sale: !!r.for_sale,
+      ask_note: r.ask_note || null,
+      satflow_url: r.satflow_url || null,
       registered_at: r.registered_at
     }))
   });

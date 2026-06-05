@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenNum Identity</title>
-  <meta name="description" content="View an OpenNum Bitcoin identity profile, send BTC, trade the inscription, and connect via social links." />
+  <meta name="description" content="View an OpenNum Bitcoin identity profile, inscription ownership status, Satflow offer route, and signed public messages." />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="profile" />
   <meta property="og:site_name" content="OpenNum" />
   <meta property="og:title" content="OpenNum Identity Profile" />
   <meta property="og:description" content="A Bitcoin identity profile anchored to an Ordinals inscription number." />
-  <meta property="og:image" content="https://opennum.org/img/logo.png" />
+  <meta property="og:image" content="https://opennum.org/img/opennum-mark-final.svg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
   <link rel="stylesheet" href="/app.css" />
@@ -18,13 +18,18 @@
 <body>
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
-      <a class="brand" href="/"><span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span><span>OpenNum</span></a>
+      <a class="brand" href="/">
+        <span class="brand-mark"><img src="/img/opennum-mark-final.svg" alt="" /></span>
+        <span>OpenNum</span>
+      </a>
       <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
+        <a href="/market">Buy</a>
+        <a href="/market?sell=1">Sell</a>
       </div>
     </nav>
   </header>
@@ -32,7 +37,7 @@
   <main class="shell">
     <div id="loading" class="panel" style="margin:72px auto;padding:42px;max-width:620px;text-align:center;color:var(--soft-ink)">Loading OpenNum identity...</div>
 
-    <div id="notFound" class="panel" style="display:none;margin:72px auto;padding:42px;max-width:680px;text-align:center">
+    <div id="notFound" class="panel" style="display:none;margin:72px auto;padding:42px;max-width:760px;text-align:center">
       <div class="number" id="nfNum"></div>
       <div id="nfInscription" style="display:none;margin:22px auto;max-width:320px;aspect-ratio:1;background:var(--wash);border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
       <p class="lead" id="nfText" style="margin:18px auto 26px">This OpenNum has not been registered yet.</p>
@@ -53,46 +58,46 @@
           </div>
         </div>
 
-        <!-- Social links (rendered from data.links) -->
+        <div class="claim-note" id="claimNote" style="display:none"></div>
+        <div class="sale-note" id="saleNote" style="display:none"></div>
+
         <div id="socialLinks" style="display:none;margin-top:20px">
           <div class="small" style="margin-bottom:8px;font-weight:760;color:var(--ink)">Links</div>
           <div id="socialGrid" style="display:flex;gap:8px;flex-wrap:wrap"></div>
         </div>
 
-        <div class="action-stack" id="send" style="margin-top:20px">
-          <button class="btn btn-primary" onclick="toggleSendPanel()">Send BTC to this number</button>
-          <a class="btn" id="satflowLink" href="#" target="_blank">Trade on Satflow</a>
-          <a class="btn" id="ordLink" href="#" target="_blank">View Inscription</a>
-          <!-- Only visible to current wallet owner -->
-          <button class="btn" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit Profile</button>
+        <div class="action-stack" id="send" style="margin-top:22px">
+          <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC to this number</button>
+          <a class="btn" id="satflowLink" href="#" target="_blank" rel="noopener noreferrer">Make offer on Satflow</a>
+          <a class="btn" id="ordLink" href="#" target="_blank" rel="noopener noreferrer">View inscription</a>
+          <a class="btn" id="claimBtn" href="/register" style="display:none">Claim this OpenNum</a>
+          <button class="btn" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit profile / selling intent</button>
         </div>
 
-        <!-- Send BTC panel -->
         <div class="send-panel" id="sendPanel">
-          <div class="small">OpenNum resolves this number to the current owner wallet. Funds are sent by your own wallet — OpenNum never holds custody.</div>
+          <div class="small">OpenNum resolves this number to the current holder wallet. OpenNum never holds custody.</div>
           <div class="data-list" style="margin-top:12px">
             <div class="data-row"><div class="data-key">Recipient</div><div class="data-val mono" id="sendWallet"></div></div>
           </div>
           <div class="form-row" id="unisatRow">
             <input class="input amount-input" id="sendSats" type="number" min="1" step="1" placeholder="sats amount" />
             <button class="btn btn-primary" onclick="sendWithUnisat()">Send with Unisat</button>
-            <button class="btn" onclick="copyRecipientWallet()">Copy Address</button>
+            <button class="btn" onclick="copyRecipientWallet()">Copy address</button>
           </div>
           <div class="form-row" id="mobileRow" style="display:none;flex-direction:column;gap:8px">
-            <div class="small" style="margin-bottom:4px">Unisat is a desktop browser extension. On mobile, copy the address and paste it into your wallet app.</div>
-            <button class="btn btn-primary" style="width:100%" onclick="copyRecipientWallet()">Copy Recipient Address</button>
-            <a class="btn" id="bitcoinUriLink" href="#" style="width:100%;text-align:center">Open in Wallet App</a>
+            <div class="small" style="margin-bottom:4px">On mobile, copy the address and paste it into your wallet app.</div>
+            <button class="btn btn-primary" style="width:100%" onclick="copyRecipientWallet()">Copy recipient address</button>
+            <a class="btn" id="bitcoinUriLink" href="#" style="width:100%;text-align:center">Open in wallet app</a>
           </div>
           <div class="alert alert-error" id="sendError"></div>
           <div class="alert alert-success" id="sendSuccess"></div>
         </div>
 
-        <!-- Edit Profile panel (owner only) -->
         <div class="send-panel" id="editPanel">
-          <div style="font-weight:780;margin-bottom:16px;color:var(--ink)">Edit Profile</div>
+          <div style="font-weight:780;margin-bottom:16px;color:var(--ink)">Edit OpenNum profile</div>
           <div style="display:grid;gap:12px">
             <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">Display Name</label>
+              <label class="data-key" style="display:block;margin-bottom:4px">Display name</label>
               <input class="input" id="editName" type="text" maxlength="48" placeholder="e.g. Satoshi" />
             </div>
             <div>
@@ -100,7 +105,7 @@
               <textarea class="textarea" id="editBio" maxlength="200" rows="2" placeholder="Short bio..."></textarea>
             </div>
             <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">𝕏 / Twitter URL</label>
+              <label class="data-key" style="display:block;margin-bottom:4px">X / Twitter URL</label>
               <input class="input" id="editX" type="url" placeholder="https://x.com/yourhandle" />
             </div>
             <div>
@@ -119,9 +124,21 @@
               <label class="data-key" style="display:block;margin-bottom:4px">Website</label>
               <input class="input" id="editWebsite" type="url" placeholder="https://yoursite.com" />
             </div>
+            <label class="checkbox-row">
+              <input id="editForSale" type="checkbox" />
+              <span>This number is open to offers</span>
+            </label>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Selling note</label>
+              <textarea class="textarea" id="editAskNote" maxlength="240" rows="2" placeholder="e.g. Open to serious offers for this birthday number."></textarea>
+            </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Satflow URL</label>
+              <input class="input" id="editSatflowUrl" type="url" placeholder="https://www.satflow.com/ordinal/..." />
+            </div>
           </div>
           <div class="form-row" style="margin-top:16px">
-            <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+            <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
             <button class="btn" onclick="toggleEditPanel()">Cancel</button>
           </div>
           <div class="alert alert-error" id="editError"></div>
@@ -130,7 +147,8 @@
 
         <div class="data-list" style="margin-top:24px">
           <div class="data-row"><div class="data-key">Number</div><div class="data-val" id="dNum"></div></div>
-          <div class="data-row"><div class="data-key">Wallet</div><div class="data-val mono" id="dWallet"></div></div>
+          <div class="data-row"><div class="data-key">Active wallet</div><div class="data-val mono" id="dWallet"></div></div>
+          <div class="data-row"><div class="data-key">Chain owner</div><div class="data-val mono" id="dCurrentOwner"></div></div>
           <div class="data-row"><div class="data-key">Inscription ID</div><div class="data-val mono" id="dInscriptionId"></div></div>
           <div class="data-row"><div class="data-key">Registered</div><div class="data-val" id="dDate"></div></div>
           <div class="data-row"><div class="data-key">Status</div><div class="data-val" id="dStatus"></div></div>
@@ -139,23 +157,28 @@
 
       <section>
         <div class="profile-card" id="inscriptionPreview" style="display:none;margin-bottom:18px">
-          <div class="small" style="margin-bottom:12px;font-weight:850;color:var(--ink)">Inscription Avatar</div>
-          <div id="inscriptionContent" style="display:grid;place-items:center;min-height:280px;background:#fffaf0;border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
+          <div class="section-head" style="margin-bottom:12px">
+            <div>
+              <h2 style="font-size:28px">Inscription</h2>
+              <p class="small">The Bitcoin object behind this OpenNum.</p>
+            </div>
+          </div>
+          <div id="inscriptionContent" style="display:grid;place-items:center;min-height:280px;background:var(--wash);border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
         </div>
 
         <div class="profile-card" id="messages">
           <div class="section-head" style="margin-bottom:10px">
             <div>
               <h2 style="font-size:32px">Public messages</h2>
-              <p class="small">Only wallets with an active OpenNum ID can leave public signed messages. Everything here is public and off-chain.</p>
+              <p class="small" id="messageHelp">Only wallets with an active OpenNum ID can leave public signed messages.</p>
             </div>
           </div>
 
           <div id="replyContext" class="empty" style="display:none;margin-bottom:12px"></div>
           <textarea class="textarea" id="guestbookMessage" maxlength="280" placeholder="Write a public message..."></textarea>
           <div class="form-row">
-            <button class="btn btn-primary" onclick="signGuestbookMessage()">Sign &amp; Post</button>
-            <button class="btn" onclick="clearReply()">Clear Reply</button>
+            <button class="btn btn-primary" id="messagePostBtn" onclick="signGuestbookMessage()">Sign &amp; Post</button>
+            <button class="btn" onclick="clearReply()">Clear reply</button>
             <button class="btn" onclick="loadGuestbook()">Refresh</button>
           </div>
           <div class="alert alert-error" id="guestbookError"></div>
@@ -172,7 +195,7 @@
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
         <a href="/market">Market</a>
-        <a href="https://twitter.com/OpenNumBTC" target="_blank">X</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
       </div>
     </div>
   </footer>
@@ -213,36 +236,42 @@
         const res = await fetch(`/api/inscription?num=${num}`);
         if (!res.ok) return;
         const data = await res.json();
-        document.getElementById('nfText').textContent = 'This inscription exists on Bitcoin, but it has not been registered as an OpenNum ID yet.';
+        document.getElementById('nfText').textContent = 'This inscription exists on Bitcoin, but it has not been claimed as an OpenNum ID yet.';
         if (data.content_type?.startsWith('image/') && data.content_url) {
           const box = document.getElementById('nfInscription');
           box.style.display = 'block';
           box.innerHTML = `<img src="${data.content_url}" alt="#${num}" style="width:100%;height:100%;object-fit:contain" />`;
         }
         document.getElementById('nfActions').innerHTML = `
-          <a class="btn btn-primary" href="/register">Register a Number</a>
-          <a class="btn" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View Inscription</a>
-          ${data.inscription_id ? `<a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make Offer</a>` : ''}
+          <a class="btn btn-primary" href="/register">Register / Claim</a>
+          <a class="btn" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View inscription</a>
+          ${data.inscription_id ? `<a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>` : ''}
         `;
       } catch (_) {}
     }
 
     function renderProfile(num, data) {
       currentProfile = data;
+      const dormant = data.status === 'dormant' || data.claim_required;
       const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
+      const tradeUrl = data.satflow_url || `https://www.satflow.com/ordinal/${inscriptionId}`;
+
       document.getElementById('loading').style.display = 'none';
       document.getElementById('profile').style.display = 'grid';
       document.getElementById('profileNum').textContent = `#${num}`;
       document.getElementById('dNum').textContent = `#${num}`;
-      document.getElementById('dWallet').textContent = data.wallet || '—';
-      document.getElementById('sendWallet').textContent = data.wallet || '—';
+      document.getElementById('dWallet').textContent = data.wallet || 'Not active until claimed';
+      document.getElementById('dCurrentOwner').textContent = data.current_owner || 'Not verified';
+      document.getElementById('sendWallet').textContent = data.wallet || 'Unavailable';
       if (data.wallet) document.getElementById('bitcoinUriLink').href = `bitcoin:${data.wallet}`;
       document.getElementById('dInscriptionId').textContent = inscriptionId;
       document.getElementById('dDate').textContent = data.registered_at ? new Date(data.registered_at).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
-      document.getElementById('dStatus').textContent = data.status || 'active';
-      document.getElementById('profileStatus').textContent = data.status || 'active';
+      document.getElementById('dStatus').textContent = dormant ? 'dormant' : (data.status || 'active');
+      document.getElementById('profileStatus').textContent = dormant ? 'Dormant' : (data.for_sale ? 'For sale' : (data.status || 'Active'));
+      document.getElementById('profileStatus').classList.toggle('dormant', dormant);
+      document.getElementById('profileStatus').classList.toggle('sale', !dormant && !!data.for_sale);
       document.getElementById('ordLink').href = `https://ordinals.com/inscription/${inscriptionId}`;
-      document.getElementById('satflowLink').href = `https://www.satflow.com/ordinal/${inscriptionId}`;
+      document.getElementById('satflowLink').href = tradeUrl;
 
       if (data.display_name) {
         document.getElementById('profileName').textContent = data.display_name;
@@ -254,20 +283,38 @@
         document.getElementById('profileBio').style.display = 'block';
       }
 
-      // Inscription image
+      if (dormant) {
+        document.getElementById('claimNote').style.display = 'block';
+        document.getElementById('claimNote').textContent = 'This inscription has moved on-chain. The previous OpenNum profile is historical until the current holder signs and claims it again.';
+        document.getElementById('sendButton').style.display = 'none';
+        document.getElementById('claimBtn').style.display = '';
+        document.getElementById('messagePostBtn').style.display = 'none';
+        document.getElementById('guestbookMessage').disabled = true;
+        document.getElementById('guestbookMessage').placeholder = 'Messages are paused while this number is awaiting claim.';
+        document.getElementById('messageHelp').textContent = 'Messages are paused because this number is dormant after an on-chain transfer.';
+      }
+
+      if (!dormant && data.for_sale) {
+        document.getElementById('saleNote').style.display = 'block';
+        document.getElementById('saleNote').textContent = data.ask_note || 'This owner has marked the number open to offers.';
+      }
+
       const m = data.metadata;
       if (m?.content_type?.startsWith('image/') && m.content_url) {
         document.getElementById('avatarWrap').innerHTML = `<img src="${m.content_url}" alt="#${num}" onerror="this.parentElement.textContent='#${num}'" />`;
         document.getElementById('inscriptionPreview').style.display = 'block';
-        document.getElementById('inscriptionContent').innerHTML = `<img src="${m.content_url}" alt="#${num}" style="max-width:100%;max-height:360px;object-fit:contain" />`;
+        document.getElementById('inscriptionContent').innerHTML = `<img src="${m.content_url}" alt="#${num}" style="max-width:100%;max-height:380px;object-fit:contain" />`;
       } else {
         document.getElementById('avatarFallback').textContent = `#${num}`;
       }
 
-      // Social links
-      const links = data.links || {};
+      renderSocialLinks(data.links || {});
+      if (!dormant) checkOwnership(data.wallet);
+    }
+
+    function renderSocialLinks(links) {
       const linkDefs = [
-        { key: 'x', label: '𝕏 Twitter' },
+        { key: 'x', label: 'X / Twitter' },
         { key: 'instagram', label: 'Instagram' },
         { key: 'onlyfans', label: 'OnlyFans' },
         { key: 'telegram', label: 'Telegram' },
@@ -281,9 +328,6 @@
         document.getElementById('socialLinks').style.display = 'block';
         document.getElementById('socialGrid').innerHTML = activeBtns;
       }
-
-      // Check if connected wallet is the owner → show Edit Profile
-      checkOwnership(data.wallet);
     }
 
     function toggleNav(btn) {
@@ -298,6 +342,7 @@
     }
 
     function toggleSendPanel() {
+      if (currentProfile?.claim_required || currentProfile?.status === 'dormant') return;
       document.getElementById('editPanel').classList.remove('visible');
       document.getElementById('sendPanel').classList.toggle('visible');
       const mobile = isMobile();
@@ -322,7 +367,6 @@
         const accounts = await window.unisat.getAccounts();
         if (accounts && accounts[0] && accounts[0] === profileWallet) {
           document.getElementById('editProfileBtn').style.display = '';
-          // Pre-fill edit form
           document.getElementById('editName').value = currentProfile.display_name || '';
           document.getElementById('editBio').value = currentProfile.bio || '';
           const links = currentProfile.links || {};
@@ -331,8 +375,11 @@
           document.getElementById('editOnlyFans').value = links.onlyfans || '';
           document.getElementById('editTelegram').value = links.telegram || '';
           document.getElementById('editWebsite').value = links.website || '';
+          document.getElementById('editForSale').checked = !!currentProfile.for_sale;
+          document.getElementById('editAskNote').value = currentProfile.ask_note || '';
+          document.getElementById('editSatflowUrl').value = currentProfile.satflow_url || '';
         }
-      } catch (_) { /* not connected, ignore */ }
+      } catch (_) {}
     }
 
     async function saveProfile() {
@@ -343,7 +390,7 @@
         const accounts = await window.unisat.requestAccounts();
         const wallet = accounts[0];
         if (wallet !== currentProfile.wallet) {
-          return setAlert('editError', 'Connected wallet does not match this profile owner.');
+          return setAlert('editError', 'Connected wallet does not match this active OpenNum owner.');
         }
         const timestamp = Math.floor(Date.now() / 1000);
         const message = `opennum:update:${currentNumber}:${wallet}:${timestamp}`;
@@ -371,13 +418,16 @@
             timestamp,
             display_name: document.getElementById('editName').value.trim() || null,
             bio: document.getElementById('editBio').value.trim() || null,
-            links
+            links,
+            for_sale: document.getElementById('editForSale').checked,
+            ask_note: document.getElementById('editAskNote').value.trim() || null,
+            satflow_url: document.getElementById('editSatflowUrl').value.trim() || null
           })
         });
         const data = await res.json();
         if (!res.ok) return setAlert('editError', data.error || 'Save failed. Please try again.');
         setAlert('editSuccess', 'Profile updated. Reloading...');
-        setTimeout(() => location.reload(), 1200);
+        setTimeout(() => location.reload(), 900);
       } catch (e) {
         setAlert('editError', e?.message || 'Failed to save profile.');
       }
@@ -386,7 +436,7 @@
     async function copyRecipientWallet() {
       setAlert('sendError', '');
       setAlert('sendSuccess', '');
-      if (!currentProfile?.wallet) return setAlert('sendError', 'Recipient wallet is unavailable.');
+      if (!currentProfile?.wallet) return setAlert('sendError', 'Recipient wallet is unavailable while this number is dormant.');
       try {
         await navigator.clipboard.writeText(currentProfile.wallet);
         setAlert('sendSuccess', 'Recipient wallet copied.');
@@ -399,10 +449,10 @@
       setAlert('sendError', '');
       setAlert('sendSuccess', '');
       const sats = parseInt(document.getElementById('sendSats').value, 10);
-      if (!currentProfile?.wallet) return setAlert('sendError', 'Recipient wallet is unavailable.');
+      if (!currentProfile?.wallet) return setAlert('sendError', 'Recipient wallet is unavailable while this number is dormant.');
       if (!window.unisat) return setAlert('sendError', 'Unisat Wallet is not installed. Copy the wallet address and send from your wallet.');
       if (!Number.isInteger(sats) || sats <= 0) return setAlert('sendError', 'Enter a positive sats amount.');
-      if (typeof window.unisat.sendBitcoin !== 'function') return setAlert('sendError', 'Your Unisat version does not expose sendBitcoin. Copy the wallet address instead.');
+      if (typeof window.unisat.sendBitcoin !== 'function') return setAlert('sendError', 'Your Unisat version does not expose sendBitcoin. Copy the address instead.');
       try {
         const txid = await window.unisat.sendBitcoin(currentProfile.wallet, sats);
         setAlert('sendSuccess', `Transaction submitted: ${txid}`);
@@ -419,7 +469,7 @@
         const data = await res.json();
         const messages = data.messages || [];
         if (!messages.length) {
-          list.innerHTML = '<div class="empty">No public messages yet. Be the first to say hello.</div>';
+          list.innerHTML = '<div class="empty">No public messages yet.</div>';
           return;
         }
         list.innerHTML = renderMessages(messages);
@@ -464,6 +514,7 @@
     async function signGuestbookMessage() {
       setAlert('guestbookError', '');
       setAlert('guestbookSuccess', '');
+      if (currentProfile?.claim_required || currentProfile?.status === 'dormant') return setAlert('guestbookError', 'This number is dormant and awaiting claim.');
       const text = document.getElementById('guestbookMessage').value.trim();
       if (!text) return setAlert('guestbookError', 'Write a message first.');
       if (!window.unisat) return setAlert('guestbookError', 'Unisat Wallet is required to sign public messages.');
@@ -498,7 +549,7 @@
 
     function shortWallet(wallet) {
       if (!wallet) return 'unknown wallet';
-      return wallet.length > 24 ? `${wallet.slice(0, 12)}...${wallet.slice(-8)}` : wallet;
+      return wallet.length > 24 ? `${wallet.slice(0, 10)}...${wallet.slice(-8)}` : wallet;
     }
 
     function escapeHtml(value) {

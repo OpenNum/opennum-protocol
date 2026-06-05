@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">OpenNum Logo Mark</title>
+  <desc id="desc">OpenNum mark: an open O and a connected N sharing four identity anchor points.</desc>
+  <rect width="512" height="512" rx="112" fill="#F8FAFA"/>
+
+  <path d="M 202 106 C 122 112 78 182 78 256 C 78 330 122 400 202 406" fill="none" stroke="#214D5C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 310 106 C 390 112 434 182 434 256 C 434 330 390 400 310 406" fill="none" stroke="#214D5C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 202 406 L 202 106 L 310 406 L 310 106" fill="none" stroke="#214D5C" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <circle cx="202" cy="106" r="4.8" fill="#C9872F"/>
+  <circle cx="310" cy="106" r="4.8" fill="#C9872F"/>
+  <circle cx="202" cy="406" r="4.8" fill="#C9872F"/>
+  <circle cx="310" cy="406" r="4.8" fill="#C9872F"/>
+</svg>

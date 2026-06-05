@@ -9,6 +9,16 @@ const supabase = createClient(
 const ORDINALS_API = 'https://ordinals.com';
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
 
+function stripMarketFields(payload) {
+  delete payload.for_sale;
+  delete payload.ask_note;
+  delete payload.satflow_url;
+}
+
+function isMissingMarketColumn(error) {
+  return /(for_sale|ask_note|satflow_url)/i.test(error?.message || '');
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -16,7 +26,7 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { inscription_num, inscription_txid, inscription_id, wallet, signature, timestamp, display_name, links } = req.body || {};
+  const { inscription_num, inscription_txid, inscription_id, wallet, signature, timestamp, display_name, links, for_sale, ask_note, satflow_url } = req.body || {};
 
   if (!inscription_num && inscription_num !== 0 || !inscription_txid || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, inscription_txid, wallet, signature, timestamp' });
@@ -115,6 +125,9 @@ module.exports = async (req, res) => {
       wallet_address: wallet,
       signature,
       display_name: display_name || null,
+      for_sale: !!for_sale,
+      ask_note: ask_note ? String(ask_note).slice(0, 240) : null,
+      satflow_url: satflow_url || null,
       indexer_ruleset: 'ord-v0.18-mainnet',
       status: 'active',
       updated_at: new Date().toISOString()
@@ -126,6 +139,14 @@ module.exports = async (req, res) => {
       .from('registrations')
       .update(updatePayload)
       .eq('id', existing.id);
+
+    if (updateError && isMissingMarketColumn(updateError)) {
+      stripMarketFields(updatePayload);
+      ({ error: updateError } = await supabase
+        .from('registrations')
+        .update(updatePayload)
+        .eq('id', existing.id));
+    }
 
     if (updateError && /inscription_id/i.test(updateError.message || '')) {
       delete updatePayload.inscription_id;
@@ -156,6 +177,9 @@ module.exports = async (req, res) => {
     wallet_address: wallet,
     signature,
     display_name: display_name || null,
+    for_sale: !!for_sale,
+    ask_note: ask_note ? String(ask_note).slice(0, 240) : null,
+    satflow_url: satflow_url || null,
     indexer_ruleset: 'ord-v0.18-mainnet',
     status: 'active'
   };
@@ -165,6 +189,13 @@ module.exports = async (req, res) => {
   let { error: insertError } = await supabase
     .from('registrations')
     .insert(insertPayload);
+
+  if (insertError && isMissingMarketColumn(insertError)) {
+    stripMarketFields(insertPayload);
+    ({ error: insertError } = await supabase
+      .from('registrations')
+      .insert(insertPayload));
+  }
 
   if (insertError && /inscription_id/i.test(insertError.message || '')) {
     delete insertPayload.inscription_id;

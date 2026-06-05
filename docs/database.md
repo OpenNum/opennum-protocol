@@ -20,9 +20,18 @@ create index if not exists registrations_inscription_id_idx
 
 alter table registrations
   add column if not exists bio text;
+
+alter table registrations
+  add column if not exists for_sale boolean not null default false,
+  add column if not exists ask_note text,
+  add column if not exists satflow_url text;
+
+create index if not exists registrations_for_sale_idx
+  on registrations (for_sale)
+  where status = 'active';
 ```
 
-The API keeps a fallback path for older schemas, but the migration should be applied before relying on profile avatars or marketplace links.
+The API keeps a fallback path for older schemas, but the migration should be applied before relying on profile avatars, marketplace links, or owner selling intent.
 
 ## Guestbook table
 

@@ -7,6 +7,30 @@ const supabase = createClient(
 );
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
+const ORDINALS_API = 'https://ordinals.com';
+
+function stripMarketFields(payload) {
+  delete payload.for_sale;
+  delete payload.ask_note;
+  delete payload.satflow_url;
+}
+
+async function currentOwnerFor(inscriptionId) {
+  try {
+    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
+      },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!ordRes.ok) return { owner: null, verified: false };
+    const raw = await ordRes.json();
+    return { owner: raw.address || null, verified: !!raw.address };
+  } catch (_) {
+    return { owner: null, verified: false };
+  }
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,7 +41,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { inscription_num, wallet, signature, timestamp, display_name, bio, links } = req.body || {};
+  const { inscription_num, wallet, signature, timestamp, display_name, bio, links, for_sale, ask_note, satflow_url } = req.body || {};
 
   if ((!inscription_num && inscription_num !== 0) || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, wallet, signature, timestamp' });
@@ -45,7 +69,7 @@ module.exports = async (req, res) => {
   // Confirm this wallet is the current owner of this OpenNum
   const { data: existing, error: selectError } = await supabase
     .from('registrations')
-    .select('id, wallet_address')
+    .select('*')
     .eq('inscription_num', inscription_num)
     .eq('status', 'active')
     .maybeSingle();
@@ -60,20 +84,38 @@ module.exports = async (req, res) => {
   if (existing.wallet_address !== wallet) {
     return res.status(403).json({ error: 'This wallet does not own this OpenNum.' });
   }
+  const inscriptionId = existing.inscription_id || (existing.inscription_txid ? `${existing.inscription_txid}i0` : null);
+  const ownership = inscriptionId ? await currentOwnerFor(inscriptionId) : { owner: null, verified: false };
+  if (ownership.verified && ownership.owner && ownership.owner !== wallet) {
+    return res.status(409).json({
+      error: 'This inscription has moved on-chain. The current holder must claim it before editing this OpenNum.'
+    });
+  }
 
   // Build update — only update editable fields
   const updatePayload = {
     display_name: display_name || null,
     bio: bio || null,
+    for_sale: !!for_sale,
+    ask_note: ask_note ? String(ask_note).slice(0, 240) : null,
+    satflow_url: satflow_url || null,
     updated_at: new Date().toISOString()
   };
   // links requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}'
   if (links !== undefined) updatePayload.links = (links && typeof links === 'object') ? links : {};
 
-  const { error: updateError } = await supabase
+  let { error: updateError } = await supabase
     .from('registrations')
     .update(updatePayload)
     .eq('id', existing.id);
+
+  if (updateError && /(for_sale|ask_note|satflow_url)/i.test(updateError.message || '')) {
+    stripMarketFields(updatePayload);
+    ({ error: updateError } = await supabase
+      .from('registrations')
+      .update(updatePayload)
+      .eq('id', existing.id));
+  }
 
   if (updateError) {
     console.error('DB update error:', updateError);

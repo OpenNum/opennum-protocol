@@ -8,6 +8,7 @@ const supabase = createClient(
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
 const MAX_MESSAGE_LENGTH = 280;
+const ORDINALS_API = 'https://ordinals.com';
 
 function normalizeNumber(raw) {
   const num = parseInt(String(raw || '').replace(/^#/, ''), 10);
@@ -20,6 +21,30 @@ function tableMissing(error) {
     /relation .*guestbook/i.test(error.message || '') ||
     /Could not find the table/i.test(error.message || '')
   );
+}
+
+async function currentOwnerFor(inscriptionId) {
+  try {
+    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
+      },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!ordRes.ok) return { owner: null, verified: false };
+    const raw = await ordRes.json();
+    return { owner: raw.address || null, verified: !!raw.address };
+  } catch (_) {
+    return { owner: null, verified: false };
+  }
+}
+
+async function isRegistrationDormant(registration) {
+  const inscriptionId = registration.inscription_id || (registration.inscription_txid ? `${registration.inscription_txid}i0` : null);
+  if (!inscriptionId) return false;
+  const ownership = await currentOwnerFor(inscriptionId);
+  return !!(ownership.verified && ownership.owner && ownership.owner !== registration.wallet_address);
 }
 
 module.exports = async (req, res) => {
@@ -79,7 +104,7 @@ module.exports = async (req, res) => {
 
   const { data: target, error: targetError } = await supabase
     .from('registrations')
-    .select('inscription_num')
+    .select('*')
     .eq('inscription_num', num)
     .eq('status', 'active')
     .maybeSingle();
@@ -89,11 +114,14 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Database error' });
   }
   if (!target) return res.status(404).json({ error: 'This OpenNum identity is not registered yet' });
+  if (await isRegistrationDormant(target)) {
+    return res.status(409).json({ error: 'This OpenNum is dormant after an on-chain transfer and must be claimed before messages can be posted.' });
+  }
 
   let authorNumber = null;
   const { data: author } = await supabase
     .from('registrations')
-    .select('inscription_num')
+    .select('*')
     .eq('wallet_address', author_wallet)
     .eq('status', 'active')
     .order('registered_at', { ascending: true })
@@ -102,6 +130,9 @@ module.exports = async (req, res) => {
   if (author) authorNumber = author.inscription_num;
   if (!authorNumber) {
     return res.status(403).json({ error: 'You need an active OpenNum ID before you can leave public messages.' });
+  }
+  if (await isRegistrationDormant(author)) {
+    return res.status(403).json({ error: 'Your OpenNum ID is dormant after an on-chain transfer. Claim an active ID before posting.' });
   }
 
   const { data, error } = await supabase
