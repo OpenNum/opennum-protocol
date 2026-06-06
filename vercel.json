@@ -35,6 +35,7 @@
     { "src": "/api/unbind",   "dest": "/api/unbind.js" },
     { "src": "/",             "dest": "/public/index.html" },
     { "src": "/register",     "dest": "/public/register.html" },
+    { "src": "/my",          "dest": "/public/my.html" },
     { "src": "/whitepaper",   "dest": "/public/whitepaper-cn.html" },
     { "src": "/whitepaper-cn","dest": "/public/whitepaper-cn.html" },
     { "src": "/whitepaper-en","dest": "/public/whitepaper-en.html" },

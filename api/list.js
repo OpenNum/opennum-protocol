@@ -16,6 +16,7 @@ module.exports = async (req, res) => {
   const sort = req.query.sort === 'number' ? 'inscription_num' : 'registered_at';
   const order = req.query.order === 'asc';
   const market = req.query.market === '1' || req.query.market === 'true';
+  const walletFilter = req.query.wallet || null;
 
   let query = supabase
     .from('registrations')
@@ -23,6 +24,7 @@ module.exports = async (req, res) => {
     .eq('status', 'active');
 
   if (market) query = query.eq('for_sale', true);
+  if (walletFilter) query = query.eq('wallet_address', walletFilter);
 
   const { data, error, count } = await query
     .order(sort, { ascending: order })

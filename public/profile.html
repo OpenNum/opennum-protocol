@@ -34,6 +34,7 @@
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
+        <a href="/my">My OpenNum</a>
       </div>
     </nav>
   </header>
@@ -220,6 +221,8 @@
         const hash = window.location.hash;
         if (hash === '#send') {
           setTimeout(() => { toggleSendPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+        } else if (hash === '#edit') {
+          setTimeout(() => { toggleEditPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
         } else if (hash === '#messages') {
           setTimeout(() => { document.getElementById('messages').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
         }

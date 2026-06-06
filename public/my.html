@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My OpenNum</title>
+  <meta name="description" content="View and manage your OpenNum Bitcoin identity." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav shell" aria-label="Primary">
+      <a class="brand" href="/">
+        <span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span>
+        <span>OpenNum</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Search</a>
+        <a href="/register">Register</a>
+        <a class="active" href="/my">My OpenNum</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell" style="padding:60px 0 100px;min-height:60vh">
+
+    <!-- Not connected -->
+    <div id="stateConnect" style="text-align:center;max-width:440px;margin:0 auto">
+      <div class="avatar" style="width:84px;height:84px;font-size:28px;margin:0 auto 28px">ON</div>
+      <h1 style="font-size:clamp(28px,4vw,40px);font-weight:920;letter-spacing:-0.04em;line-height:1.1;margin-bottom:14px">Your Bitcoin identity,<br>one number.</h1>
+      <p class="lead" style="font-size:16px;margin-bottom:32px">Connect your Unisat wallet to see and manage your registered OpenNum.</p>
+      <button class="btn btn-primary" style="min-height:52px;font-size:16px;padding:0 28px" onclick="connectAndLoad()">Connect Unisat Wallet</button>
+      <p class="small" style="margin-top:16px">Don't have Unisat? <a href="https://unisat.io" target="_blank" style="color:var(--gold-deep)">Download it here →</a></p>
+      <div class="alert alert-error" id="connectError" style="margin-top:16px;text-align:left"></div>
+    </div>
+
+    <!-- Loading -->
+    <div id="stateLoading" style="display:none;text-align:center;padding:80px 0;color:var(--muted)">
+      Looking up your OpenNum…
+    </div>
+
+    <!-- Has OpenNum -->
+    <div id="stateHas" style="display:none;max-width:520px;margin:0 auto">
+      <p class="small" style="margin-bottom:6px;text-align:center;color:var(--muted)" id="myWalletLine"></p>
+      <div class="profile-card" style="text-align:center;padding:36px 28px">
+        <div class="avatar" id="myAvatar" style="width:96px;height:96px;font-size:32px;margin:0 auto 20px"></div>
+        <div class="status" id="myStatus">Active</div>
+        <div class="number" id="myNum" style="margin-top:4px"></div>
+        <div class="profile-name" id="myName" style="display:none;margin-top:8px"></div>
+        <div class="profile-bio" id="myBio" style="display:none;margin-top:6px"></div>
+        <div style="display:grid;gap:10px;margin-top:28px">
+          <a class="btn btn-primary" id="viewLink" href="#" style="min-height:48px;font-size:15px">View my profile →</a>
+          <a class="btn" id="editLink" href="#" style="min-height:48px;font-size:15px">Edit profile &amp; social links</a>
+          <a class="btn" id="tradeLink" href="#" target="_blank" rel="noopener noreferrer" style="min-height:48px;font-size:15px">Trade on Satflow ↗</a>
+        </div>
+      </div>
+      <p class="small" style="margin-top:16px;text-align:center;color:var(--muted)">
+        Selling your inscription will automatically release this OpenNum to the new holder.
+      </p>
+    </div>
+
+    <!-- No OpenNum -->
+    <div id="stateNone" style="display:none;text-align:center;max-width:440px;margin:0 auto">
+      <div class="avatar" style="width:84px;height:84px;font-size:28px;margin:0 auto 24px;background:var(--wash);color:var(--muted)">?</div>
+      <h1 style="font-size:clamp(24px,4vw,36px);font-weight:920;letter-spacing:-0.04em;line-height:1.1;margin-bottom:14px">No OpenNum yet</h1>
+      <p class="lead" style="font-size:16px;margin-bottom:32px" id="noneWalletLine">This wallet has no active OpenNum. Own an Ordinals inscription? Register it as your identity.</p>
+      <a class="btn btn-primary" href="/register" style="min-height:52px;font-size:16px;padding:0 28px">Register a Number</a>
+      <p class="small" style="margin-top:14px;color:var(--muted)">New to Ordinals? Search for a number above and see if it's available.</p>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <div>OpenNum is non-custodial. Ownership follows the inscription on Bitcoin.</div>
+      <div class="footer-links">
+        <a href="/whitepaper-en">Whitepaper</a>
+        <a href="/market">Market</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+
+    function shortWallet(w) {
+      if (!w) return '';
+      return w.length > 24 ? `${w.slice(0, 10)}...${w.slice(-8)}` : w;
+    }
+
+    function setState(id) {
+      ['stateConnect', 'stateLoading', 'stateHas', 'stateNone'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? '' : 'none';
+      });
+    }
+
+    function setAlert(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg || '';
+      el.classList.toggle('visible', !!msg);
+    }
+
+    async function connectAndLoad() {
+      setAlert('connectError', '');
+      if (!window.unisat) {
+        setAlert('connectError', 'Unisat Wallet extension not found. Install it from unisat.io and reload this page.');
+        return;
+      }
+      setState('stateLoading');
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        await loadForWallet(accounts[0]);
+      } catch (e) {
+        setState('stateConnect');
+        setAlert('connectError', e?.message || 'Wallet connection cancelled.');
+      }
+    }
+
+    async function loadForWallet(wallet) {
+      setState('stateLoading');
+      try {
+        const res = await fetch(`/api/list?wallet=${encodeURIComponent(wallet)}&limit=1`, {
+          signal: AbortSignal.timeout(8000)
+        });
+        if (!res.ok) throw new Error('Registry unavailable');
+        const data = await res.json();
+        const reg = (data.registrations || [])[0];
+
+        document.getElementById('myWalletLine').textContent = `Connected: ${shortWallet(wallet)}`;
+        document.getElementById('noneWalletLine').textContent =
+          `Wallet ${shortWallet(wallet)} has no active OpenNum. Own an Ordinals inscription? Register it as your identity.`;
+
+        if (!reg) {
+          setState('stateNone');
+          return;
+        }
+
+        // Populate "has OpenNum" state
+        const num = reg.inscription_num;
+        const inscId = reg.inscription_id || (reg.inscription_txid ? `${reg.inscription_txid}i0` : '');
+        document.getElementById('myNum').textContent = `#${num}`;
+        document.getElementById('myStatus').textContent = reg.status === 'dormant' ? 'Dormant' : (reg.for_sale ? 'For sale' : 'Active');
+
+        if (reg.display_name) {
+          document.getElementById('myName').textContent = reg.display_name;
+          document.getElementById('myName').style.display = 'block';
+          document.title = `${reg.display_name} (#${num}) — My OpenNum`;
+        } else {
+          document.title = `#${num} — My OpenNum`;
+        }
+        if (reg.bio) {
+          document.getElementById('myBio').textContent = reg.bio;
+          document.getElementById('myBio').style.display = 'block';
+        }
+
+        // Try to show inscription image
+        if (inscId) {
+          const img = new Image();
+          img.onload = () => { document.getElementById('myAvatar').innerHTML = `<img src="${img.src}" style="width:100%;height:100%;object-fit:cover" />`; };
+          img.src = `https://ordinals.com/content/${inscId}`;
+        }
+        document.getElementById('myAvatar').textContent = document.getElementById('myAvatar').innerHTML ? '' : `#${num}`;
+
+        const profileUrl = `/n/${num}`;
+        const satflowUrl = reg.satflow_url || (inscId ? `https://www.satflow.com/ordinal/${inscId}` : 'https://www.satflow.com');
+        document.getElementById('viewLink').href = profileUrl;
+        document.getElementById('editLink').href = `${profileUrl}#edit`;
+        document.getElementById('tradeLink').href = satflowUrl;
+
+        setState('stateHas');
+      } catch (_) {
+        setState('stateConnect');
+        setAlert('connectError', 'Could not load registry. Please try again.');
+      }
+    }
+
+    // Auto-connect if Unisat is already unlocked (silent check)
+    window.addEventListener('load', async () => {
+      if (!window.unisat) return;
+      try {
+        const accounts = await window.unisat.getAccounts();
+        if (accounts && accounts[0]) await loadForWallet(accounts[0]);
+      } catch (_) {}
+    });
+  </script>
+</body>
+</html>
