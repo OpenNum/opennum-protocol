@@ -277,6 +277,27 @@ img { max-width: 100%; }
 .market-card .number { font-size: clamp(26px, 3vw, 42px); }
 .card-actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* ── SOCIAL LINK ROWS (Linktree style) ── */
+.social-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  transition: border-color 0.16s, background 0.16s, transform 0.12s;
+  text-decoration: none;
+  color: var(--ink);
+}
+.social-row:hover { border-color: var(--gold); background: #fffaf0; transform: translateY(-1px); }
+.social-icon-wrap {
+  width: 32px; height: 32px; border-radius: 7px;
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.social-platform { font-size: 13px; font-weight: 760; color: var(--muted); min-width: 72px; flex-shrink: 0; }
+.social-handle { flex: 1; font-size: 14px; font-weight: 780; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.social-arrow { color: var(--muted); font-size: 13px; flex-shrink: 0; }
 .footer { border-top: 1px solid var(--line); padding: 34px 0; color: var(--muted); font-size: 13px; }
 .footer .shell { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }

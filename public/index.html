@@ -70,13 +70,13 @@
         <aside class="number-preview" aria-label="Number preview">
           <div class="preview-head">
             <span id="resultStatus" class="status">Ready</span>
-            <span id="resultNum" class="console-number">#99</span>
+            <span id="resultNum" class="console-number">#0</span>
           </div>
           <div class="preview-body">
             <div id="resultAvatar" class="avatar avatar-large">ON</div>
             <div>
-              <div id="resultName" class="profile-name">Find any number</div>
-              <div id="resultWallet" class="wallet-line">View its inscription, holder status, public messages, and Satflow offer route.</div>
+              <div id="resultName" class="profile-name">The genesis inscription</div>
+              <div id="resultWallet" class="wallet-line">Search any number to see its inscription, holder, and profile.</div>
             </div>
           </div>
           <div class="preview-actions" id="resultActions">
@@ -168,6 +168,9 @@
         previewUnregistered(num, status, nameEl, walletEl, avatar, actions);
       }
     }
+
+    // Auto-load inscription #0 on page open
+    window.addEventListener('load', () => previewNumber('0'));
 
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions) {
       status.textContent = 'Unregistered';
