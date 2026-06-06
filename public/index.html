@@ -15,6 +15,7 @@
   <meta property="og:image" content="https://opennum.org/img/opennum-mark-final.svg" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/app.css" />
   <script type="application/ld+json">
   {
@@ -43,9 +44,6 @@
       <div class="nav-links" id="navLinks">
         <a class="active" href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/market">Buy</a>
-        <a href="/market?sell=1">Sell</a>
-        <button class="btn btn-small" type="button" onclick="connectWallet()">Connect</button>
       </div>
     </nav>
   </header>
@@ -60,17 +58,13 @@
           <form class="number-desk" onsubmit="searchNumber(event)">
             <label class="desk-label" for="homeSearch">Search an inscription number</label>
             <div class="desk-row">
-              <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #99, #7777, birthday number..." oninput="previewNumber(this.value)" />
+              <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #1, #8888, #100000…" oninput="previewNumber(this.value)" />
               <button class="btn btn-primary" type="submit">Search</button>
             </div>
             <div class="desk-actions">
               <a class="btn btn-primary" href="/register">Register a Number</a>
-              <a class="btn" href="/market">Buy a Number</a>
-              <a class="btn" href="/market?sell=1">Sell a Number</a>
             </div>
           </form>
-
-          <div id="walletState" class="wallet-mini">Connect only when you register, claim, edit, or leave a signed message.</div>
         </div>
 
         <aside class="number-preview" aria-label="Number preview">
@@ -86,44 +80,12 @@
             </div>
           </div>
           <div class="preview-actions" id="resultActions">
-            <a class="btn btn-primary" href="/n/9164">View example</a>
-            <a class="btn" href="/register">Register yours</a>
+            <a class="btn btn-primary" href="/register">Register a Number</a>
           </div>
         </aside>
       </div>
     </section>
 
-    <section class="home-strip">
-      <div class="shell workflow-grid">
-        <a class="workflow-item" href="/register">
-          <span>Register</span>
-          <strong>Claim a number you own.</strong>
-          <p>Connect Unisat, choose an inscription, sign once, and make the inscription number your OpenNum ID.</p>
-        </a>
-        <a class="workflow-item" href="/market">
-          <span>Buy</span>
-          <strong>Find the number you want.</strong>
-          <p>Search familiar numbers, leave a signed message, and make an offer through Satflow when the inscription is tradable.</p>
-        </a>
-        <a class="workflow-item" href="/market?sell=1">
-          <span>Sell</span>
-          <strong>Mark a number open to offers.</strong>
-          <p>Owners can show selling intent on the OpenNum page while the actual transaction stays non-custodial on Satflow.</p>
-        </a>
-      </div>
-    </section>
-
-    <section class="section logo-story-band">
-      <div class="shell story-grid">
-        <div>
-          <img class="story-mark" src="/img/opennum-mark-final.svg" alt="OpenNum ON mark" />
-        </div>
-        <div>
-          <h2>An open number, anchored to identity.</h2>
-          <p class="section-copy">The open O and connected N share four anchor points: number, inscription, wallet, and profile. The mark says what OpenNum does: one memorable number becomes a verifiable place to find, pay, message, and recognize someone on Bitcoin.</p>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">
@@ -162,20 +124,6 @@
       if (num !== null) location.href = `/n/${num}`;
     }
 
-    async function connectWallet() {
-      const state = document.getElementById('walletState');
-      if (!window.unisat) {
-        state.textContent = 'Unisat extension not found. Install it before registering or posting.';
-        return;
-      }
-      try {
-        const accounts = await window.unisat.requestAccounts();
-        state.textContent = `Connected: ${shortWallet(accounts[0])}`;
-      } catch (e) {
-        state.textContent = e?.message || 'Wallet connection was cancelled.';
-      }
-    }
-
     async function previewNumber(value) {
       const num = normalizeNumber(value);
       if (num === null) return;
@@ -193,7 +141,7 @@
       avatar.innerHTML = 'ON';
 
       try {
-        const res = await fetch(`/api/profile?num=${num}`);
+        const res = await fetch(`/api/profile?num=${num}`, { signal: AbortSignal.timeout(8000) });
         const data = await res.json();
         if (res.status === 404 || data.status === 'unregistered') {
           return previewUnregistered(num, status, nameEl, walletEl, avatar, actions);

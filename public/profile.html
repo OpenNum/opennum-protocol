@@ -11,8 +11,14 @@
   <meta property="og:title" content="OpenNum Identity Profile" />
   <meta property="og:description" content="A Bitcoin identity profile anchored to an Ordinals inscription number." />
   <meta property="og:image" content="https://opennum.org/img/opennum-mark-final.svg" />
+  <meta property="og:url" content="https://opennum.org/" />
+  <link rel="canonical" href="https://opennum.org/" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@OpenNumBTC" />
+  <meta name="twitter:title" content="OpenNum Identity Profile" />
+  <meta name="twitter:description" content="A Bitcoin identity profile anchored to an Ordinals inscription number." />
+  <meta name="twitter:image" content="https://opennum.org/img/opennum-mark-final.svg" />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body>
@@ -28,8 +34,6 @@
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/market">Buy</a>
-        <a href="/market?sell=1">Sell</a>
       </div>
     </nav>
   </header>
@@ -111,10 +115,6 @@
             <div>
               <label class="data-key" style="display:block;margin-bottom:4px">Instagram URL</label>
               <input class="input" id="editInstagram" type="url" placeholder="https://instagram.com/yourhandle" />
-            </div>
-            <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">OnlyFans URL</label>
-              <input class="input" id="editOnlyFans" type="url" placeholder="https://onlyfans.com/yourhandle" />
             </div>
             <div>
               <label class="data-key" style="display:block;margin-bottom:4px">Telegram URL</label>
@@ -284,6 +284,25 @@
         document.getElementById('profileBio').style.display = 'block';
       }
 
+      // Dynamic OG / Twitter meta for social sharing
+      const ogTitle = data.display_name ? `${data.display_name} (#${num}) — OpenNum` : `OpenNum #${num}`;
+      const ogDesc = data.bio ? data.bio : `Bitcoin Ordinals identity #${num} on OpenNum. Search, pay, and connect.`;
+      const m0 = data.metadata;
+      const ogImage = (m0?.content_type?.startsWith('image/') && m0.content_url)
+        ? m0.content_url
+        : 'https://opennum.org/img/opennum-mark-final.svg';
+      const setMeta = (prop, val) => { const el = document.querySelector(`meta[property="${prop}"],meta[name="${prop}"]`); if (el) el.setAttribute('content', val); };
+      setMeta('og:title', ogTitle);
+      setMeta('og:description', ogDesc);
+      setMeta('og:image', ogImage);
+      setMeta('og:url', `https://opennum.org/n/${num}`);
+      setMeta('twitter:title', ogTitle);
+      setMeta('twitter:description', ogDesc);
+      setMeta('twitter:image', ogImage);
+      document.querySelector('link[rel="canonical"]')?.setAttribute('href', `https://opennum.org/n/${num}`);
+      const descEl = document.querySelector('meta[name="description"]');
+      if (descEl) descEl.setAttribute('content', ogDesc);
+
       if (dormant) {
         document.getElementById('claimNote').style.display = 'block';
         document.getElementById('claimNote').textContent = 'This inscription has moved on-chain. The previous OpenNum profile is historical until the current holder signs and claims it again.';
@@ -333,7 +352,6 @@
       const linkDefs = [
         { key: 'x', label: 'X / Twitter' },
         { key: 'instagram', label: 'Instagram' },
-        { key: 'onlyfans', label: 'OnlyFans' },
         { key: 'telegram', label: 'Telegram' },
         { key: 'website', label: 'Website' }
       ];
@@ -389,7 +407,6 @@
           const links = currentProfile.links || {};
           document.getElementById('editX').value = links.x || '';
           document.getElementById('editInstagram').value = links.instagram || '';
-          document.getElementById('editOnlyFans').value = links.onlyfans || '';
           document.getElementById('editTelegram').value = links.telegram || '';
           document.getElementById('editWebsite').value = links.website || '';
           document.getElementById('editForSale').checked = !!currentProfile.for_sale;
@@ -416,12 +433,10 @@
         const links = {};
         const x = document.getElementById('editX').value.trim();
         const ig = document.getElementById('editInstagram').value.trim();
-        const of = document.getElementById('editOnlyFans').value.trim();
         const tg = document.getElementById('editTelegram').value.trim();
         const ws = document.getElementById('editWebsite').value.trim();
         if (x) links.x = x;
         if (ig) links.instagram = ig;
-        if (of) links.onlyfans = of;
         if (tg) links.telegram = tg;
         if (ws) links.website = ws;
 
