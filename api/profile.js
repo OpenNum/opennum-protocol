@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { setCors } = require('./_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -20,7 +21,8 @@ async function fetchInscription(inscriptionId) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  setCors(req, res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
   const raw = req.query.num || req.query.number;

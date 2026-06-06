@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { setCors } = require('./_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -6,7 +7,8 @@ const supabase = createClient(
 );
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  setCors(req, res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
 
   const limit = Math.min(parseInt(req.query.limit || '50', 10), 100);

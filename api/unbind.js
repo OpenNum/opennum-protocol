@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
+const { setCors, checkRateLimit, sendRateLimit } = require('./_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -9,11 +10,11 @@ const supabase = createClient(
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const rate = checkRateLimit(req, 'unbind', 10, 60 * 60 * 1000);
+  if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
   const { inscription_num, wallet, signature, timestamp } = req.body || {};
 

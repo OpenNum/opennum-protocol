@@ -1,4 +1,5 @@
 const ORDINALS_API = 'https://ordinals.com';
+const { setCors } = require('./_security');
 
 function normalizeNumber(raw) {
   const num = parseInt(String(raw || '').replace(/^#/, ''), 10);
@@ -6,7 +7,8 @@ function normalizeNumber(raw) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  setCors(req, res, 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
   res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
 
   const num = normalizeNumber(req.query.num || req.query.number);

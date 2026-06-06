@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
+const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('./_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -33,13 +34,13 @@ async function currentOwnerFor(inscriptionId) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'PATCH, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res, 'PATCH, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'PATCH' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  const rate = checkRateLimit(req, 'update', 30, 60 * 60 * 1000);
+  if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
   const { inscription_num, wallet, signature, timestamp, display_name, bio, links, for_sale, ask_note, satflow_url } = req.body || {};
 
@@ -94,15 +95,15 @@ module.exports = async (req, res) => {
 
   // Build update — only update editable fields
   const updatePayload = {
-    display_name: display_name || null,
-    bio: bio || null,
+    display_name: sanitizeText(display_name, 48),
+    bio: sanitizeText(bio, 200),
     for_sale: !!for_sale,
-    ask_note: ask_note ? String(ask_note).slice(0, 240) : null,
-    satflow_url: satflow_url || null,
+    ask_note: sanitizeText(ask_note, 240),
+    satflow_url: sanitizeUrl(satflow_url),
     updated_at: new Date().toISOString()
   };
   // links requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}'
-  if (links !== undefined) updatePayload.links = (links && typeof links === 'object') ? links : {};
+  if (links !== undefined) updatePayload.links = sanitizeLinks(links);
 
   let { error: updateError } = await supabase
     .from('registrations')

@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
+const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('./_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -32,11 +33,11 @@ async function activeRegistrationForWallet(wallet) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const rate = checkRateLimit(req, 'register', 10, 60 * 60 * 1000);
+  if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
   const { inscription_num, inscription_txid, inscription_id, wallet, signature, timestamp, display_name, links, for_sale, ask_note, satflow_url } = req.body || {};
 
@@ -152,16 +153,16 @@ module.exports = async (req, res) => {
       inscription_id: inscription_id || `${inscription_txid}i0`,
       wallet_address: wallet,
       signature,
-      display_name: display_name || null,
+      display_name: sanitizeText(display_name, 48),
       for_sale: !!for_sale,
-      ask_note: ask_note ? String(ask_note).slice(0, 240) : null,
-      satflow_url: satflow_url || null,
+      ask_note: sanitizeText(ask_note, 240),
+      satflow_url: sanitizeUrl(satflow_url),
       indexer_ruleset: 'ord-v0.18-mainnet',
       status: 'active',
       updated_at: new Date().toISOString()
     };
     // links is optional — only include if provided (requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}')
-    if (links && typeof links === 'object') updatePayload.links = links;
+    if (links && typeof links === 'object') updatePayload.links = sanitizeLinks(links);
 
     let { error: updateError } = await supabase
       .from('registrations')
@@ -215,15 +216,15 @@ module.exports = async (req, res) => {
     inscription_id: inscription_id || `${inscription_txid}i0`,
     wallet_address: wallet,
     signature,
-    display_name: display_name || null,
+    display_name: sanitizeText(display_name, 48),
     for_sale: !!for_sale,
-    ask_note: ask_note ? String(ask_note).slice(0, 240) : null,
-    satflow_url: satflow_url || null,
+    ask_note: sanitizeText(ask_note, 240),
+    satflow_url: sanitizeUrl(satflow_url),
     indexer_ruleset: 'ord-v0.18-mainnet',
     status: 'active'
   };
   // links is optional — only include if provided (requires DB migration)
-  if (links && typeof links === 'object') insertPayload.links = links;
+  if (links && typeof links === 'object') insertPayload.links = sanitizeLinks(links);
 
   let { error: insertError } = await supabase
     .from('registrations')

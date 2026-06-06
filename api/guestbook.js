@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
+const { setCors, sanitizeText, checkRateLimit, sendRateLimit } = require('./_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -48,9 +49,7 @@ async function isRegistrationDormant(registration) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(req, res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
@@ -79,22 +78,25 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  const rate = checkRateLimit(req, 'guestbook', 30, 60 * 60 * 1000);
+  if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
   const { inscription_num, parent_id, author_wallet, message, signature, timestamp } = req.body || {};
   const num = normalizeNumber(inscription_num);
-  const cleanMessage = String(message || '').trim();
+  const rawMessage = String(message || '').trim();
+  const cleanMessage = sanitizeText(rawMessage, MAX_MESSAGE_LENGTH);
 
-  if (num === null || !author_wallet || !cleanMessage || !signature || !timestamp) {
+  if (num === null || !author_wallet || !rawMessage || !cleanMessage || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, author_wallet, message, signature, timestamp' });
   }
-  if (cleanMessage.length > MAX_MESSAGE_LENGTH) {
+  if (rawMessage.length > MAX_MESSAGE_LENGTH) {
     return res.status(400).json({ error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` });
   }
   if (Math.abs(Date.now() - Number(timestamp) * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
-  const signedMessage = `opennum:guestbook:${num}:${author_wallet}:${cleanMessage}:${timestamp}`;
+  const signedMessage = `opennum:guestbook:${num}:${author_wallet}:${rawMessage}:${timestamp}`;
   try {
     const valid = Verifier.verifySignature(author_wallet, signedMessage, signature);
     if (!valid) return res.status(400).json({ error: 'Invalid signature' });
@@ -133,6 +135,24 @@ module.exports = async (req, res) => {
   }
   if (await isRegistrationDormant(author)) {
     return res.status(403).json({ error: 'Your OpenNum ID is dormant after an on-chain transfer. Claim an active ID before posting.' });
+  }
+
+  if (parent_id) {
+    const { data: parentMsg, error: parentError } = await supabase
+      .from('guestbook')
+      .select('id, inscription_num')
+      .eq('id', parent_id)
+      .maybeSingle();
+    if (tableMissing(parentError)) {
+      return res.status(503).json({ error: 'Guestbook table is not installed yet. Run the Supabase migration in docs/database.md.' });
+    }
+    if (parentError) {
+      console.error('Guestbook parent lookup error:', parentError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (!parentMsg || parentMsg.inscription_num !== num) {
+      return res.status(400).json({ error: 'Invalid reply target.' });
+    }
   }
 
   const { data, error } = await supabase
