@@ -52,8 +52,8 @@
     <section class="home-hero">
       <div class="shell home-grid">
         <div class="home-copy">
-          <h1>Your number is your Bitcoin identity.</h1>
-          <p class="lead">Register, find, message, and trade inscription-backed OpenNum IDs. OpenNum resolves identity; Satflow handles the market.</p>
+          <h1>One inscription. One identity. Yours forever.</h1>
+          <p class="lead">Search any inscription number. If you own it, claim it as your OpenNum — one address for your Bitcoin wallet, social links, and messages.</p>
 
           <form class="number-desk" onsubmit="searchNumber(event)">
             <label class="desk-label" for="homeSearch">Search an inscription number</label>
@@ -85,6 +85,13 @@
         </aside>
       </div>
     </section>
+
+    <div class="recent-strip" id="recentStrip" style="display:none">
+      <div class="shell recent-inner">
+        <span class="recent-label">Recently claimed</span>
+        <div class="recent-pills" id="recentPills"></div>
+      </div>
+    </div>
 
   </main>
 
@@ -169,8 +176,32 @@
       }
     }
 
-    // Auto-load inscription #0 on page open
-    window.addEventListener('load', () => previewNumber('0'));
+    function escapeHtml(v) {
+      return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // Auto-load inscription #0 on page open + recently claimed strip
+    window.addEventListener('load', () => {
+      previewNumber('0');
+      loadRecent();
+    });
+
+    async function loadRecent() {
+      try {
+        const res = await fetch('/api/list?sort=registered_at&order=desc&limit=6', { signal: AbortSignal.timeout(4000) });
+        if (!res.ok) return;
+        const data = await res.json();
+        const regs = data.registrations || [];
+        if (!regs.length) return;
+        document.getElementById('recentPills').innerHTML = regs.map(r =>
+          `<a class="recent-pill" href="/n/${r.inscription_num}">
+            <span class="pill-num">#${r.inscription_num}</span>
+            ${r.display_name ? `<span class="pill-name">${escapeHtml(r.display_name)}</span>` : ''}
+          </a>`
+        ).join('');
+        document.getElementById('recentStrip').style.display = '';
+      } catch (_) {}
+    }
 
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions) {
       status.textContent = 'Unregistered';

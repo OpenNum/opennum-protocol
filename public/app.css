@@ -277,6 +277,21 @@ img { max-width: 100%; }
 .market-card .number { font-size: clamp(26px, 3vw, 42px); }
 .card-actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* ── RECENTLY CLAIMED STRIP ── */
+.recent-strip { border-top: 1px solid var(--line); padding: 14px 0; background: var(--wash); }
+.recent-inner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.recent-label { font-size: 12px; font-weight: 760; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; }
+.recent-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.recent-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border: 1px solid var(--line); border-radius: 20px;
+  font-size: 13px; font-weight: 760; background: var(--paper);
+  transition: border-color 0.14s, background 0.14s;
+}
+.recent-pill:hover { border-color: var(--gold); background: #fffaf0; }
+.pill-num { color: var(--gold-deep); }
+.pill-name { color: var(--soft-ink); font-weight: 720; }
+
 /* ── SOCIAL LINK ROWS (Linktree style) ── */
 .social-row {
   display: flex;
