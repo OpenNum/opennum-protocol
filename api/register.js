@@ -19,6 +19,18 @@ function isMissingMarketColumn(error) {
   return /(for_sale|ask_note|satflow_url)/i.test(error?.message || '');
 }
 
+async function activeRegistrationForWallet(wallet) {
+  const { data, error } = await supabase
+    .from('registrations')
+    .select('id, inscription_num, wallet_address, status')
+    .eq('wallet_address', wallet)
+    .eq('status', 'active')
+    .order('inscription_num', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return { data, error };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -94,12 +106,19 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Signature verification failed: ' + e.message });
   }
 
-  // Check for existing active registration on this number
+  const { data: activeWalletRegistration, error: walletSelectError } = await activeRegistrationForWallet(wallet);
+  if (walletSelectError) {
+    console.error('DB wallet select error:', walletSelectError);
+    return res.status(500).json({ error: 'Database error. Please try again.' });
+  }
+
+  // Check for existing registration on this number. Inactive rows can be reactivated by the current on-chain owner.
   const { data: existing, error: selectError } = await supabase
     .from('registrations')
-    .select('id, wallet_address')
+    .select('id, wallet_address, status')
     .eq('inscription_num', inscription_num)
-    .eq('status', 'active')
+    .order('registered_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (selectError) {
@@ -107,18 +126,27 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Database error. Please try again.' });
   }
   if (existing) {
-    if (existing.wallet_address === wallet) {
+    if (existing.status === 'active' && existing.wallet_address === wallet) {
       return res.status(409).json({ error: 'This inscription is already registered to your wallet.' });
     }
-    // Inscription is registered to a different wallet.
-    // If ordinals.com confirmed the current on-chain owner is the requester,
-    // the inscription has changed hands — transfer the registration.
-    if (!ownershipVerified) {
+    if (activeWalletRegistration && activeWalletRegistration.inscription_num !== inscription_num) {
       return res.status(409).json({
-        error: 'This inscription number is already registered. On-chain ownership could not be verified — please try again.'
+        error: `This wallet already has active OpenNum #${activeWalletRegistration.inscription_num}. Unbind it before registering another number.`,
+        active_registration: {
+          inscription_num: activeWalletRegistration.inscription_num,
+          profile_url: `https://opennum.org/n/${activeWalletRegistration.inscription_num}`
+        }
       });
     }
-    // Verified transfer: update existing row in place (preserves inscription_num uniqueness)
+    // Inscription is registered to a different wallet, or was previously unbound/dormant.
+    // If ordinals.com confirmed the current on-chain owner is the requester,
+    // the inscription can be transferred/reactivated.
+    if (!ownershipVerified) {
+      return res.status(409).json({
+        error: 'This inscription number has an existing OpenNum record. On-chain ownership could not be verified — please try again.'
+      });
+    }
+    // Verified transfer/reactivation: update existing row in place (preserves inscription_num uniqueness)
     const updatePayload = {
       inscription_txid,
       inscription_id: inscription_id || `${inscription_txid}i0`,
@@ -163,10 +191,21 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      transferred: true,
+      transferred: existing.status === 'active',
+      reactivated: existing.status !== 'active',
       inscription_num,
       wallet,
       profile_url: `https://opennum.org/n/${inscription_num}`
+    });
+  }
+
+  if (activeWalletRegistration) {
+    return res.status(409).json({
+      error: `This wallet already has active OpenNum #${activeWalletRegistration.inscription_num}. Unbind it before registering another number.`,
+      active_registration: {
+        inscription_num: activeWalletRegistration.inscription_num,
+        profile_url: `https://opennum.org/n/${activeWalletRegistration.inscription_num}`
+      }
     });
   }
 

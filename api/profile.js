@@ -69,6 +69,20 @@ module.exports = async (req, res) => {
 
   const ownerMismatch = ownershipVerified && currentOwner && data.wallet_address && currentOwner !== data.wallet_address;
   const effectiveStatus = ownerMismatch ? 'dormant' : data.status;
+  let collections = [];
+  try {
+    const result = await supabase
+      .from('inscription_collections')
+      .select('collection_slug, collection_name, source, verified_at')
+      .eq('inscription_id', inscriptionId)
+      .order('collection_name', { ascending: true });
+    if (!result.error) collections = result.data || [];
+    else if (!/relation .*inscription_collections/i.test(result.error.message || '')) {
+      console.error('Collection lookup error:', result.error);
+    }
+  } catch (_) {
+    collections = [];
+  }
 
   return res.status(200).json({
     inscription_num: data.inscription_num,
@@ -87,6 +101,7 @@ module.exports = async (req, res) => {
     for_sale: !!data.for_sale,
     ask_note: data.ask_note || null,
     satflow_url: data.satflow_url || null,
+    collections,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     metadata

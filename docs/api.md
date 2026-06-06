@@ -131,7 +131,58 @@ Validation:
 - The signature must verify for the submitted wallet.
 - When Ordinals metadata is reachable, the inscription owner and number must match.
 - `inscription_id` is optional for compatibility, but should be sent by wallets because one Bitcoin transaction can contain multiple inscriptions (`i0`, `i1`, `i2`, ...).
+- A wallet can have only one active OpenNum ID. Registering a second ID requires unbinding the existing active ID first.
 - Existing active registrations can be transferred only when on-chain ownership is verified.
+
+## Wallet
+
+Check whether a wallet already has an active OpenNum ID.
+
+```http
+GET /api/wallet?wallet=bc1p...
+```
+
+Response:
+
+```json
+{
+  "wallet": "bc1p...",
+  "has_active_id": true,
+  "registration": {
+    "inscription_num": 2311,
+    "inscription_id": "64-character-hex-txidi0",
+    "status": "active"
+  }
+}
+```
+
+## Unbind
+
+Unbind the wallet's active OpenNum ID so the same wallet can register another inscription.
+
+```http
+POST /api/unbind
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "inscription_num": 2311,
+  "wallet": "bc1p...",
+  "signature": "BIP322 signature",
+  "timestamp": 1779744378
+}
+```
+
+Signed message:
+
+```text
+opennum:unbind:<inscription_num>:<wallet>:<timestamp>
+```
+
+Unbinding does not delete the historical record. It changes `status` to `unbound`.
 
 ## Guestbook
 

@@ -12,6 +12,11 @@ A: No. Registration only requires signing a message with your wallet private key
 
 ---
 
+**Q: Can one wallet register multiple OpenNum IDs?**
+A: No. One wallet can have only one active OpenNum ID. If you own many inscriptions in the same wallet, choose one as your identity. To switch to another inscription, unbind the current ID first and then register the new one.
+
+---
+
 **Q: What happens to my number if I sell my inscription?**
 A: Your registration automatically becomes invalid and the number enters Dormant state. The new holder must re-register to activate it — just like selling a phone means the new owner activates the number themselves.
 

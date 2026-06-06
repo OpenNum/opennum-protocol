@@ -95,6 +95,9 @@
     .wallet-indicator.off { background: var(--muted); box-shadow: none; }
     .wallet-addr { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--dim); }
     .wallet-label { font-size: 13px; font-weight: 600; }
+    .bound-card { margin-top: 18px; padding: 18px; border: 1px solid var(--border); border-radius: 8px; background: #fffaf0; }
+    .bound-num { font-size: 34px; line-height: 1; font-weight: 900; color: var(--orange); letter-spacing: -1px; margin: 8px 0; }
+    .bound-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 
     /* INSCRIPTION GRID */
     .inscription-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
@@ -223,6 +226,7 @@
         </div>
       </div>
       <button class="btn btn-outline" id="disconnectBtn" onclick="disconnect()">Disconnect</button>
+      <div id="boundStatus" class="bound-card" style="display:none"></div>
     </div>
     <div id="connectBtnWrap">
       <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">
@@ -323,6 +327,7 @@
   let selectedInscription = null; // { inscriptionId, inscriptionNumber, txid, contentType }
   let inscriptions = [];
   let inscriptionOffset = 0;
+  let activeWalletRegistration = null;
   const PAGE_SIZE = 20;
 
   // ── STEPS UI ───────────────────────────────────────────────
@@ -388,8 +393,86 @@
     document.getElementById('walletDot').className = 'wallet-indicator';
     document.getElementById('walletLabel').textContent = 'Unisat Wallet Connected';
     document.getElementById('walletAddr').textContent = walletAddr;
+    const active = await loadActiveWalletRegistration();
+    if (active) {
+      setStep(1);
+      renderBoundStatus(active);
+      return;
+    }
     setStep(2);
     await loadInscriptions(true);
+  }
+
+  async function loadActiveWalletRegistration() {
+    activeWalletRegistration = null;
+    const box = document.getElementById('boundStatus');
+    box.style.display = 'none';
+    try {
+      const res = await fetch(`/api/wallet?wallet=${encodeURIComponent(walletAddr)}`);
+      const data = await res.json();
+      if (res.ok && data.has_active_id && data.registration) {
+        activeWalletRegistration = data.registration;
+        return activeWalletRegistration;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function renderBoundStatus(registration) {
+    const box = document.getElementById('boundStatus');
+    box.style.display = 'block';
+    box.innerHTML = `
+      <div style="font-size:13px;color:var(--dim)">This wallet already has an active OpenNum ID.</div>
+      <div class="bound-num">#${registration.inscription_num}</div>
+      <div style="font-size:13px;color:var(--dim)">One wallet can only bind one OpenNum ID at a time. Unbind this ID before registering another inscription.</div>
+      <div class="bound-actions">
+        <a class="btn btn-primary" href="/n/${registration.inscription_num}">View profile</a>
+        <button class="btn btn-outline" id="unbindBtn" onclick="unbindActiveId()">Unbind this ID</button>
+      </div>
+      <div class="alert alert-error" id="unbindError" style="margin-top:14px"></div>
+      <div class="alert alert-success" id="unbindSuccess" style="margin-top:14px"></div>
+    `;
+  }
+
+  async function unbindActiveId() {
+    if (!activeWalletRegistration) return;
+    const btn = document.getElementById('unbindBtn');
+    const err = document.getElementById('unbindError');
+    const ok = document.getElementById('unbindSuccess');
+    err.className = 'alert alert-error';
+    err.textContent = '';
+    ok.className = 'alert alert-success';
+    ok.textContent = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Waiting for signature...';
+    try {
+      const accounts = await window.unisat.requestAccounts();
+      const wallet = accounts[0];
+      if (wallet !== walletAddr) throw new Error('Connected wallet changed. Please reconnect and try again.');
+      const ts = Math.floor(Date.now() / 1000);
+      const num = activeWalletRegistration.inscription_num;
+      const message = `opennum:unbind:${num}:${wallet}:${ts}`;
+      const signature = await window.unisat.signMessage(message, 'ecdsa');
+      btn.innerHTML = '<span class="spinner"></span> Unbinding...';
+      const res = await fetch('/api/unbind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inscription_num: num, wallet, signature, timestamp: ts })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unbind failed.');
+      ok.textContent = `#${num} has been unbound. You can now register another inscription.`;
+      ok.className = 'alert alert-success visible';
+      activeWalletRegistration = null;
+      document.getElementById('boundStatus').style.display = 'none';
+      setStep(2);
+      await loadInscriptions(true);
+    } catch (e) {
+      err.textContent = e?.message || 'Unbind failed.';
+      err.className = 'alert alert-error visible';
+      btn.disabled = false;
+      btn.textContent = 'Unbind this ID';
+    }
   }
 
   function disconnect() {
@@ -397,8 +480,10 @@
     selectedInscription = null;
     inscriptions = [];
     inscriptionOffset = 0;
+    activeWalletRegistration = null;
     document.getElementById('connectBtnWrap').style.display = 'block';
     document.getElementById('walletStatus').style.display = 'none';
+    document.getElementById('boundStatus').style.display = 'none';
     document.getElementById('connectBtn').disabled = false;
     document.getElementById('connectBtn').textContent = 'Connect Unisat Wallet';
     setStep(1);

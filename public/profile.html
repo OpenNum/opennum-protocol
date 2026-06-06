@@ -163,6 +163,7 @@
               <p class="small">The Bitcoin object behind this OpenNum.</p>
             </div>
           </div>
+          <div id="collectionBadges" style="display:none;margin-bottom:14px;gap:8px;flex-wrap:wrap"></div>
           <div id="inscriptionContent" style="display:grid;place-items:center;min-height:280px;background:var(--wash);border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
         </div>
 
@@ -309,7 +310,23 @@
       }
 
       renderSocialLinks(data.links || {});
+      renderCollections(data.collections || []);
       if (!dormant) checkOwnership(data.wallet);
+    }
+
+    function renderCollections(collections) {
+      const box = document.getElementById('collectionBadges');
+      if (!collections.length) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+      }
+      box.style.display = 'flex';
+      box.innerHTML = collections.map((c) => `
+        <span class="btn" style="min-height:34px;padding:0 12px;color:var(--deep);background:#f7fbfc;border-color:#d7e4e8">
+          V Verified collection · ${escapeHtml(c.collection_name || c.collection_slug)}
+        </span>
+      `).join('');
     }
 
     function renderSocialLinks(links) {
