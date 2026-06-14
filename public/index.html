@@ -53,29 +53,25 @@
     <section class="home-hero">
       <div class="shell home-grid">
         <div class="home-copy">
-          <h1>One inscription. One identity. Yours forever.</h1>
-          <p class="lead">Search any inscription number. If you own it, claim it as your OpenNum — one address for your Bitcoin wallet, social links, and messages.</p>
+          <h1>Your inscription number is your Bitcoin identity.</h1>
+          <p class="lead">Find a number, see who owns it, leave a signed message, or claim it as yours.</p>
 
           <form class="number-desk" onsubmit="searchNumber(event)">
-            <label class="desk-label" for="homeSearch">Search an inscription number</label>
             <div class="desk-row">
-              <input id="homeSearch" class="search-input" inputmode="numeric" autocomplete="off" placeholder="Search #1, #8888, #100000…" oninput="previewNumber(this.value)" />
+              <span class="search-prefix" aria-hidden="true">#</span>
+              <input id="homeSearch" class="search-input" aria-label="Inscription number" inputmode="numeric" autocomplete="off" placeholder="Enter inscription number" oninput="previewNumber(this.value)" />
               <button class="btn btn-primary" type="submit">Search</button>
             </div>
-            <div class="desk-actions">
-              <a class="btn btn-primary" href="/register">Register a Number</a>
-            </div>
           </form>
+          <a class="claim-link" href="/register">Claim my number <span aria-hidden="true">→</span></a>
         </div>
 
         <aside class="number-preview" aria-label="Number preview">
-          <div class="preview-head">
-            <span id="resultStatus" class="status">Ready</span>
-            <span id="resultNum" class="console-number">#0</span>
-          </div>
           <div class="preview-body">
             <div id="resultAvatar" class="avatar avatar-large">ON</div>
-            <div>
+            <div class="preview-identity">
+              <span id="resultStatus" class="status">Ready</span>
+              <span id="resultNum" class="console-number">#0</span>
               <div id="resultName" class="profile-name">The genesis inscription</div>
               <div id="resultWallet" class="wallet-line">Search any number to see its inscription, holder, and profile.</div>
             </div>
@@ -91,6 +87,7 @@
       <div class="shell recent-inner">
         <span class="recent-label">Recently claimed</span>
         <div class="recent-pills" id="recentPills"></div>
+        <a class="recent-all" href="/market">View all</a>
       </div>
     </div>
 
@@ -166,11 +163,9 @@
         } else {
           avatar.textContent = `#${num}`;
         }
-        const tradeUrl = data.satflow_url || (data.inscription_id ? `https://www.satflow.com/ordinal/${data.inscription_id}` : 'https://www.satflow.com');
         actions.innerHTML = `
           <a class="btn btn-primary" href="/n/${num}">Open profile</a>
           ${dormant ? '<a class="btn" href="/register">Claim</a>' : `<a class="btn" href="/n/${num}#messages">Message</a>`}
-          <a class="btn" href="${tradeUrl}" target="_blank" rel="noopener noreferrer">Satflow</a>
         `;
       } catch (_) {
         previewUnregistered(num, status, nameEl, walletEl, avatar, actions);
@@ -181,27 +176,31 @@
       return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
-    // Auto-load inscription #0 on page open + recently claimed strip
-    window.addEventListener('load', () => {
-      previewNumber('0');
-      loadRecent();
+    // Lead with a real active identity when the registry has recent claims.
+    window.addEventListener('load', async () => {
+      const recent = await loadRecent();
+      previewNumber(recent?.[0]?.inscription_num ?? '0');
     });
 
     async function loadRecent() {
       try {
         const res = await fetch('/api/list?sort=registered_at&order=desc&limit=6', { signal: AbortSignal.timeout(4000) });
-        if (!res.ok) return;
+        if (!res.ok) return [];
         const data = await res.json();
         const regs = data.registrations || [];
-        if (!regs.length) return;
+        if (!regs.length) return [];
         document.getElementById('recentPills').innerHTML = regs.map(r =>
           `<a class="recent-pill" href="/n/${r.inscription_num}">
+            <span class="recent-thumb">${r.inscription_id ? `<img src="https://ordinals.com/content/${escapeHtml(r.inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='ON'" />` : 'ON'}</span>
             <span class="pill-num">#${r.inscription_num}</span>
             ${r.display_name ? `<span class="pill-name">${escapeHtml(r.display_name)}</span>` : ''}
           </a>`
         ).join('');
         document.getElementById('recentStrip').style.display = '';
-      } catch (_) {}
+        return regs;
+      } catch (_) {
+        return [];
+      }
     }
 
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions) {

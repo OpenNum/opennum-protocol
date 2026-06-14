@@ -51,34 +51,40 @@
       </div>
     </div>
 
-    <section id="profile" class="profile-layout" style="display:none">
-      <aside class="profile-card">
-        <div class="profile-hero">
-          <div class="avatar" id="avatarWrap"><span id="avatarFallback">#</span></div>
-          <div class="profile-title">
-            <div class="status" id="profileStatus">Active</div>
-            <div class="number" id="profileNum"></div>
-            <div class="profile-name" id="profileName" style="display:none"></div>
-            <div class="profile-bio" id="profileBio" style="display:none"></div>
+    <section id="profile" class="social-profile" style="display:none">
+      <div class="profile-stage">
+        <div class="profile-art-column">
+          <div class="profile-art" id="avatarWrap"><span id="avatarFallback">#</span></div>
+          <div id="collectionBadges" class="collection-list" style="display:none"></div>
+          <div class="art-links">
+            <a id="ordLink" href="#" target="_blank" rel="noopener noreferrer">View inscription <span aria-hidden="true">↗</span></a>
+            <a id="satflowLink" href="#" target="_blank" rel="noopener noreferrer">Make offer <span aria-hidden="true">↗</span></a>
           </div>
         </div>
 
-        <div class="claim-note" id="claimNote" style="display:none"></div>
-        <div class="sale-note" id="saleNote" style="display:none"></div>
+        <div class="profile-identity">
+          <div class="identity-topline">
+            <div class="status" id="profileStatus">Active</div>
+            <button class="quiet-button" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit profile</button>
+          </div>
+          <div class="number" id="profileNum"></div>
+          <h1 class="profile-display-name" id="profileName" style="display:none"></h1>
+          <p class="profile-bio" id="profileBio" style="display:none"></p>
 
-        <div id="socialLinks" style="display:none;margin-top:20px">
-          <div id="socialGrid" style="display:grid;gap:8px"></div>
-        </div>
+          <div class="claim-note" id="claimNote" style="display:none"></div>
+          <div class="sale-note" id="saleNote" style="display:none"></div>
 
-        <div class="action-stack" id="send" style="margin-top:22px">
-          <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC to this number</button>
-          <a class="btn" id="satflowLink" href="#" target="_blank" rel="noopener noreferrer">Make offer on Satflow</a>
-          <a class="btn" id="ordLink" href="#" target="_blank" rel="noopener noreferrer">View inscription</a>
-          <a class="btn" id="claimBtn" href="/register" style="display:none">Claim this OpenNum</a>
-          <button class="btn" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit profile / selling intent</button>
-        </div>
+          <div id="socialLinks" style="display:none">
+            <div id="socialGrid" class="social-grid"></div>
+          </div>
 
-        <div class="send-panel" id="sendPanel">
+          <div class="primary-actions" id="send">
+            <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC</button>
+            <a class="btn" href="#messages">Message</a>
+            <a class="btn" id="claimBtn" href="/register" style="display:none">Claim this OpenNum</a>
+          </div>
+
+          <div class="send-panel" id="sendPanel">
           <div class="small">OpenNum resolves this number to the current holder wallet. OpenNum never holds custody.</div>
           <div class="data-list" style="margin-top:12px">
             <div class="data-row"><div class="data-key">Recipient</div><div class="data-val mono" id="sendWallet"></div></div>
@@ -95,9 +101,9 @@
           </div>
           <div class="alert alert-error" id="sendError"></div>
           <div class="alert alert-success" id="sendSuccess"></div>
-        </div>
+          </div>
 
-        <div class="send-panel" id="editPanel">
+          <div class="send-panel" id="editPanel">
           <div style="font-weight:780;margin-bottom:16px;color:var(--ink)">Edit OpenNum profile</div>
           <div style="display:grid;gap:12px">
             <div>
@@ -143,9 +149,42 @@
           </div>
           <div class="alert alert-error" id="editError"></div>
           <div class="alert alert-success" id="editSuccess"></div>
+          </div>
+        </div>
+      </div>
+
+      <section class="conversation" id="messages">
+        <div class="conversation-head">
+          <div>
+            <h2>Messages</h2>
+            <p id="messageHelp">Signed by active OpenNum identities.</p>
+          </div>
+          <button class="quiet-button" onclick="loadGuestbook()">Refresh</button>
         </div>
 
-        <div class="data-list" style="margin-top:24px">
+        <div class="message-composer">
+          <div class="composer-mark">ON</div>
+          <div class="composer-body">
+            <div id="replyContext" class="reply-context" style="display:none"></div>
+            <textarea class="textarea" id="guestbookMessage" maxlength="280" placeholder="Write to this OpenNum…"></textarea>
+            <div class="composer-actions">
+              <span>280 characters · public and permanent</span>
+              <div>
+                <button class="quiet-button" onclick="clearReply()">Cancel reply</button>
+                <button class="btn btn-primary btn-small" id="messagePostBtn" onclick="signGuestbookMessage()">Sign &amp; Post</button>
+              </div>
+            </div>
+            <div class="alert alert-error" id="guestbookError"></div>
+            <div class="alert alert-success" id="guestbookSuccess"></div>
+          </div>
+        </div>
+
+        <div class="thread" id="guestbookList"><div class="empty">Loading messages...</div></div>
+      </section>
+
+      <details class="ownership-details">
+        <summary>Ownership &amp; inscription details</summary>
+        <div class="data-list">
           <div class="data-row"><div class="data-key">Number</div><div class="data-val" id="dNum"></div></div>
           <div class="data-row"><div class="data-key">Active wallet</div><div class="data-val mono" id="dWallet"></div></div>
           <div class="data-row"><div class="data-key">Chain owner</div><div class="data-val mono" id="dCurrentOwner"></div></div>
@@ -153,40 +192,7 @@
           <div class="data-row"><div class="data-key">Registered</div><div class="data-val" id="dDate"></div></div>
           <div class="data-row"><div class="data-key">Status</div><div class="data-val" id="dStatus"></div></div>
         </div>
-      </aside>
-
-      <section>
-        <div class="profile-card" id="inscriptionPreview" style="display:none;margin-bottom:18px">
-          <div class="section-head" style="margin-bottom:12px">
-            <div>
-              <h2 style="font-size:28px">Inscription</h2>
-              <p class="small">The Bitcoin object behind this OpenNum.</p>
-            </div>
-          </div>
-          <div id="collectionBadges" style="display:none;margin-bottom:14px;gap:8px;flex-wrap:wrap"></div>
-          <div id="inscriptionContent" style="display:grid;place-items:center;min-height:280px;background:var(--wash);border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
-        </div>
-
-        <div class="profile-card" id="messages">
-          <div class="section-head" style="margin-bottom:10px">
-            <div>
-              <h2 style="font-size:32px">Public messages</h2>
-              <p class="small" id="messageHelp">Only wallets with an active OpenNum ID can leave public signed messages.</p>
-            </div>
-          </div>
-
-          <div id="replyContext" class="empty" style="display:none;margin-bottom:12px"></div>
-          <textarea class="textarea" id="guestbookMessage" maxlength="280" placeholder="Write a public message..."></textarea>
-          <div class="form-row">
-            <button class="btn btn-primary" id="messagePostBtn" onclick="signGuestbookMessage()">Sign &amp; Post</button>
-            <button class="btn" onclick="clearReply()">Clear reply</button>
-            <button class="btn" onclick="loadGuestbook()">Refresh</button>
-          </div>
-          <div class="alert alert-error" id="guestbookError"></div>
-          <div class="alert alert-success" id="guestbookSuccess"></div>
-          <div class="thread" id="guestbookList"><div class="empty">Loading messages...</div></div>
-        </div>
-      </section>
+      </details>
     </section>
   </main>
 
@@ -260,8 +266,9 @@
       const tradeUrl = data.satflow_url || `https://www.satflow.com/ordinal/${inscriptionId}`;
 
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('profile').style.display = 'grid';
+      document.getElementById('profile').style.display = 'block';
       document.getElementById('profileNum').textContent = `#${num}`;
+      document.getElementById('guestbookMessage').placeholder = `Write to #${num}…`;
       document.getElementById('dNum').textContent = `#${num}`;
       document.getElementById('dWallet').textContent = data.wallet || 'Not active until claimed';
       document.getElementById('dCurrentOwner').textContent = data.current_owner || 'Not verified';
@@ -324,8 +331,6 @@
       const m = data.metadata;
       if (m?.content_type?.startsWith('image/') && m.content_url) {
         document.getElementById('avatarWrap').innerHTML = `<img src="${m.content_url}" alt="#${num}" onerror="this.parentElement.textContent='#${num}'" />`;
-        document.getElementById('inscriptionPreview').style.display = 'block';
-        document.getElementById('inscriptionContent').innerHTML = `<img src="${m.content_url}" alt="#${num}" style="max-width:100%;max-height:380px;object-fit:contain" />`;
       } else {
         document.getElementById('avatarFallback').textContent = `#${num}`;
       }
@@ -344,8 +349,8 @@
       }
       box.style.display = 'flex';
       box.innerHTML = collections.map((c) => `
-        <span class="btn" style="min-height:34px;padding:0 12px;color:var(--deep);background:#f7fbfc;border-color:#d7e4e8">
-          V Verified collection · ${escapeHtml(c.collection_name || c.collection_slug)}
+        <span class="collection-item">
+          <span aria-hidden="true">✓</span> ${escapeHtml(c.collection_name || c.collection_slug)}
         </span>
       `).join('');
     }
@@ -563,10 +568,19 @@
     function renderMessage(m, isReply) {
       const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
       const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      const avatar = m.author_inscription_id
+        ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='ON'" />`
+        : (m.author_number ? `#${m.author_number}` : 'ON');
       return `<article class="message ${isReply ? 'reply' : ''}">
-        <div class="message-meta"><span>${author}</span><span>${date}</span></div>
-        <div class="message-body">${escapeHtml(m.message)}</div>
-        ${isReply ? '' : `<button class="reply-btn" onclick="setReply('${m.id}', '${escapeAttr(author)}')">Reply</button>`}
+        <a class="message-avatar" ${m.author_number ? `href="/n/${m.author_number}"` : ''}>${avatar}</a>
+        <div class="message-content">
+          <div class="message-meta">
+            ${m.author_number ? `<a href="/n/${m.author_number}">${author}</a>` : `<span>${author}</span>`}
+            <span>${date}</span>
+          </div>
+          <div class="message-body">${escapeHtml(m.message)}</div>
+          ${isReply ? '' : `<button class="reply-btn" onclick="setReply('${m.id}', '${escapeAttr(author)}')">Reply</button>`}
+        </div>
       </article>`;
     }
 

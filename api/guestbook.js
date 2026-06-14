@@ -72,7 +72,35 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    return res.status(200).json({ inscription_num: num, messages: data || [] });
+    const messages = data || [];
+    const authorNumbers = [...new Set(
+      messages
+        .map((message) => Number(message.author_number))
+        .filter(Number.isInteger)
+    )];
+    let authorInscriptions = new Map();
+
+    if (authorNumbers.length) {
+      const { data: authors, error: authorError } = await supabase
+        .from('registrations')
+        .select('inscription_num, inscription_id, inscription_txid')
+        .in('inscription_num', authorNumbers)
+        .eq('status', 'active');
+      if (!authorError) {
+        authorInscriptions = new Map((authors || []).map((author) => [
+          Number(author.inscription_num),
+          author.inscription_id || (author.inscription_txid ? `${author.inscription_txid}i0` : null)
+        ]));
+      }
+    }
+
+    return res.status(200).json({
+      inscription_num: num,
+      messages: messages.map((message) => ({
+        ...message,
+        author_inscription_id: authorInscriptions.get(Number(message.author_number)) || null
+      }))
+    });
   }
 
   if (req.method !== 'POST') {
