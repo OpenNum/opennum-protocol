@@ -150,6 +150,10 @@ img { max-width: 100%; }
   box-shadow: var(--shadow);
 }
 .number-preview { padding: 18px; overflow: hidden; box-shadow: 0 22px 60px rgba(23, 55, 70, 0.09); }
+.carousel-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; color: var(--muted); font-size: 12px; font-weight: 780; text-transform: uppercase; letter-spacing: 0.06em; }
+.carousel-controls { display: flex; gap: 4px; }
+.carousel-button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--deep); font-size: 13px; font-weight: 800; cursor: pointer; }
+.carousel-button:hover { border-color: var(--copper); color: var(--copper); }
 .preview-head, .console-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
 .console-number { display: block; margin-top: 8px; font-size: 58px; line-height: 1; letter-spacing: 0; font-weight: 850; color: var(--deep); }
 .preview-body, .console-main { display: grid; grid-template-columns: 168px 1fr; gap: 22px; align-items: center; }
@@ -344,25 +348,6 @@ img { max-width: 100%; }
 .market-card .number { font-size: clamp(26px, 3vw, 42px); }
 .card-actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* ── RECENTLY CLAIMED STRIP ── */
-.recent-strip { border-top: 1px solid var(--line); padding: 14px 0; background: var(--wash); }
-.recent-inner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.recent-label { font-size: 12px; font-weight: 760; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; }
-.recent-pills { display: flex; gap: 8px; flex-wrap: wrap; }
-.recent-pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px 4px 4px; border: 1px solid var(--line); border-radius: 8px;
-  font-size: 13px; font-weight: 760; background: var(--paper);
-  transition: border-color 0.14s, background 0.14s;
-}
-.recent-pill:hover { border-color: var(--gold); background: #fffaf0; }
-.recent-thumb { width: 28px; height: 28px; display: grid; place-items: center; overflow: hidden; border-radius: 5px; background: var(--wash); color: var(--deep); font-size: 8px; font-weight: 850; }
-.recent-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.recent-all { margin-left: auto; color: var(--soft-ink); font-size: 12px; font-weight: 760; }
-.recent-all:hover { color: var(--copper); }
-.pill-num { color: var(--gold-deep); }
-.pill-name { color: var(--soft-ink); font-weight: 720; }
-
 /* ── SOCIAL LINK ROWS (Linktree style) ── */
 .social-row {
   display: flex;
@@ -451,7 +436,5 @@ img { max-width: 100%; }
   .message-composer, .message { grid-template-columns: 40px 1fr; gap: 11px; }
   .composer-mark, .message-avatar { width: 40px; height: 40px; }
   .message.reply { margin-left: 22px; }
-  .recent-pills { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 4px; }
-  .recent-pill { flex: 0 0 auto; }
-  .recent-all { display: none; }
+  .carousel-bar { align-items: flex-start; }
 }

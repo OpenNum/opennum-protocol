@@ -66,14 +66,22 @@
           <a class="claim-link" href="/register">Claim my number <span aria-hidden="true">→</span></a>
         </div>
 
-        <aside class="number-preview" aria-label="Number preview">
+        <aside class="number-preview" aria-label="Early inscription carousel">
+          <div class="carousel-bar">
+            <span>Early inscriptions · #1–#100</span>
+            <div class="carousel-controls">
+              <button type="button" class="carousel-button" aria-label="Previous inscription" onclick="stepCarousel(-1)">←</button>
+              <button type="button" class="carousel-button" id="carouselToggle" aria-label="Pause carousel" onclick="toggleCarousel()">Ⅱ</button>
+              <button type="button" class="carousel-button" aria-label="Next inscription" onclick="stepCarousel(1)">→</button>
+            </div>
+          </div>
           <div class="preview-body">
             <div id="resultAvatar" class="avatar avatar-large">ON</div>
             <div class="preview-identity">
               <span id="resultStatus" class="status">Ready</span>
-              <span id="resultNum" class="console-number">#0</span>
-              <div id="resultName" class="profile-name">The genesis inscription</div>
-              <div id="resultWallet" class="wallet-line">Search any number to see its inscription, holder, and profile.</div>
+              <span id="resultNum" class="console-number">#1</span>
+              <div id="resultName" class="profile-name">Early inscription #1</div>
+              <div id="resultWallet" class="wallet-line">The first one hundred inscriptions on Bitcoin.</div>
             </div>
           </div>
           <div class="preview-actions" id="resultActions">
@@ -82,14 +90,6 @@
         </aside>
       </div>
     </section>
-
-    <div class="recent-strip" id="recentStrip" style="display:none">
-      <div class="shell recent-inner">
-        <span class="recent-label">Recently claimed</span>
-        <div class="recent-pills" id="recentPills"></div>
-        <a class="recent-all" href="/market">View all</a>
-      </div>
-    </div>
 
   </main>
 
@@ -105,6 +105,11 @@
   </footer>
 
   <script>
+    let carouselNumber = 1;
+    let carouselTimer = null;
+    let carouselPlaying = true;
+    let carouselRequest = 0;
+
     function toggleNav(btn) {
       const links = document.getElementById('navLinks');
       const open = links.classList.toggle('open');
@@ -125,13 +130,15 @@
 
     function searchNumber(event) {
       event.preventDefault();
+      pauseCarousel();
       const num = normalizeNumber(document.getElementById('homeSearch').value);
       if (num !== null) location.href = `/n/${num}`;
     }
 
-    async function previewNumber(value) {
+    async function previewNumber(value, options = {}) {
       const num = normalizeNumber(value);
       if (num === null) return;
+      if (!options.carousel) pauseCarousel();
       const status = document.getElementById('resultStatus');
       const numEl = document.getElementById('resultNum');
       const nameEl = document.getElementById('resultName');
@@ -145,11 +152,13 @@
       walletEl.textContent = 'Resolving OpenNum status.';
       avatar.innerHTML = 'ON';
 
+      const requestId = ++carouselRequest;
       try {
         const res = await fetch(`/api/profile?num=${num}`, { signal: AbortSignal.timeout(8000) });
         const data = await res.json();
+        if (requestId !== carouselRequest) return;
         if (res.status === 404 || data.status === 'unregistered') {
-          return previewUnregistered(num, status, nameEl, walletEl, avatar, actions);
+          return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options);
         }
 
         const dormant = data.status === 'dormant' || data.claim_required;
@@ -167,46 +176,62 @@
           <a class="btn btn-primary" href="/n/${num}">Open profile</a>
           ${dormant ? '<a class="btn" href="/register">Claim</a>' : `<a class="btn" href="/n/${num}#messages">Message</a>`}
         `;
+        return true;
       } catch (_) {
-        previewUnregistered(num, status, nameEl, walletEl, avatar, actions);
+        return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options);
       }
     }
 
-    function escapeHtml(v) {
-      return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    // Lead with a real active identity when the registry has recent claims.
-    window.addEventListener('load', async () => {
-      const recent = await loadRecent();
-      previewNumber(recent?.[0]?.inscription_num ?? '0');
+    window.addEventListener('load', () => {
+      showCarouselNumber(1);
+      startCarousel();
     });
 
-    async function loadRecent() {
-      try {
-        const res = await fetch('/api/list?sort=registered_at&order=desc&limit=6', { signal: AbortSignal.timeout(4000) });
-        if (!res.ok) return [];
-        const data = await res.json();
-        const regs = data.registrations || [];
-        if (!regs.length) return [];
-        document.getElementById('recentPills').innerHTML = regs.map(r =>
-          `<a class="recent-pill" href="/n/${r.inscription_num}">
-            <span class="recent-thumb">${r.inscription_id ? `<img src="https://ordinals.com/content/${escapeHtml(r.inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='ON'" />` : 'ON'}</span>
-            <span class="pill-num">#${r.inscription_num}</span>
-            ${r.display_name ? `<span class="pill-name">${escapeHtml(r.display_name)}</span>` : ''}
-          </a>`
-        ).join('');
-        document.getElementById('recentStrip').style.display = '';
-        return regs;
-      } catch (_) {
-        return [];
+    function startCarousel() {
+      clearInterval(carouselTimer);
+      if (!carouselPlaying) return;
+      carouselTimer = setInterval(() => stepCarousel(1), 5000);
+    }
+
+    function pauseCarousel() {
+      carouselPlaying = false;
+      clearInterval(carouselTimer);
+      carouselTimer = null;
+      const button = document.getElementById('carouselToggle');
+      if (button) {
+        button.textContent = '▶';
+        button.setAttribute('aria-label', 'Play carousel');
       }
     }
 
-    async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions) {
-      status.textContent = 'Unregistered';
-      nameEl.textContent = `#${num} has no OpenNum ID yet`;
-      walletEl.textContent = 'If you own the inscription, register or claim it.';
+    function toggleCarousel() {
+      carouselPlaying = !carouselPlaying;
+      const button = document.getElementById('carouselToggle');
+      button.textContent = carouselPlaying ? 'Ⅱ' : '▶';
+      button.setAttribute('aria-label', carouselPlaying ? 'Pause carousel' : 'Play carousel');
+      if (carouselPlaying) {
+        stepCarousel(1);
+        startCarousel();
+      } else {
+        clearInterval(carouselTimer);
+      }
+    }
+
+    function stepCarousel(direction) {
+      carouselNumber = ((carouselNumber - 1 + direction + 100) % 100) + 1;
+      showCarouselNumber(carouselNumber, direction);
+      if (carouselPlaying) startCarousel();
+    }
+
+    async function showCarouselNumber(num) {
+      carouselNumber = num;
+      return previewNumber(num, { carousel: true });
+    }
+
+    async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options = {}) {
+      status.textContent = options.carousel ? 'Early inscription' : 'Unregistered';
+      nameEl.textContent = options.carousel ? `Early inscription #${num}` : `#${num} has no OpenNum ID yet`;
+      walletEl.textContent = options.carousel ? 'One of the first one hundred inscriptions on Bitcoin.' : 'If you own the inscription, register or claim it.';
       avatar.textContent = `#${num}`;
       try {
         const res = await fetch(`/api/inscription?num=${num}`);
@@ -216,13 +241,21 @@
             avatar.innerHTML = `<img src="${data.content_url}" alt="#${num}" />`;
           }
           actions.innerHTML = `
-            <a class="btn btn-primary" href="/register">Register</a>
+            <a class="btn btn-primary" href="/n/${num}">View #${num}</a>
             <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
           `;
-          return;
+          return true;
         }
       } catch (_) {}
+      if (options.carousel) {
+        actions.innerHTML = `
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
+          <a class="btn" href="/register">Claim a number</a>
+        `;
+        return true;
+      }
       actions.innerHTML = '<a class="btn btn-primary" href="/register">Register</a><a class="btn" href="/market">Market</a>';
+      return true;
     }
   </script>
 </body>
