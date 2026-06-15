@@ -12,7 +12,7 @@
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "Referrer-Policy": "strict-origin-when-cross-origin",
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' https://ordinals.com https://www.satflow.com https://satflow.com https://www.google-analytics.com https://region1.google-analytics.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' https://ordinals.com https://www.satflow.com https://satflow.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src https://ordinals.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
       },
       "continue": true
     },

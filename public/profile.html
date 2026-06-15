@@ -163,7 +163,7 @@
         </div>
 
         <div class="message-composer">
-          <div class="composer-mark">ON</div>
+          <div class="composer-mark" id="composerMark">#</div>
           <div class="composer-body">
             <div id="replyContext" class="reply-context" style="display:none"></div>
             <textarea class="textarea" id="guestbookMessage" maxlength="280" placeholder="Write to this OpenNum…"></textarea>
@@ -246,10 +246,13 @@
         if (!res.ok) return;
         const data = await res.json();
         document.getElementById('nfText').textContent = 'This inscription exists on Bitcoin, but it has not been claimed as an OpenNum ID yet.';
+        const box = document.getElementById('nfInscription');
         if (data.content_type?.startsWith('image/') && data.content_url) {
-          const box = document.getElementById('nfInscription');
           box.style.display = 'block';
           box.innerHTML = `<img src="${data.content_url}" alt="#${num}" style="width:100%;height:100%;object-fit:contain" />`;
+        } else if (data.inscription_id) {
+          box.style.display = 'block';
+          box.innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${data.inscription_id}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
         }
         document.getElementById('nfActions').innerHTML = `
           <a class="btn btn-primary" href="/register">Register / Claim</a>
@@ -268,6 +271,7 @@
       document.getElementById('loading').style.display = 'none';
       document.getElementById('profile').style.display = 'block';
       document.getElementById('profileNum').textContent = `#${num}`;
+      document.getElementById('composerMark').textContent = `#${num}`;
       document.getElementById('guestbookMessage').placeholder = `Write to #${num}…`;
       document.getElementById('dNum').textContent = `#${num}`;
       document.getElementById('dWallet').textContent = data.wallet || 'Not active until claimed';
@@ -332,7 +336,7 @@
       if (m?.content_type?.startsWith('image/') && m.content_url) {
         document.getElementById('avatarWrap').innerHTML = `<img src="${m.content_url}" alt="#${num}" onerror="this.parentElement.textContent='#${num}'" />`;
       } else {
-        document.getElementById('avatarFallback').textContent = `#${num}`;
+        document.getElementById('avatarWrap').innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${inscriptionId}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
       }
 
       renderSocialLinks(data.links || {});
@@ -569,8 +573,8 @@
       const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
       const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       const avatar = m.author_inscription_id
-        ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='ON'" />`
-        : (m.author_number ? `#${m.author_number}` : 'ON');
+        ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
+        : (m.author_number ? `#${m.author_number}` : '#');
       return `<article class="message ${isReply ? 'reply' : ''}">
         <a class="message-avatar" ${m.author_number ? `href="/n/${m.author_number}"` : ''}>${avatar}</a>
         <div class="message-content">

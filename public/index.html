@@ -59,7 +59,7 @@
           <form class="number-desk" onsubmit="searchNumber(event)">
             <div class="desk-row">
               <span class="search-prefix" aria-hidden="true">#</span>
-              <input id="homeSearch" class="search-input" aria-label="Inscription number" inputmode="numeric" autocomplete="off" placeholder="Enter inscription number" oninput="previewNumber(this.value)" />
+              <input id="homeSearch" class="search-input" aria-label="Inscription number" inputmode="numeric" autocomplete="off" placeholder="Enter inscription number" oninput="handleSearchInput(this.value)" />
               <button class="btn btn-primary" type="submit">Search</button>
             </div>
           </form>
@@ -68,7 +68,7 @@
 
         <aside class="number-preview" aria-label="Early inscription carousel">
           <div class="carousel-bar">
-            <span>Early inscriptions · #1–#100</span>
+            <span>Early inscriptions · #0–#100</span>
             <div class="carousel-controls">
               <button type="button" class="carousel-button" aria-label="Previous inscription" onclick="stepCarousel(-1)">←</button>
               <button type="button" class="carousel-button" id="carouselToggle" aria-label="Pause carousel" onclick="toggleCarousel()">Ⅱ</button>
@@ -76,12 +76,12 @@
             </div>
           </div>
           <div class="preview-body">
-            <div id="resultAvatar" class="avatar avatar-large"><span class="avatar-number">#1</span></div>
+            <div id="resultAvatar" class="avatar avatar-large"><span class="avatar-number">#0</span></div>
             <div class="preview-identity">
               <span id="resultStatus" class="status">Ready</span>
-              <span id="resultNum" class="console-number">#1</span>
-              <div id="resultName" class="profile-name">Early inscription #1</div>
-              <div id="resultWallet" class="wallet-line">The first one hundred inscriptions on Bitcoin.</div>
+              <span id="resultNum" class="console-number">#0</span>
+              <div id="resultName" class="profile-name">Early inscription #0</div>
+              <div id="resultWallet" class="wallet-line">The first one hundred and one inscriptions on Bitcoin.</div>
             </div>
           </div>
           <div class="preview-actions" id="resultActions">
@@ -105,10 +105,11 @@
   </footer>
 
   <script>
-    let carouselNumber = 1;
+    let carouselNumber = 0;
     let carouselTimer = null;
     let carouselPlaying = true;
     let carouselRequest = 0;
+    let searchPreviewTimer = null;
 
     function toggleNav(btn) {
       const links = document.getElementById('navLinks');
@@ -123,6 +124,14 @@
       return Number.isInteger(num) && num >= 0 ? num : null;
     }
 
+    function setPreviewNumber(num) {
+      const number = document.getElementById('resultNum');
+      const digits = String(num).length;
+      number.textContent = `#${num}`;
+      number.classList.toggle('is-long', digits >= 6 && digits < 9);
+      number.classList.toggle('is-very-long', digits >= 9);
+    }
+
     function shortWallet(wallet) {
       if (!wallet) return 'wallet unavailable';
       return wallet.length > 24 ? `${wallet.slice(0, 10)}...${wallet.slice(-8)}` : wallet;
@@ -130,9 +139,25 @@
 
     function searchNumber(event) {
       event.preventDefault();
+      clearTimeout(searchPreviewTimer);
       pauseCarousel();
       const num = normalizeNumber(document.getElementById('homeSearch').value);
       if (num !== null) location.href = `/n/${num}`;
+    }
+
+    function handleSearchInput(value) {
+      clearTimeout(searchPreviewTimer);
+      if (String(value || '').trim() === '') {
+        carouselPlaying = true;
+        const button = document.getElementById('carouselToggle');
+        button.textContent = 'Ⅱ';
+        button.setAttribute('aria-label', 'Pause carousel');
+        showCarouselNumber(carouselNumber);
+        startCarousel();
+        return;
+      }
+      pauseCarousel();
+      searchPreviewTimer = setTimeout(() => previewNumber(value), 600);
     }
 
     async function previewNumber(value, options = {}) {
@@ -141,13 +166,12 @@
       if (options.carousel) return previewEarlyInscription(num);
       if (!options.carousel) pauseCarousel();
       const status = document.getElementById('resultStatus');
-      const numEl = document.getElementById('resultNum');
       const nameEl = document.getElementById('resultName');
       const walletEl = document.getElementById('resultWallet');
       const avatar = document.getElementById('resultAvatar');
       const actions = document.getElementById('resultActions');
 
-      numEl.textContent = `#${num}`;
+      setPreviewNumber(num);
       status.textContent = 'Looking up';
       nameEl.textContent = 'Checking registry...';
       walletEl.textContent = 'Resolving OpenNum status.';
@@ -159,7 +183,7 @@
         const data = await res.json();
         if (requestId !== carouselRequest) return;
         if (res.status === 404 || data.status === 'unregistered') {
-          return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options);
+          return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, { ...options, requestId });
         }
 
         const dormant = data.status === 'dormant' || data.claim_required;
@@ -168,18 +192,21 @@
         walletEl.textContent = dormant
           ? `Moved on-chain. Current holder must claim it again.`
           : `${shortWallet(data.wallet)} is the active owner`;
-        if (data.metadata?.content_type?.startsWith('image/') && data.metadata.content_url) {
-          avatar.innerHTML = `<img src="${data.metadata.content_url}" alt="#${num}" />`;
-        } else {
-          avatar.textContent = `#${num}`;
-        }
+        const media = await prepareInscriptionMedia({
+          inscription_id: data.inscription_id,
+          content_type: data.metadata?.content_type,
+          content_url: data.metadata?.content_url
+        }, num);
+        if (requestId !== carouselRequest) return;
+        avatar.innerHTML = media;
         actions.innerHTML = `
           <a class="btn btn-primary" href="/n/${num}">Open profile</a>
           ${dormant ? '<a class="btn" href="/register">Claim</a>' : `<a class="btn" href="/n/${num}#messages">Message</a>`}
         `;
         return true;
       } catch (_) {
-        return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options);
+        if (requestId !== carouselRequest) return;
+        return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, { ...options, requestId });
       }
     }
 
@@ -192,20 +219,14 @@
         const res = await fetch(`/api/inscription?num=${num}`, { signal: AbortSignal.timeout(9000) });
         if (!res.ok) throw new Error('Inscription unavailable');
         const data = await res.json();
-        let imageReady = false;
-
-        if (data.content_type?.startsWith('image/') && data.content_url) {
-          imageReady = await preloadImage(data.content_url);
-        }
+        const media = await prepareInscriptionMedia(data, num);
         if (requestId !== carouselRequest) return false;
 
         document.getElementById('resultStatus').textContent = 'Early inscription';
-        document.getElementById('resultNum').textContent = `#${num}`;
+        setPreviewNumber(num);
         document.getElementById('resultName').textContent = `Early inscription #${num}`;
-        document.getElementById('resultWallet').textContent = 'One of the first one hundred inscriptions on Bitcoin.';
-        document.getElementById('resultAvatar').innerHTML = imageReady
-          ? `<img src="${data.content_url}" alt="Inscription #${num}" />`
-          : `<span class="avatar-number">#${num}</span>`;
+        document.getElementById('resultWallet').textContent = 'One of the first one hundred and one inscriptions on Bitcoin.';
+        document.getElementById('resultAvatar').innerHTML = media;
         document.getElementById('resultActions').innerHTML = `
           <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View #${num}</a>
           <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
@@ -214,7 +235,7 @@
       } catch (_) {
         if (requestId !== carouselRequest) return false;
         document.getElementById('resultStatus').textContent = 'Early inscription';
-        document.getElementById('resultNum').textContent = `#${num}`;
+        setPreviewNumber(num);
         document.getElementById('resultName').textContent = `Early inscription #${num}`;
         document.getElementById('resultWallet').textContent = 'Image temporarily unavailable. The inscription still exists on Bitcoin.';
         document.getElementById('resultAvatar').innerHTML = `<span class="avatar-number">#${num}</span>`;
@@ -237,8 +258,23 @@
       });
     }
 
+    async function prepareInscriptionMedia(data, num) {
+      if (data.content_type?.startsWith('image/') && data.content_url) {
+        const ready = await preloadImage(data.content_url);
+        if (ready) return `<img src="${data.content_url}" alt="Inscription #${num}" />`;
+      }
+      if (data.inscription_id) {
+        return `<iframe class="inscription-frame" src="https://ordinals.com/preview/${data.inscription_id}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
+      }
+      return `<span class="avatar-number">#${num}</span>`;
+    }
+
+    async function renderInscriptionMedia(container, data, num) {
+      container.innerHTML = await prepareInscriptionMedia(data, num);
+    }
+
     window.addEventListener('load', () => {
-      showCarouselNumber(1);
+      showCarouselNumber(0);
       startCarousel();
     });
 
@@ -273,7 +309,7 @@
     }
 
     function stepCarousel(direction) {
-      carouselNumber = ((carouselNumber - 1 + direction + 100) % 100) + 1;
+      carouselNumber = (carouselNumber + direction + 101) % 101;
       showCarouselNumber(carouselNumber, direction);
       if (carouselPlaying) startCarousel();
     }
@@ -286,15 +322,15 @@
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options = {}) {
       status.textContent = options.carousel ? 'Early inscription' : 'Unregistered';
       nameEl.textContent = options.carousel ? `Early inscription #${num}` : `#${num} has no OpenNum ID yet`;
-      walletEl.textContent = options.carousel ? 'One of the first one hundred inscriptions on Bitcoin.' : 'If you own the inscription, register or claim it.';
+      walletEl.textContent = options.carousel ? 'One of the first one hundred and one inscriptions on Bitcoin.' : 'If you own the inscription, register or claim it.';
       avatar.textContent = `#${num}`;
       try {
         const res = await fetch(`/api/inscription?num=${num}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.content_type?.startsWith('image/') && data.content_url) {
-            avatar.innerHTML = `<img src="${data.content_url}" alt="#${num}" />`;
-          }
+          const media = await prepareInscriptionMedia(data, num);
+          if (options.requestId && options.requestId !== carouselRequest) return false;
+          avatar.innerHTML = media;
           actions.innerHTML = `
             <a class="btn btn-primary" href="/n/${num}">View #${num}</a>
             <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
