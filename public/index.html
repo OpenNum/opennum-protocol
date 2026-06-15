@@ -76,7 +76,7 @@
             </div>
           </div>
           <div class="preview-body">
-            <div id="resultAvatar" class="avatar avatar-large">ON</div>
+            <div id="resultAvatar" class="avatar avatar-large"><span class="avatar-number">#1</span></div>
             <div class="preview-identity">
               <span id="resultStatus" class="status">Ready</span>
               <span id="resultNum" class="console-number">#1</span>
@@ -138,6 +138,7 @@
     async function previewNumber(value, options = {}) {
       const num = normalizeNumber(value);
       if (num === null) return;
+      if (options.carousel) return previewEarlyInscription(num);
       if (!options.carousel) pauseCarousel();
       const status = document.getElementById('resultStatus');
       const numEl = document.getElementById('resultNum');
@@ -150,7 +151,7 @@
       status.textContent = 'Looking up';
       nameEl.textContent = 'Checking registry...';
       walletEl.textContent = 'Resolving OpenNum status.';
-      avatar.innerHTML = 'ON';
+      avatar.innerHTML = `<span class="avatar-number">#${num}</span>`;
 
       const requestId = ++carouselRequest;
       try {
@@ -180,6 +181,60 @@
       } catch (_) {
         return previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options);
       }
+    }
+
+    async function previewEarlyInscription(num) {
+      const requestId = ++carouselRequest;
+      const preview = document.querySelector('.number-preview');
+      preview.classList.add('is-loading');
+
+      try {
+        const res = await fetch(`/api/inscription?num=${num}`, { signal: AbortSignal.timeout(9000) });
+        if (!res.ok) throw new Error('Inscription unavailable');
+        const data = await res.json();
+        let imageReady = false;
+
+        if (data.content_type?.startsWith('image/') && data.content_url) {
+          imageReady = await preloadImage(data.content_url);
+        }
+        if (requestId !== carouselRequest) return false;
+
+        document.getElementById('resultStatus').textContent = 'Early inscription';
+        document.getElementById('resultNum').textContent = `#${num}`;
+        document.getElementById('resultName').textContent = `Early inscription #${num}`;
+        document.getElementById('resultWallet').textContent = 'One of the first one hundred inscriptions on Bitcoin.';
+        document.getElementById('resultAvatar').innerHTML = imageReady
+          ? `<img src="${data.content_url}" alt="Inscription #${num}" />`
+          : `<span class="avatar-number">#${num}</span>`;
+        document.getElementById('resultActions').innerHTML = `
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View #${num}</a>
+          <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
+        `;
+        return true;
+      } catch (_) {
+        if (requestId !== carouselRequest) return false;
+        document.getElementById('resultStatus').textContent = 'Early inscription';
+        document.getElementById('resultNum').textContent = `#${num}`;
+        document.getElementById('resultName').textContent = `Early inscription #${num}`;
+        document.getElementById('resultWallet').textContent = 'Image temporarily unavailable. The inscription still exists on Bitcoin.';
+        document.getElementById('resultAvatar').innerHTML = `<span class="avatar-number">#${num}</span>`;
+        document.getElementById('resultActions').innerHTML = `
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
+          <a class="btn" href="/register">Claim a number</a>
+        `;
+        return false;
+      } finally {
+        if (requestId === carouselRequest) preview.classList.remove('is-loading');
+      }
+    }
+
+    function preloadImage(url) {
+      return new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve(true);
+        image.onerror = () => resolve(false);
+        image.src = url;
+      });
     }
 
     window.addEventListener('load', () => {
