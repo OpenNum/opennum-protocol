@@ -156,8 +156,9 @@ img { max-width: 100%; }
 .carousel-button:hover { border-color: var(--copper); color: var(--copper); }
 .preview-head, .console-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
 .console-number { display: block; margin-top: 8px; font-size: 58px; line-height: 1; letter-spacing: 0; font-weight: 850; color: var(--deep); }
-.console-number.is-long { font-size: 44px; }
-.console-number.is-very-long { font-size: 34px; }
+.console-number.is-long { font-size: 40px; }
+.console-number.is-very-long { font-size: 30px; }
+.console-number.is-ultra-long { font-size: 24px; }
 .preview-body, .console-main { display: grid; grid-template-columns: 168px 1fr; gap: 22px; align-items: center; }
 .preview-identity { min-width: 0; }
 .avatar {
@@ -179,11 +180,14 @@ img { max-width: 100%; }
 .inscription-frame { width: 100%; height: 100%; display: block; border: 0; background: #fff; }
 .number-preview.is-loading { cursor: progress; }
 .avatar-number { color: var(--deep); font-size: 30px; font-weight: 850; }
+.avatar-number.is-long { font-size: 21px; }
+.avatar-number.is-very-long { font-size: 16px; }
+.avatar-number.is-ultra-long { font-size: 13px; }
 @keyframes image-reveal {
   from { opacity: 0; transform: scale(0.985); }
   to { opacity: 1; transform: scale(1); }
 }
-.profile-name { margin-top: 10px; font-size: 20px; font-weight: 820; letter-spacing: -0.02em; }
+.profile-name { margin-top: 10px; font-size: 20px; font-weight: 820; letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .profile-bio { margin-top: 8px; color: var(--soft-ink); }
 .wallet-line { margin-top: 16px; color: var(--soft-ink); font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; line-height: 1.55; }
 .status { display: inline-flex; align-items: center; gap: 7px; color: var(--green); font-size: 12px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -437,10 +441,14 @@ img { max-width: 100%; }
   .lead { font-size: 17px; }
   .number { font-size: 40px; }
   .console-number { font-size: 46px; }
-  .console-number.is-long { font-size: 38px; }
-  .console-number.is-very-long { font-size: 30px; }
+  .console-number.is-long { font-size: 36px; }
+  .console-number.is-very-long { font-size: 28px; }
+  .console-number.is-ultra-long { font-size: 23px; }
   .preview-body { grid-template-columns: 108px 1fr; gap: 14px; }
   .avatar-large { width: 108px !important; height: 108px !important; }
+  .avatar-number.is-long { font-size: 17px; }
+  .avatar-number.is-very-long { font-size: 13px; }
+  .avatar-number.is-ultra-long { font-size: 11px; }
   .profile-display-name { font-size: 26px; }
   .profile-stage { gap: 28px; }
   .art-links { flex-direction: column; gap: 8px; }

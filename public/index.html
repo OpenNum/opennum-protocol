@@ -126,10 +126,23 @@
 
     function setPreviewNumber(num) {
       const number = document.getElementById('resultNum');
-      const digits = String(num).length;
       number.textContent = `#${num}`;
-      number.classList.toggle('is-long', digits >= 6 && digits < 9);
-      number.classList.toggle('is-very-long', digits >= 9);
+      number.classList.remove('is-long', 'is-very-long', 'is-ultra-long');
+      const lengthClass = numberLengthClass(num);
+      if (lengthClass) number.classList.add(lengthClass);
+    }
+
+    function numberLengthClass(num) {
+      const digits = String(num).length;
+      if (digits >= 10) return 'is-ultra-long';
+      if (digits >= 8) return 'is-very-long';
+      if (digits >= 6) return 'is-long';
+      return '';
+    }
+
+    function numberFallbackMarkup(num) {
+      const lengthClass = numberLengthClass(num);
+      return `<span class="avatar-number${lengthClass ? ` ${lengthClass}` : ''}">#${num}</span>`;
     }
 
     function shortWallet(wallet) {
@@ -175,7 +188,7 @@
       status.textContent = 'Looking up';
       nameEl.textContent = 'Checking registry...';
       walletEl.textContent = 'Resolving OpenNum status.';
-      avatar.innerHTML = `<span class="avatar-number">#${num}</span>`;
+      avatar.innerHTML = numberFallbackMarkup(num);
 
       const requestId = ++carouselRequest;
       try {
@@ -238,7 +251,7 @@
         setPreviewNumber(num);
         document.getElementById('resultName').textContent = `Early inscription #${num}`;
         document.getElementById('resultWallet').textContent = 'Image temporarily unavailable. The inscription still exists on Bitcoin.';
-        document.getElementById('resultAvatar').innerHTML = `<span class="avatar-number">#${num}</span>`;
+        document.getElementById('resultAvatar').innerHTML = numberFallbackMarkup(num);
         document.getElementById('resultActions').innerHTML = `
           <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
           <a class="btn" href="/register">Claim a number</a>
@@ -266,7 +279,7 @@
       if (data.inscription_id) {
         return `<iframe class="inscription-frame" src="https://ordinals.com/preview/${data.inscription_id}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
       }
-      return `<span class="avatar-number">#${num}</span>`;
+      return numberFallbackMarkup(num);
     }
 
     async function renderInscriptionMedia(container, data, num) {
@@ -323,7 +336,7 @@
       status.textContent = options.carousel ? 'Early inscription' : 'Unregistered';
       nameEl.textContent = options.carousel ? `Early inscription #${num}` : `#${num} has no OpenNum ID yet`;
       walletEl.textContent = options.carousel ? 'One of the first one hundred and one inscriptions on Bitcoin.' : 'If you own the inscription, register or claim it.';
-      avatar.textContent = `#${num}`;
+      avatar.innerHTML = numberFallbackMarkup(num);
       try {
         const res = await fetch(`/api/inscription?num=${num}`);
         if (res.ok) {
