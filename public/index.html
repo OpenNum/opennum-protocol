@@ -111,6 +111,8 @@
     let carouselRequest = 0;
     let carouselInitialized = false;
     let searchPreviewTimer = null;
+    const DEFAULT_CAROUSEL_DELAY = 5000;
+    const EARLY_CAROUSEL_DELAY = 8000;
 
     function toggleNav(btn) {
       const links = document.getElementById('navLinks');
@@ -298,14 +300,18 @@
     setTimeout(initCarousel, 0);
 
     function startCarousel() {
-      clearInterval(carouselTimer);
+      clearTimeout(carouselTimer);
       if (!carouselPlaying) return;
-      carouselTimer = setInterval(() => stepCarousel(1), 5000);
+      carouselTimer = setTimeout(() => stepCarousel(1), carouselDelayFor(carouselNumber));
+    }
+
+    function carouselDelayFor(num) {
+      return num >= 0 && num <= 9 ? EARLY_CAROUSEL_DELAY : DEFAULT_CAROUSEL_DELAY;
     }
 
     function pauseCarousel() {
       carouselPlaying = false;
-      clearInterval(carouselTimer);
+      clearTimeout(carouselTimer);
       carouselTimer = null;
       const button = document.getElementById('carouselToggle');
       if (button) {
@@ -323,7 +329,7 @@
         stepCarousel(1);
         startCarousel();
       } else {
-        clearInterval(carouselTimer);
+        clearTimeout(carouselTimer);
       }
     }
 
