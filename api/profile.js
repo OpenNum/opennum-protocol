@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { setCors } = require('./_security');
+const { resolveOwnershipState } = require('./_ownership');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -51,13 +52,9 @@ module.exports = async (req, res) => {
 
   // Enrich with Ordinals metadata and current owner (best-effort).
   let metadata = null;
-  let currentOwner = null;
-  let ownershipVerified = false;
   try {
     const raw = await fetchInscription(inscriptionId);
     if (raw) {
-      currentOwner = raw.address || null;
-      ownershipVerified = !!raw.address;
       metadata = {
         content_type: raw.content_type,
         content_url: `${ORDINALS_API}/content/${inscriptionId}`,
@@ -69,8 +66,11 @@ module.exports = async (req, res) => {
     }
   } catch (_) { /* metadata is optional */ }
 
-  const ownerMismatch = ownershipVerified && currentOwner && data.wallet_address && currentOwner !== data.wallet_address;
-  const effectiveStatus = ownerMismatch ? 'dormant' : data.status;
+  const ownership = await resolveOwnershipState(data, { persist: true });
+  const currentOwner = ownership.currentOwner;
+  const ownershipVerified = ownership.ownershipVerified;
+  const ownerMismatch = ownership.ownerMismatch;
+  const effectiveStatus = ownerMismatch ? 'dormant' : (data.status === 'dormant' && !ownerMismatch ? 'active' : data.status);
   let collections = [];
   try {
     const result = await supabase
@@ -106,6 +106,7 @@ module.exports = async (req, res) => {
     collections,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
+    owner_checked_at: ownership.ownerCheckedAt,
     metadata
   });
 };

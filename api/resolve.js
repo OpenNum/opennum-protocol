@@ -1,29 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const { setCors } = require('./_security');
+const { resolveOwnershipState } = require('./_ownership');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
-
-const ORDINALS_API = 'https://ordinals.com';
-
-async function currentOwnerFor(inscriptionId) {
-  try {
-    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
-      },
-      signal: AbortSignal.timeout(5000)
-    });
-    if (!ordRes.ok) return { owner: null, verified: false };
-    const raw = await ordRes.json();
-    return { owner: raw.address || null, verified: !!raw.address };
-  } catch (_) {
-    return { owner: null, verified: false };
-  }
-}
 
 module.exports = async (req, res) => {
   setCors(req, res, 'GET, OPTIONS');
@@ -53,8 +35,8 @@ module.exports = async (req, res) => {
   }
 
   const inscriptionId = data.inscription_id || (data.inscription_txid ? `${data.inscription_txid}i0` : null);
-  const ownership = inscriptionId ? await currentOwnerFor(inscriptionId) : { owner: null, verified: false };
-  const ownerMismatch = ownership.verified && ownership.owner && data.wallet_address && ownership.owner !== data.wallet_address;
+  const ownership = await resolveOwnershipState(data, { persist: true });
+  const ownerMismatch = ownership.ownerMismatch;
 
   return res.status(200).json({
     inscription_num: data.inscription_num,
@@ -62,12 +44,13 @@ module.exports = async (req, res) => {
     inscription_txid: data.inscription_txid,
     wallet: ownerMismatch ? null : data.wallet_address,
     registered_wallet: data.wallet_address,
-    current_owner: ownership.owner,
-    ownership_verified: ownership.verified,
+    current_owner: ownership.currentOwner,
+    ownership_verified: ownership.ownershipVerified,
     owner_mismatch: ownerMismatch,
     claim_required: ownerMismatch,
-    status: ownerMismatch ? 'dormant' : data.status,
+    status: ownerMismatch ? 'dormant' : (data.status === 'dormant' ? 'active' : data.status),
     display_name: data.display_name,
-    registered_at: data.registered_at
+    registered_at: data.registered_at,
+    owner_checked_at: ownership.ownerCheckedAt
   });
 };

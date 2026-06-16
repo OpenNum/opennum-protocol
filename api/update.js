@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('./_security');
+const { syncCurrentProfileVersion } = require('./_ownership');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -126,6 +127,15 @@ module.exports = async (req, res) => {
     console.error('DB update error:', updateError);
     return res.status(500).json({ error: 'Update failed. Please try again.' });
   }
+
+  await syncCurrentProfileVersion(existing, {
+    display_name: updatePayload.display_name,
+    bio: updatePayload.bio,
+    links: updatePayload.links !== undefined ? updatePayload.links : (existing.links || {}),
+    for_sale: updatePayload.for_sale,
+    ask_note: updatePayload.ask_note,
+    satflow_url: updatePayload.satflow_url
+  });
 
   return res.status(200).json({ success: true, inscription_num, wallet });
 };

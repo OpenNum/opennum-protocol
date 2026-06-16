@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('./_security');
+const { closeCurrentHolderPeriod, ensureHolderPeriodAndProfileVersion } = require('./_ownership');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -24,14 +25,6 @@ function isMissingMarketColumn(error) {
   return /(for_sale|ask_note|satflow_url)/i.test(error?.message || '');
 }
 
-function isMissingOwnershipTable(error) {
-  return error && (
-    error.code === '42P01' ||
-    /relation .*(holder_periods|profile_versions)/i.test(error.message || '') ||
-    /Could not find the table/i.test(error.message || '')
-  );
-}
-
 async function activeRegistrationForWallet(wallet) {
   const { data, error } = await supabase
     .from('registrations')
@@ -42,86 +35,6 @@ async function activeRegistrationForWallet(wallet) {
     .limit(1)
     .maybeSingle();
   return { data, error };
-}
-
-async function ensureHolderPeriodAndProfileVersion({ inscription_num, wallet, profile, start_reason = 'register' }) {
-  let { data: period, error: periodSelectError } = await supabase
-    .from('holder_periods')
-    .select('id')
-    .eq('inscription_num', inscription_num)
-    .eq('is_current', true)
-    .maybeSingle();
-
-  if (isMissingOwnershipTable(periodSelectError)) {
-    console.warn('holder_periods table is not installed; skipping holder period creation');
-    return;
-  }
-  if (periodSelectError) {
-    console.warn('Holder period lookup failed:', periodSelectError.message);
-    return;
-  }
-
-  if (!period) {
-    const { data: insertedPeriod, error: periodInsertError } = await supabase
-      .from('holder_periods')
-      .insert({
-        inscription_num,
-        wallet_address: wallet,
-        start_reason,
-        is_current: true
-      })
-      .select('id')
-      .single();
-
-    if (isMissingOwnershipTable(periodInsertError)) {
-      console.warn('holder_periods table is not installed; skipping holder period creation');
-      return;
-    }
-    if (periodInsertError) {
-      console.warn('Holder period insert failed:', periodInsertError.message);
-      return;
-    }
-    period = insertedPeriod;
-  }
-
-  const { data: version, error: versionSelectError } = await supabase
-    .from('profile_versions')
-    .select('id')
-    .eq('holder_period_id', period.id)
-    .eq('is_current', true)
-    .maybeSingle();
-
-  if (isMissingOwnershipTable(versionSelectError)) {
-    console.warn('profile_versions table is not installed; skipping profile version creation');
-    return;
-  }
-  if (versionSelectError) {
-    console.warn('Profile version lookup failed:', versionSelectError.message);
-    return;
-  }
-  if (version) return;
-
-  const { error: versionInsertError } = await supabase
-    .from('profile_versions')
-    .insert({
-      holder_period_id: period.id,
-      inscription_num,
-      display_name: profile.display_name || null,
-      bio: profile.bio || null,
-      links: profile.links || {},
-      for_sale: !!profile.for_sale,
-      ask_note: profile.ask_note || null,
-      satflow_url: profile.satflow_url || null,
-      is_current: true
-    });
-
-  if (isMissingOwnershipTable(versionInsertError)) {
-    console.warn('profile_versions table is not installed; skipping profile version creation');
-    return;
-  }
-  if (versionInsertError) {
-    console.warn('Profile version insert failed:', versionInsertError.message);
-  }
 }
 
 module.exports = async (req, res) => {
@@ -208,7 +121,7 @@ module.exports = async (req, res) => {
   // Check for existing registration on this number. Inactive rows can be reactivated by the current on-chain owner.
   const { data: existing, error: selectError } = await supabase
     .from('registrations')
-    .select('id, wallet_address, status')
+    .select('*')
     .eq('inscription_num', inscription_num)
     .order('registered_at', { ascending: false })
     .limit(1)
@@ -239,22 +152,26 @@ module.exports = async (req, res) => {
         error: 'This inscription number has an existing OpenNum record. On-chain ownership could not be verified — please try again.'
       });
     }
-    // Verified transfer/reactivation: update existing row in place (preserves inscription_num uniqueness)
+    await closeCurrentHolderPeriod(existing, 'transfer');
+
+    // Verified transfer/reactivation: update existing row and reset public profile for the new holder.
     const updatePayload = {
       inscription_txid,
       inscription_id: inscription_id || `${inscription_txid}i0`,
       wallet_address: wallet,
       signature,
-      display_name: sanitizeText(display_name, 48),
-      for_sale: !!for_sale,
-      ask_note: sanitizeText(ask_note, 240),
-      satflow_url: sanitizeUrl(satflow_url),
+      display_name: null,
+      bio: null,
+      links: {},
+      for_sale: false,
+      ask_note: null,
+      satflow_url: null,
+      current_owner: wallet,
+      owner_checked_at: new Date().toISOString(),
       indexer_ruleset: 'ord-v0.18-mainnet',
       status: 'active',
       updated_at: new Date().toISOString()
     };
-    // links is optional — only include if provided (requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}')
-    if (links && typeof links === 'object') updatePayload.links = sanitizeLinks(links);
 
     let { error: updateError } = await supabase
       .from('registrations')
@@ -281,6 +198,20 @@ module.exports = async (req, res) => {
       console.error('DB update error:', updateError);
       return res.status(500).json({ error: 'Transfer failed. Please try again.' });
     }
+
+    await ensureHolderPeriodAndProfileVersion({
+      inscription_num,
+      wallet,
+      profile: {
+        display_name: null,
+        bio: null,
+        links: {},
+        for_sale: false,
+        ask_note: null,
+        satflow_url: null
+      },
+      start_reason: 'claim'
+    });
 
     return res.status(200).json({
       success: true,
