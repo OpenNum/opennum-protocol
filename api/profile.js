@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
-const { setCors } = require('./_security');
-const { resolveOwnershipState } = require('./_ownership');
+const { setCors } = require('../lib/_security');
+const { resolveOwnershipState } = require('../lib/_ownership');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

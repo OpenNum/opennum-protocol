@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { setCors } = require('./_security');
+const { setCors } = require('../lib/_security');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,

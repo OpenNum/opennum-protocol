@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
-const { setCors, checkRateLimit, sendRateLimit } = require('./_security');
+const { setCors, checkRateLimit, sendRateLimit } = require('../lib/_security');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');

@@ -1,5 +1,5 @@
 const ORDINALS_API = 'https://ordinals.com';
-const { setCors } = require('./_security');
+const { setCors } = require('../lib/_security');
 
 function normalizeNumber(raw) {
   const num = parseInt(String(raw || '').replace(/^#/, ''), 10);
