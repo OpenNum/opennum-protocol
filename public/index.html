@@ -80,8 +80,8 @@
             <div class="preview-identity">
               <span id="resultStatus" class="status">Ready</span>
               <span id="resultNum" class="console-number">#0</span>
-              <div id="resultName" class="profile-name">Early inscription #0</div>
-              <div id="resultWallet" class="wallet-line">The first one hundred and one inscriptions on Bitcoin.</div>
+              <div id="resultName" class="profile-name" style="display:none"></div>
+              <div id="resultWallet" class="wallet-line" style="display:none"></div>
             </div>
           </div>
           <div class="preview-actions" id="resultActions">
@@ -153,6 +153,15 @@
       return wallet.length > 24 ? `${wallet.slice(0, 10)}...${wallet.slice(-8)}` : wallet;
     }
 
+    function setPreviewCopy(name, wallet, visible = true) {
+      const nameEl = document.getElementById('resultName');
+      const walletEl = document.getElementById('resultWallet');
+      nameEl.textContent = name || '';
+      walletEl.textContent = wallet || '';
+      nameEl.style.display = visible && name ? '' : 'none';
+      walletEl.style.display = visible && wallet ? '' : 'none';
+    }
+
     function searchNumber(event) {
       event.preventDefault();
       clearTimeout(searchPreviewTimer);
@@ -189,8 +198,7 @@
 
       setPreviewNumber(num);
       status.textContent = 'Looking up';
-      nameEl.textContent = 'Checking registry...';
-      walletEl.textContent = 'Resolving OpenNum status.';
+      setPreviewCopy('Checking registry...', 'Resolving OpenNum status.');
       avatar.innerHTML = numberFallbackMarkup(num);
 
       const requestId = ++carouselRequest;
@@ -204,10 +212,9 @@
 
         const dormant = data.status === 'dormant' || data.claim_required;
         status.textContent = dormant ? 'Dormant' : (data.for_sale ? 'For sale' : 'Active');
-        nameEl.textContent = data.display_name || `OpenNum #${num}`;
-        walletEl.textContent = dormant
+        setPreviewCopy(data.display_name || `OpenNum #${num}`, dormant
           ? `Moved on-chain. Current holder must claim it again.`
-          : `${shortWallet(data.wallet)} is the active owner`;
+          : `${shortWallet(data.wallet)} is the active owner`);
         const media = await prepareInscriptionMedia({
           inscription_id: data.inscription_id,
           content_type: data.metadata?.content_type,
@@ -240,8 +247,7 @@
 
         document.getElementById('resultStatus').textContent = 'Early inscription';
         setPreviewNumber(num);
-        document.getElementById('resultName').textContent = `Early inscription #${num}`;
-        document.getElementById('resultWallet').textContent = 'One of the first one hundred and one inscriptions on Bitcoin.';
+        setPreviewCopy('', '', false);
         document.getElementById('resultAvatar').innerHTML = media;
         document.getElementById('resultActions').innerHTML = `
           <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View #${num}</a>
@@ -252,8 +258,7 @@
         if (requestId !== carouselRequest) return false;
         document.getElementById('resultStatus').textContent = 'Early inscription';
         setPreviewNumber(num);
-        document.getElementById('resultName').textContent = `Early inscription #${num}`;
-        document.getElementById('resultWallet').textContent = 'Image temporarily unavailable. The inscription still exists on Bitcoin.';
+        setPreviewCopy('', '', false);
         document.getElementById('resultAvatar').innerHTML = numberFallbackMarkup(num);
         document.getElementById('resultActions').innerHTML = `
           <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
@@ -346,8 +351,11 @@
 
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options = {}) {
       status.textContent = options.carousel ? 'Early inscription' : 'Unregistered';
-      nameEl.textContent = options.carousel ? `Early inscription #${num}` : `#${num} has no OpenNum ID yet`;
-      walletEl.textContent = options.carousel ? 'One of the first one hundred and one inscriptions on Bitcoin.' : 'If you own the inscription, register or claim it.';
+      setPreviewCopy(
+        options.carousel ? '' : `#${num} has no OpenNum ID yet`,
+        options.carousel ? '' : 'If you own the inscription, register or claim it.',
+        !options.carousel
+      );
       avatar.innerHTML = numberFallbackMarkup(num);
       try {
         const res = await fetch(`/api/inscription?num=${num}`);
