@@ -24,6 +24,14 @@ function isMissingMarketColumn(error) {
   return /(for_sale|ask_note|satflow_url)/i.test(error?.message || '');
 }
 
+function isMissingOwnershipTable(error) {
+  return error && (
+    error.code === '42P01' ||
+    /relation .*(holder_periods|profile_versions)/i.test(error.message || '') ||
+    /Could not find the table/i.test(error.message || '')
+  );
+}
+
 async function activeRegistrationForWallet(wallet) {
   const { data, error } = await supabase
     .from('registrations')
@@ -34,6 +42,86 @@ async function activeRegistrationForWallet(wallet) {
     .limit(1)
     .maybeSingle();
   return { data, error };
+}
+
+async function ensureHolderPeriodAndProfileVersion({ inscription_num, wallet, profile, start_reason = 'register' }) {
+  let { data: period, error: periodSelectError } = await supabase
+    .from('holder_periods')
+    .select('id')
+    .eq('inscription_num', inscription_num)
+    .eq('is_current', true)
+    .maybeSingle();
+
+  if (isMissingOwnershipTable(periodSelectError)) {
+    console.warn('holder_periods table is not installed; skipping holder period creation');
+    return;
+  }
+  if (periodSelectError) {
+    console.warn('Holder period lookup failed:', periodSelectError.message);
+    return;
+  }
+
+  if (!period) {
+    const { data: insertedPeriod, error: periodInsertError } = await supabase
+      .from('holder_periods')
+      .insert({
+        inscription_num,
+        wallet_address: wallet,
+        start_reason,
+        is_current: true
+      })
+      .select('id')
+      .single();
+
+    if (isMissingOwnershipTable(periodInsertError)) {
+      console.warn('holder_periods table is not installed; skipping holder period creation');
+      return;
+    }
+    if (periodInsertError) {
+      console.warn('Holder period insert failed:', periodInsertError.message);
+      return;
+    }
+    period = insertedPeriod;
+  }
+
+  const { data: version, error: versionSelectError } = await supabase
+    .from('profile_versions')
+    .select('id')
+    .eq('holder_period_id', period.id)
+    .eq('is_current', true)
+    .maybeSingle();
+
+  if (isMissingOwnershipTable(versionSelectError)) {
+    console.warn('profile_versions table is not installed; skipping profile version creation');
+    return;
+  }
+  if (versionSelectError) {
+    console.warn('Profile version lookup failed:', versionSelectError.message);
+    return;
+  }
+  if (version) return;
+
+  const { error: versionInsertError } = await supabase
+    .from('profile_versions')
+    .insert({
+      holder_period_id: period.id,
+      inscription_num,
+      display_name: profile.display_name || null,
+      bio: profile.bio || null,
+      links: profile.links || {},
+      for_sale: !!profile.for_sale,
+      ask_note: profile.ask_note || null,
+      satflow_url: profile.satflow_url || null,
+      is_current: true
+    });
+
+  if (isMissingOwnershipTable(versionInsertError)) {
+    console.warn('profile_versions table is not installed; skipping profile version creation');
+    return;
+  }
+  if (versionInsertError) {
+    console.warn('Profile version insert failed:', versionInsertError.message);
+  }
 }
 
 module.exports = async (req, res) => {
@@ -252,6 +340,20 @@ module.exports = async (req, res) => {
     console.error('DB insert error:', insertError);
     return res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
+
+  await ensureHolderPeriodAndProfileVersion({
+    inscription_num,
+    wallet,
+    profile: {
+      display_name: insertPayload.display_name,
+      bio: insertPayload.bio,
+      links: insertPayload.links || {},
+      for_sale: insertPayload.for_sale,
+      ask_note: insertPayload.ask_note,
+      satflow_url: insertPayload.satflow_url
+    },
+    start_reason: 'register'
+  });
 
   return res.status(200).json({
     success: true,
