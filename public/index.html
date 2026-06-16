@@ -109,6 +109,7 @@
     let carouselTimer = null;
     let carouselPlaying = true;
     let carouselRequest = 0;
+    let carouselInitialized = false;
     let searchPreviewTimer = null;
 
     function toggleNav(btn) {
@@ -119,7 +120,7 @@
     }
 
     function normalizeNumber(value) {
-      const q = String(value || '').trim().replace(/^#/, '');
+      const q = String(value ?? '').trim().replace(/^#/, '');
       const num = parseInt(q, 10);
       return Number.isInteger(num) && num >= 0 ? num : null;
     }
@@ -273,8 +274,8 @@
 
     async function prepareInscriptionMedia(data, num) {
       if (data.content_type?.startsWith('image/') && data.content_url) {
-        const ready = await preloadImage(data.content_url);
-        if (ready) return `<img src="${data.content_url}" alt="Inscription #${num}" />`;
+        const fallback = numberFallbackMarkup(num).replace(/"/g, '&quot;');
+        return `<img src="${data.content_url}" alt="Inscription #${num}" onerror="this.outerHTML='${fallback}'" />`;
       }
       if (data.inscription_id) {
         return `<iframe class="inscription-frame" src="https://ordinals.com/preview/${data.inscription_id}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
@@ -286,10 +287,15 @@
       container.innerHTML = await prepareInscriptionMedia(data, num);
     }
 
-    window.addEventListener('load', () => {
-      showCarouselNumber(0);
-      startCarousel();
-    });
+    function initCarousel() {
+      if (carouselInitialized) return;
+      carouselInitialized = true;
+      showCarouselNumber(0).finally(startCarousel);
+    }
+
+    document.addEventListener('DOMContentLoaded', initCarousel);
+    window.addEventListener('load', initCarousel);
+    setTimeout(initCarousel, 0);
 
     function startCarousel() {
       clearInterval(carouselTimer);
