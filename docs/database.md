@@ -2,6 +2,27 @@
 
 The hosted API expects Supabase/Postgres tables for registrations and public guestbook messages.
 
+## Auth nonce table
+
+Server write endpoints should use one-time nonces before accepting wallet signatures. Nonces expire quickly and are marked as used by the shared auth verifier.
+
+```sql
+create table if not exists auth_nonces (
+  nonce text primary key,
+  wallet text not null,
+  action text not null,
+  used boolean not null default false,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+
+create index if not exists auth_nonces_expiry_idx
+  on auth_nonces (expires_at);
+
+create index if not exists auth_nonces_wallet_action_idx
+  on auth_nonces (wallet, action, used);
+```
+
 ## Registrations migration
 
 Older deployments only stored `inscription_txid`. Add `inscription_id` so non-`i0` inscriptions can render the correct avatar, content preview, and market link.

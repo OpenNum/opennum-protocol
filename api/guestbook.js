@@ -1,10 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, checkRateLimit, sendRateLimit } = require('./_security');
+const { verifyAction } = require('./_auth');
+
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
+if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY missing');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  SUPABASE_SERVICE_ROLE_KEY
 );
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
@@ -109,7 +114,7 @@ module.exports = async (req, res) => {
   const rate = checkRateLimit(req, 'guestbook', 30, 60 * 60 * 1000);
   if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
-  const { inscription_num, parent_id, author_wallet, message, signature, timestamp } = req.body || {};
+  const { inscription_num, parent_id, author_wallet, message, signature, timestamp, nonce, actor_num, author_number } = req.body || {};
   const num = normalizeNumber(inscription_num);
   const rawMessage = String(message || '').trim();
   const cleanMessage = sanitizeText(rawMessage, MAX_MESSAGE_LENGTH);
@@ -124,12 +129,39 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
-  const signedMessage = `opennum:guestbook:${num}:${author_wallet}:${rawMessage}:${timestamp}`;
-  try {
-    const valid = Verifier.verifySignature(author_wallet, signedMessage, signature);
-    if (!valid) return res.status(400).json({ error: 'Invalid signature' });
-  } catch (e) {
-    return res.status(400).json({ error: 'Signature verification failed: ' + e.message });
+  let signedMessage = `opennum:guestbook:${num}:${author_wallet}:${rawMessage}:${timestamp}`;
+  let authorNumber = null;
+  let author = null;
+
+  if (nonce) {
+    const actorNum = normalizeNumber(actor_num ?? author_number);
+    if (actorNum === null) {
+      return res.status(400).json({ error: 'Missing or invalid actor_num for nonce guestbook auth' });
+    }
+
+    const auth = await verifyAction({
+      wallet: author_wallet,
+      action: 'guestbook',
+      actor_num: actorNum,
+      target: num,
+      ts: timestamp,
+      nonce,
+      signature,
+      requireActiveId: true,
+      requireOwnership: false
+    });
+    if (!auth.ok) return res.status(auth.status || 401).json({ error: auth.error || 'Authentication failed' });
+
+    author = auth.actor_registration;
+    authorNumber = Number(author.inscription_num);
+    signedMessage = auth.signed_message;
+  } else {
+    try {
+      const valid = Verifier.verifySignature(author_wallet, signedMessage, signature);
+      if (!valid) return res.status(400).json({ error: 'Invalid signature' });
+    } catch (e) {
+      return res.status(400).json({ error: 'Signature verification failed: ' + e.message });
+    }
   }
 
   const { data: target, error: targetError } = await supabase
@@ -148,16 +180,18 @@ module.exports = async (req, res) => {
     return res.status(409).json({ error: 'This OpenNum is dormant after an on-chain transfer and must be claimed before messages can be posted.' });
   }
 
-  let authorNumber = null;
-  const { data: author } = await supabase
-    .from('registrations')
-    .select('*')
-    .eq('wallet_address', author_wallet)
-    .eq('status', 'active')
-    .order('registered_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (author) authorNumber = author.inscription_num;
+  if (!author) {
+    const { data: authorData } = await supabase
+      .from('registrations')
+      .select('*')
+      .eq('wallet_address', author_wallet)
+      .eq('status', 'active')
+      .order('registered_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    author = authorData;
+    if (author) authorNumber = author.inscription_num;
+  }
   if (!authorNumber) {
     return res.status(403).json({ error: 'You need an active OpenNum ID before you can leave public messages.' });
   }

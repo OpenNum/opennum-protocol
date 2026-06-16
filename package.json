@@ -4,7 +4,7 @@
   "private": true,
   "engines": { "node": ">=18" },
   "scripts": {
-    "check": "node --check api/_security.js && node --check api/resolve.js && node --check api/register.js && node --check api/list.js && node --check api/profile.js && node --check api/inscription.js && node --check api/guestbook.js && node --check api/update.js && node --check api/wallet.js && node --check api/unbind.js",
+    "check": "node --check api/_security.js && node --check api/_auth.js && node --check api/challenge.js && node --check api/resolve.js && node --check api/register.js && node --check api/list.js && node --check api/profile.js && node --check api/inscription.js && node --check api/guestbook.js && node --check api/update.js && node --check api/wallet.js && node --check api/unbind.js",
     "dev": "vercel dev"
   },
   "dependencies": {
