@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { setCors, sanitizeText, checkRateLimit, sendRateLimit } = require('../lib/_security');
+const { setCors, sanitizeText, sanitizeUrl, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { verifyAction } = require('../lib/_auth');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,7 +13,10 @@ const supabase = createClient(
 
 const MAX_WATCHLIST_NOTE_LENGTH = 160;
 const MAX_REPORT_REASON_LENGTH = 500;
+const MAX_OFFER_PRICE_LENGTH = 80;
+const MAX_OFFER_NOTE_LENGTH = 280;
 const REPORT_TARGET_TYPES = new Set(['profile', 'message', 'number']);
+const OFFER_STATUS_VALUES = new Set(['archived', 'rejected']);
 
 function cleanAction(value) {
   return String(value || '').trim().toLowerCase();
@@ -27,7 +30,7 @@ function normalizeNumber(raw) {
 function tableMissing(error) {
   return error && (
     error.code === '42P01' ||
-    /relation .*(guestbook|holder_periods|follows|number_watches|watchlist_items|blocks|reports)/i.test(error.message || '') ||
+    /relation .*(guestbook|holder_periods|follows|number_watches|watchlist_items|blocks|reports|private_offers)/i.test(error.message || '') ||
     /Could not find the table/i.test(error.message || '')
   );
 }
@@ -35,7 +38,7 @@ function tableMissing(error) {
 function missingRelationshipTable(error) {
   return error && (
     error.code === '42P01' ||
-    /relation .*(follows|number_watches|watchlist_items|blocks|reports)/i.test(error.message || '') ||
+    /relation .*(follows|number_watches|watchlist_items|blocks|reports|private_offers)/i.test(error.message || '') ||
     /Could not find the table/i.test(error.message || '')
   );
 }
@@ -47,6 +50,11 @@ function normalizeTargetId(raw) {
 
 function actionTargetFor(body, fallbackField = 'target_num') {
   return normalizeNumber(body[fallbackField] ?? body.target_num ?? body.target);
+}
+
+function normalizeOfferId(raw) {
+  const id = parseInt(String(raw || '').trim(), 10);
+  return Number.isInteger(id) && id > 0 ? id : null;
 }
 
 async function verifySocialAction({ body, action, actorNum, target }) {
@@ -102,6 +110,23 @@ async function activeRegistrationForNumber(num) {
   }
   if (!data) return { error: { status: 404, message: 'Target OpenNum is not active' } };
   return { data };
+}
+
+async function currentOwnerContext(num, wallet) {
+  const registration = await activeRegistrationForNumber(num);
+  if (registration.error) return registration;
+  if (registration.data.wallet_address !== wallet) {
+    return { error: { status: 403, message: 'Only the current holder can perform this action' } };
+  }
+
+  const currentPeriod = await currentHolderPeriodFor(num);
+  if (currentPeriod.error) return { error: { status: 503, message: currentPeriod.error } };
+  if (!currentPeriod.id) return { error: { status: 409, message: 'Current holder period is not ready yet' } };
+
+  return {
+    registration: registration.data,
+    period_id: currentPeriod.id
+  };
 }
 
 async function isBlocked({ blockerNum, blockedNum }) {
@@ -525,6 +550,138 @@ async function handleReport(req, res, body) {
   return res.status(200).json({ success: true, report: data });
 }
 
+async function handleOffer(req, res, body) {
+  const actorNum = normalizeNumber(body.actor_num);
+  const targetNum = actionTargetFor(body);
+  if (actorNum === null || targetNum === null) return res.status(400).json({ error: 'Missing or invalid actor_num or target_num' });
+  if (actorNum === targetNum) return res.status(400).json({ error: 'You cannot send an offer to your own OpenNum' });
+
+  const verified = await verifySocialAction({ body, action: 'offer', actorNum, target: targetNum });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
+
+  const target = await activeRegistrationForNumber(targetNum);
+  if (target.error) return res.status(target.error.status).json({ error: target.error.message });
+
+  if (await isBlocked({ blockerNum: targetNum, blockedNum: actorNum })) {
+    return res.status(403).json({ error: 'You have been blocked by this profile.' });
+  }
+
+  const currentPeriod = await currentHolderPeriodFor(targetNum);
+  if (currentPeriod.error) return res.status(503).json({ error: currentPeriod.error });
+  if (!currentPeriod.id) return res.status(409).json({ error: 'Target holder period is not ready yet' });
+
+  const priceText = body.price_text === undefined || body.price_text === null
+    ? null
+    : sanitizeText(String(body.price_text), MAX_OFFER_PRICE_LENGTH);
+  const note = body.note === undefined || body.note === null
+    ? null
+    : sanitizeText(String(body.note), MAX_OFFER_NOTE_LENGTH);
+  const satflowUrl = sanitizeUrl(body.satflow_url);
+
+  const { data, error } = await supabase
+    .from('private_offers')
+    .insert({
+      buyer_num: actorNum,
+      buyer_wallet: verified.wallet,
+      target_num: targetNum,
+      target_period_id: currentPeriod.id,
+      price_text: priceText,
+      note,
+      satflow_url: satflowUrl,
+      status: 'open',
+      signature: body.signature
+    })
+    .select('id, buyer_num, target_num, target_period_id, price_text, note, satflow_url, status, created_at')
+    .single();
+
+  if (missingRelationshipTable(error)) return res.status(503).json({ error: 'Private offers table is not installed yet. Run the Supabase migration in docs/database.md.' });
+  if (error) {
+    console.error('Social offer insert error:', error);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  return res.status(200).json({ success: true, offer: data });
+}
+
+async function handleOfferList(req, res, body) {
+  const actorNum = normalizeNumber(body.actor_num);
+  if (actorNum === null) return res.status(400).json({ error: 'Missing or invalid actor_num' });
+
+  const verified = await verifySocialAction({ body, action: 'offer_list', actorNum, target: '' });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
+
+  const owner = await currentOwnerContext(actorNum, verified.wallet);
+  if (owner.error) return res.status(owner.error.status).json({ error: owner.error.message });
+
+  const { data, error } = await supabase
+    .from('private_offers')
+    .select('id, buyer_num, target_num, target_period_id, price_text, note, satflow_url, status, created_at')
+    .eq('target_num', actorNum)
+    .eq('target_period_id', owner.period_id)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (missingRelationshipTable(error)) return res.status(503).json({ error: 'Private offers table is not installed yet. Run the Supabase migration in docs/database.md.' });
+  if (error) {
+    console.error('Social offer list error:', error);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  return res.status(200).json({
+    success: true,
+    target_num: actorNum,
+    target_period_id: owner.period_id,
+    offers: data || []
+  });
+}
+
+async function handleOfferStatus(req, res, body) {
+  const actorNum = normalizeNumber(body.actor_num);
+  const offerId = normalizeOfferId(body.offer_id ?? body.target);
+  const nextStatus = cleanAction(body.status);
+  if (actorNum === null || offerId === null || !nextStatus) return res.status(400).json({ error: 'Missing or invalid offer status fields' });
+  if (!OFFER_STATUS_VALUES.has(nextStatus)) return res.status(400).json({ error: 'Unsupported offer status' });
+
+  const verified = await verifySocialAction({ body, action: 'offer_status', actorNum, target: offerId });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
+
+  const { data: offer, error: offerError } = await supabase
+    .from('private_offers')
+    .select('id, buyer_num, target_num, target_period_id, status')
+    .eq('id', offerId)
+    .maybeSingle();
+
+  if (missingRelationshipTable(offerError)) return res.status(503).json({ error: 'Private offers table is not installed yet. Run the Supabase migration in docs/database.md.' });
+  if (offerError) {
+    console.error('Social offer lookup error:', offerError);
+    return res.status(500).json({ error: 'Database error' });
+  }
+  if (!offer) return res.status(404).json({ error: 'Offer not found' });
+  if (Number(offer.target_num) !== actorNum) return res.status(403).json({ error: 'Only the target holder can update this offer' });
+
+  const owner = await currentOwnerContext(Number(offer.target_num), verified.wallet);
+  if (owner.error) return res.status(owner.error.status).json({ error: owner.error.message });
+  if (Number(offer.target_period_id) !== Number(owner.period_id)) {
+    return res.status(409).json({ error: 'Archived-period offers cannot be changed by the current holder' });
+  }
+
+  const { data, error } = await supabase
+    .from('private_offers')
+    .update({ status: nextStatus })
+    .eq('id', offerId)
+    .eq('target_period_id', owner.period_id)
+    .select('id, buyer_num, target_num, target_period_id, status, created_at')
+    .single();
+
+  if (missingRelationshipTable(error)) return res.status(503).json({ error: 'Private offers table is not installed yet. Run the Supabase migration in docs/database.md.' });
+  if (error) {
+    console.error('Social offer status update error:', error);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  return res.status(200).json({ success: true, offer: data });
+}
+
 module.exports = async (req, res) => {
   setCors(req, res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -548,6 +705,9 @@ module.exports = async (req, res) => {
   if (action === 'block') return handleBlock(req, res, body);
   if (action === 'unblock') return handleUnblock(req, res, body);
   if (action === 'report') return handleReport(req, res, body);
+  if (action === 'offer') return handleOffer(req, res, body);
+  if (action === 'offer_list') return handleOfferList(req, res, body);
+  if (action === 'offer_status') return handleOfferStatus(req, res, body);
 
   return res.status(400).json({ error: 'Unknown social action' });
 };

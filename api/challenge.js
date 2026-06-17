@@ -31,7 +31,9 @@ const ACTIONS = new Set([
   'unblock',
   'report',
   'claim',
-  'offer'
+  'offer',
+  'offer_list',
+  'offer_status'
 ]);
 
 function cleanWallet(value) {
