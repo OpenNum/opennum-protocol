@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { syncCurrentProfileVersion } = require('../lib/_ownership');
+const { currentHolderPeriodId, emitEvent } = require('../lib/_activity');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -136,6 +137,20 @@ module.exports = async (req, res) => {
     ask_note: updatePayload.ask_note,
     satflow_url: updatePayload.satflow_url
   });
+
+  if (!existing.for_sale && updatePayload.for_sale) {
+    const periodId = await currentHolderPeriodId(inscription_num);
+    await emitEvent({
+      event_type: 'marked_for_sale',
+      subject_num: inscription_num,
+      holder_period_id: periodId,
+      payload: {
+        ask_note: updatePayload.ask_note || null,
+        satflow_url: updatePayload.satflow_url || null
+      },
+      dedupe_key: periodId ? `sale:${inscription_num}:${periodId}` : `sale:${inscription_num}`
+    });
+  }
 
   return res.status(200).json({ success: true, inscription_num, wallet });
 };

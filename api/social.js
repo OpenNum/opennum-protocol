@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { setCors, sanitizeText, sanitizeUrl, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { verifyAction } = require('../lib/_auth');
+const { emitEvent, isMissingActivityTable } = require('../lib/_activity');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -17,6 +18,8 @@ const MAX_OFFER_PRICE_LENGTH = 80;
 const MAX_OFFER_NOTE_LENGTH = 280;
 const REPORT_TARGET_TYPES = new Set(['profile', 'message', 'number']);
 const OFFER_STATUS_VALUES = new Set(['archived', 'rejected']);
+const INBOX_OWN_EVENTS = ['public_message_received', 'followed', 'offer_received'];
+const INBOX_WATCH_EVENTS = ['ownership_transferred', 'marked_for_sale'];
 
 function cleanAction(value) {
   return String(value || '').trim().toLowerCase();
@@ -55,6 +58,17 @@ function actionTargetFor(body, fallbackField = 'target_num') {
 function normalizeOfferId(raw) {
   const id = parseInt(String(raw || '').trim(), 10);
   return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function normalizeLimit(raw, fallback = 50) {
+  const limit = parseInt(String(raw || ''), 10);
+  if (!Number.isInteger(limit) || limit <= 0) return fallback;
+  return Math.min(limit, 50);
+}
+
+function normalizeOffset(raw) {
+  const offset = parseInt(String(raw || ''), 10);
+  return Number.isInteger(offset) && offset > 0 ? offset : 0;
 }
 
 async function verifySocialAction({ body, action, actorNum, target }) {
@@ -143,6 +157,40 @@ async function isBlocked({ blockerNum, blockedNum }) {
     return false;
   }
   return !!(data && data.length);
+}
+
+async function handleFeed(req, res) {
+  const num = normalizeNumber(req.query.num || req.query.number);
+  if (num === null) return res.status(400).json({ error: 'Missing or invalid ?num= parameter' });
+
+  const limit = normalizeLimit(req.query.limit, 50);
+  const offset = normalizeOffset(req.query.offset);
+  const from = offset;
+  const to = offset + limit - 1;
+
+  const { data, error } = await supabase
+    .from('activity_events')
+    .select('id, event_type, subject_num, actor_num, holder_period_id, visibility, payload, created_at')
+    .eq('subject_num', num)
+    .eq('visibility', 'public')
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (isMissingActivityTable(error)) {
+    return res.status(200).json({ success: true, num, events: [], setup_required: true });
+  }
+  if (error) {
+    console.error('Social feed lookup error:', error);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  return res.status(200).json({
+    success: true,
+    num,
+    limit,
+    offset,
+    events: data || []
+  });
 }
 
 async function loadMessage(messageId) {
@@ -285,13 +333,13 @@ async function insertActiveRow(table, payload, select = '*') {
       console.error(`Social ${table} duplicate lookup error:`, existingError);
       return { error: { status: 500, message: 'Database error' } };
     }
-    return { data: existing };
+    return { data: existing, duplicate: true };
   }
   if (error) {
     console.error(`Social ${table} insert error:`, error);
     return { error: { status: 500, message: 'Database error' } };
   }
-  return { data };
+  return { data, duplicate: false };
 }
 
 async function handleFollow(req, res, body) {
@@ -322,6 +370,18 @@ async function handleFollow(req, res, body) {
     status: 'active'
   }, 'id, follower_num, target_num, target_period_id, status, created_at');
   if (result.error) return res.status(result.error.status).json({ error: result.error.message });
+
+  if (!result.duplicate) {
+    await emitEvent({
+      event_type: 'followed',
+      subject_num: targetNum,
+      actor_num: actorNum,
+      holder_period_id: currentPeriod.id,
+      payload: {
+        follow_id: result.data?.id || null
+      }
+    });
+  }
 
   return res.status(200).json({ success: true, follow: result.data });
 }
@@ -600,6 +660,18 @@ async function handleOffer(req, res, body) {
     return res.status(500).json({ error: 'Database error' });
   }
 
+  await emitEvent({
+    event_type: 'offer_received',
+    subject_num: targetNum,
+    actor_num: actorNum,
+    holder_period_id: currentPeriod.id,
+    visibility: 'inbox_only',
+    payload: {
+      offer_id: data.id,
+      status: data.status
+    }
+  });
+
   return res.status(200).json({ success: true, offer: data });
 }
 
@@ -682,9 +754,86 @@ async function handleOfferStatus(req, res, body) {
   return res.status(200).json({ success: true, offer: data });
 }
 
+async function handleInbox(req, res, body) {
+  const actorNum = normalizeNumber(body.actor_num);
+  if (actorNum === null) return res.status(400).json({ error: 'Missing or invalid actor_num' });
+
+  const verified = await verifySocialAction({ body, action: 'inbox', actorNum, target: '' });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
+
+  const owner = await currentOwnerContext(actorNum, verified.wallet);
+  if (owner.error) return res.status(owner.error.status).json({ error: owner.error.message });
+
+  const { data: ownEvents, error: ownError } = await supabase
+    .from('activity_events')
+    .select('id, event_type, subject_num, actor_num, holder_period_id, visibility, payload, created_at')
+    .eq('subject_num', actorNum)
+    .in('event_type', INBOX_OWN_EVENTS)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (isMissingActivityTable(ownError)) {
+    return res.status(200).json({ success: true, inbox: [], setup_required: true });
+  }
+  if (ownError) {
+    console.error('Social inbox own events error:', ownError);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  let watchEvents = [];
+  const { data: watches, error: watchError } = await supabase
+    .from('number_watches')
+    .select('target_num')
+    .eq('watcher_num', actorNum)
+    .eq('status', 'active')
+    .limit(100);
+
+  if (missingRelationshipTable(watchError)) {
+    watchEvents = [];
+  } else if (watchError) {
+    console.warn('Social inbox watch lookup failed:', watchError.message);
+  } else {
+    const watchedNums = [...new Set((watches || []).map((row) => Number(row.target_num)).filter(Number.isInteger))];
+    if (watchedNums.length) {
+      const { data, error } = await supabase
+        .from('activity_events')
+        .select('id, event_type, subject_num, actor_num, holder_period_id, visibility, payload, created_at')
+        .in('subject_num', watchedNums)
+        .in('event_type', INBOX_WATCH_EVENTS)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (isMissingActivityTable(error)) {
+        watchEvents = [];
+      } else if (error) {
+        console.warn('Social inbox watched events failed:', error.message);
+      } else {
+        watchEvents = data || [];
+      }
+    }
+  }
+
+  const inbox = [...(ownEvents || []), ...watchEvents]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 100);
+
+  return res.status(200).json({
+    success: true,
+    actor_num: actorNum,
+    holder_period_id: owner.period_id,
+    inbox
+  });
+}
+
 module.exports = async (req, res) => {
-  setCors(req, res, 'POST, OPTIONS');
+  setCors(req, res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=60');
+    const view = cleanAction(req.query.view);
+    if (view === 'feed') return handleFeed(req, res);
+    return res.status(400).json({ error: 'Unknown social view' });
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const rate = checkRateLimit(req, 'social', 30, 60 * 60 * 1000);
@@ -708,6 +857,7 @@ module.exports = async (req, res) => {
   if (action === 'offer') return handleOffer(req, res, body);
   if (action === 'offer_list') return handleOfferList(req, res, body);
   if (action === 'offer_status') return handleOfferStatus(req, res, body);
+  if (action === 'inbox') return handleInbox(req, res, body);
 
   return res.status(400).json({ error: 'Unknown social action' });
 };

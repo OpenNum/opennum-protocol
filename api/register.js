@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { closeCurrentHolderPeriod, ensureHolderPeriodAndProfileVersion } = require('../lib/_ownership');
+const { emitEvent } = require('../lib/_activity');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -152,7 +153,7 @@ module.exports = async (req, res) => {
         error: 'This inscription number has an existing OpenNum record. On-chain ownership could not be verified — please try again.'
       });
     }
-    await closeCurrentHolderPeriod(existing, 'transfer');
+    const oldPeriodId = await closeCurrentHolderPeriod(existing, 'transfer');
 
     // Verified transfer/reactivation: update existing row and reset public profile for the new holder.
     const updatePayload = {
@@ -199,7 +200,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Transfer failed. Please try again.' });
     }
 
-    await ensureHolderPeriodAndProfileVersion({
+    const newPeriodId = await ensureHolderPeriodAndProfileVersion({
       inscription_num,
       wallet,
       profile: {
@@ -211,6 +212,16 @@ module.exports = async (req, res) => {
         satflow_url: null
       },
       start_reason: 'claim'
+    });
+
+    await emitEvent({
+      event_type: 'new_holder_claimed',
+      subject_num: inscription_num,
+      holder_period_id: newPeriodId,
+      payload: {
+        previous_wallet: existing.wallet_address || null,
+        previous_holder_period_id: oldPeriodId || null
+      }
     });
 
     return res.status(200).json({
@@ -272,7 +283,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 
-  await ensureHolderPeriodAndProfileVersion({
+  const periodId = await ensureHolderPeriodAndProfileVersion({
     inscription_num,
     wallet,
     profile: {
@@ -284,6 +295,15 @@ module.exports = async (req, res) => {
       satflow_url: insertPayload.satflow_url
     },
     start_reason: 'register'
+  });
+
+  await emitEvent({
+    event_type: 'number_claimed',
+    subject_num: inscription_num,
+    holder_period_id: periodId,
+    payload: {
+      wallet
+    }
   });
 
   return res.status(200).json({

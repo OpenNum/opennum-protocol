@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { verifyAction } = require('../lib/_auth');
+const { emitEvent } = require('../lib/_activity');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -319,6 +320,17 @@ module.exports = async (req, res) => {
     console.error('Guestbook insert error:', error);
     return res.status(500).json({ error: 'Database error' });
   }
+
+  await emitEvent({
+    event_type: 'public_message_received',
+    subject_num: num,
+    actor_num: Number(authorNumber),
+    holder_period_id: data.holder_period_id || targetHolderPeriodId || null,
+    payload: {
+      message_id: data.id,
+      parent_id: data.parent_id || null
+    }
+  });
 
   return res.status(200).json({
     success: true,

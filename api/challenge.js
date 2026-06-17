@@ -33,7 +33,8 @@ const ACTIONS = new Set([
   'claim',
   'offer',
   'offer_list',
-  'offer_status'
+  'offer_status',
+  'inbox'
 ]);
 
 function cleanWallet(value) {
