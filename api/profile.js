@@ -9,6 +9,56 @@ const supabase = createClient(
 
 const ORDINALS_API = 'https://ordinals.com';
 
+function computeNumberTraits(num) {
+  const digits = String(num);
+  const reversed = digits.split('').reverse().join('');
+  return {
+    is_sub_100: num < 100,
+    is_sub_1k: num < 1000,
+    is_sub_10k: num < 10000,
+    is_palindrome: digits === reversed,
+    is_repdigit: /^(.)\1*$/.test(digits),
+    is_year: num >= 1900 && num <= 2100,
+    digit_count: digits.length
+  };
+}
+
+function missingFollowsTable(error) {
+  return error && (
+    error.code === '42P01' ||
+    /relation .*follows/i.test(error.message || '') ||
+    /Could not find the table/i.test(error.message || '')
+  );
+}
+
+async function countActiveFollows(column, num) {
+  const { count, error } = await supabase
+    .from('follows')
+    .select('id', { count: 'exact', head: true })
+    .eq(column, num)
+    .eq('status', 'active');
+
+  if (missingFollowsTable(error)) return { count: 0, setup_required: true };
+  if (error) {
+    console.warn(`Follow count failed for ${column}:`, error.message);
+    return { count: 0, setup_required: false };
+  }
+  return { count: count || 0, setup_required: false };
+}
+
+async function loadSocialCounts(num) {
+  const [followers, following] = await Promise.all([
+    countActiveFollows('target_num', num),
+    countActiveFollows('follower_num', num)
+  ]);
+
+  return {
+    followers: followers.count,
+    following: following.count,
+    setup_required: !!(followers.setup_required || following.setup_required)
+  };
+}
+
 async function fetchInscription(inscriptionId) {
   const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
     headers: {
@@ -31,6 +81,8 @@ module.exports = async (req, res) => {
 
   const num = parseInt(raw.replace(/^#/, ''), 10);
   if (isNaN(num)) return res.status(400).json({ error: 'Invalid inscription number' });
+  const traits = computeNumberTraits(num);
+  const socialCounts = await loadSocialCounts(num);
 
   const { data, error } = await supabase
     .from('registrations')
@@ -45,7 +97,14 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Database error' });
   }
   if (!data) {
-    return res.status(404).json({ status: 'unregistered', inscription_num: num });
+    return res.status(404).json({
+      status: 'unregistered',
+      inscription_num: num,
+      traits,
+      followers: socialCounts.followers,
+      following: socialCounts.following,
+      social_counts: socialCounts
+    });
   }
 
   const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
@@ -104,6 +163,10 @@ module.exports = async (req, res) => {
     ask_note: data.ask_note || null,
     satflow_url: data.satflow_url || null,
     collections,
+    traits,
+    followers: socialCounts.followers,
+    following: socialCounts.following,
+    social_counts: socialCounts,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     owner_checked_at: ownership.ownerCheckedAt,
