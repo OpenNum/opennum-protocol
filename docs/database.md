@@ -225,3 +225,30 @@ create index if not exists guestbook_author_wallet_idx
 ```
 
 If row-level security is enabled, expose guestbook reads to anon clients and keep writes routed through the serverless API.
+
+## Guestbook holder periods and status
+
+Guestbook messages are tied to the holder period that owned the profile when the message was posted. When a number transfers, old-period messages stay archived with their original holder period instead of following the new holder.
+
+```sql
+alter table guestbook
+  add column if not exists holder_period_id bigint references holder_periods(id);
+
+alter table guestbook
+  add column if not exists status text not null default 'active';
+
+alter table guestbook
+  add column if not exists status_changed_at timestamptz;
+
+create index if not exists guestbook_period_status_idx
+  on guestbook (holder_period_id, status, created_at desc);
+
+update guestbook g
+set holder_period_id = hp.id
+from holder_periods hp
+where hp.inscription_num = g.inscription_num
+  and hp.is_current = true
+  and g.holder_period_id is null;
+```
+
+`guestbook` already uses RLS from the Phase 0.5 hardening step. These columns inherit the same policy: anon can read public rows, and writes still go through the service-role API.

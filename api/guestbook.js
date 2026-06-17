@@ -24,9 +24,32 @@ function normalizeNumber(raw) {
 function tableMissing(error) {
   return error && (
     error.code === '42P01' ||
-    /relation .*guestbook/i.test(error.message || '') ||
+    /relation .*(guestbook|holder_periods)/i.test(error.message || '') ||
     /Could not find the table/i.test(error.message || '')
   );
+}
+
+function missingGuestbookColumn(error) {
+  return error && /(holder_period_id|status|status_changed_at)/i.test(error.message || '');
+}
+
+async function currentHolderPeriodFor(num) {
+  const { data, error } = await supabase
+    .from('holder_periods')
+    .select('id')
+    .eq('inscription_num', num)
+    .eq('is_current', true)
+    .maybeSingle();
+
+  if (tableMissing(error)) {
+    console.warn('holder_periods table is not installed; guestbook period binding skipped');
+    return null;
+  }
+  if (error) {
+    console.warn('Current holder period lookup failed:', error.message);
+    return null;
+  }
+  return data?.id || null;
 }
 
 async function currentOwnerFor(inscriptionId) {
@@ -62,15 +85,26 @@ module.exports = async (req, res) => {
     const num = normalizeNumber(req.query.num || req.query.number);
     if (num === null) return res.status(400).json({ error: 'Missing or invalid ?num= parameter' });
 
-    const { data, error } = await supabase
+    const currentHolderPeriodId = await currentHolderPeriodFor(num);
+
+    let { data, error } = await supabase
       .from('guestbook')
-      .select('id, inscription_num, parent_id, message, author_wallet, author_number, created_at')
+      .select('id, inscription_num, parent_id, holder_period_id, status, status_changed_at, message, author_wallet, author_number, created_at')
       .eq('inscription_num', num)
       .order('created_at', { ascending: false })
       .limit(50);
 
+    if (missingGuestbookColumn(error)) {
+      ({ data, error } = await supabase
+        .from('guestbook')
+        .select('id, inscription_num, parent_id, message, author_wallet, author_number, created_at')
+        .eq('inscription_num', num)
+        .order('created_at', { ascending: false })
+        .limit(50));
+    }
+
     if (tableMissing(error)) {
-      return res.status(200).json({ inscription_num: num, messages: [], setup_required: true });
+      return res.status(200).json({ inscription_num: num, current_holder_period_id: currentHolderPeriodId, messages: [], current: [], archived: [], setup_required: true });
     }
     if (error) {
       console.error('Guestbook DB error:', error);
@@ -99,12 +133,21 @@ module.exports = async (req, res) => {
       }
     }
 
+    const enrichedMessages = messages.map((message) => ({
+      ...message,
+      holder_period_id: message.holder_period_id || null,
+      status: message.status || 'active',
+      status_changed_at: message.status_changed_at || null,
+      is_current_period: currentHolderPeriodId ? Number(message.holder_period_id) === Number(currentHolderPeriodId) : true,
+      author_inscription_id: authorInscriptions.get(Number(message.author_number)) || null
+    }));
+
     return res.status(200).json({
       inscription_num: num,
-      messages: messages.map((message) => ({
-        ...message,
-        author_inscription_id: authorInscriptions.get(Number(message.author_number)) || null
-      }))
+      current_holder_period_id: currentHolderPeriodId,
+      messages: enrichedMessages,
+      current: enrichedMessages.filter((message) => message.is_current_period),
+      archived: enrichedMessages.filter((message) => !message.is_current_period)
     });
   }
 
@@ -199,6 +242,8 @@ module.exports = async (req, res) => {
     return res.status(403).json({ error: 'Your OpenNum ID is dormant after an on-chain transfer. Claim an active ID before posting.' });
   }
 
+  const targetHolderPeriodId = await currentHolderPeriodFor(num);
+
   if (parent_id) {
     const { data: parentMsg, error: parentError } = await supabase
       .from('guestbook')
@@ -217,19 +262,33 @@ module.exports = async (req, res) => {
     }
   }
 
-  const { data, error } = await supabase
+  const insertPayload = {
+    inscription_num: num,
+    parent_id: parent_id || null,
+    holder_period_id: targetHolderPeriodId,
+    status: 'active',
+    message: cleanMessage,
+    author_wallet,
+    author_number: authorNumber,
+    signature,
+    signed_message: signedMessage
+  };
+
+  let { data, error } = await supabase
     .from('guestbook')
-    .insert({
-      inscription_num: num,
-      parent_id: parent_id || null,
-      message: cleanMessage,
-      author_wallet,
-      author_number: authorNumber,
-      signature,
-      signed_message: signedMessage
-    })
-    .select('id, inscription_num, parent_id, message, author_wallet, author_number, created_at')
+    .insert(insertPayload)
+    .select('id, inscription_num, parent_id, holder_period_id, status, status_changed_at, message, author_wallet, author_number, created_at')
     .single();
+
+  if (missingGuestbookColumn(error)) {
+    delete insertPayload.holder_period_id;
+    delete insertPayload.status;
+    ({ data, error } = await supabase
+      .from('guestbook')
+      .insert(insertPayload)
+      .select('id, inscription_num, parent_id, message, author_wallet, author_number, created_at')
+      .single());
+  }
 
   if (tableMissing(error)) {
     return res.status(503).json({ error: 'Guestbook table is not installed yet. Run the Supabase migration in docs/database.md.' });
@@ -239,5 +298,13 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Database error' });
   }
 
-  return res.status(200).json({ success: true, message: data });
+  return res.status(200).json({
+    success: true,
+    message: {
+      ...data,
+      holder_period_id: data.holder_period_id || null,
+      status: data.status || 'active',
+      status_changed_at: data.status_changed_at || null
+    }
+  });
 };

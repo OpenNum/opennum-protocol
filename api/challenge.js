@@ -17,6 +17,9 @@ const ACTIONS = new Set([
   'update',
   'unbind',
   'guestbook',
+  'message',
+  'message_withdraw',
+  'message_hide',
   'claim',
   'offer'
 ]);
