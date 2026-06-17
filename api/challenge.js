@@ -20,6 +20,16 @@ const ACTIONS = new Set([
   'message',
   'message_withdraw',
   'message_hide',
+  'follow',
+  'unfollow',
+  'watch',
+  'unwatch',
+  'watchlist_add',
+  'watchlist_remove',
+  'watchlist_list',
+  'block',
+  'unblock',
+  'report',
   'claim',
   'offer'
 ]);

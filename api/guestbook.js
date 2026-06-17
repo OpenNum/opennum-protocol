@@ -24,7 +24,7 @@ function normalizeNumber(raw) {
 function tableMissing(error) {
   return error && (
     error.code === '42P01' ||
-    /relation .*(guestbook|holder_periods)/i.test(error.message || '') ||
+    /relation .*(guestbook|holder_periods|blocks)/i.test(error.message || '') ||
     /Could not find the table/i.test(error.message || '')
   );
 }
@@ -50,6 +50,25 @@ async function currentHolderPeriodFor(num) {
     return null;
   }
   return data?.id || null;
+}
+
+async function isBlockedByProfile(profileNum, authorNum) {
+  const { data, error } = await supabase
+    .from('blocks')
+    .select('id')
+    .eq('blocker_num', profileNum)
+    .eq('blocked_num', authorNum)
+    .limit(1);
+
+  if (tableMissing(error)) {
+    console.warn('blocks table is not installed; guestbook block check skipped');
+    return false;
+  }
+  if (error) {
+    console.warn('Guestbook block check failed:', error.message);
+    return false;
+  }
+  return !!(data && data.length);
 }
 
 async function currentOwnerFor(inscriptionId) {
@@ -240,6 +259,9 @@ module.exports = async (req, res) => {
   }
   if (await isRegistrationDormant(author)) {
     return res.status(403).json({ error: 'Your OpenNum ID is dormant after an on-chain transfer. Claim an active ID before posting.' });
+  }
+  if (await isBlockedByProfile(num, Number(authorNumber))) {
+    return res.status(403).json({ error: 'You have been blocked by this profile.' });
   }
 
   const targetHolderPeriodId = await currentHolderPeriodFor(num);
