@@ -825,6 +825,41 @@ async function handleInbox(req, res, body) {
   });
 }
 
+async function handleFollowsList(req, res) {
+  const num = normalizeNumber(req.query.num || req.query.number);
+  if (num === null) return res.status(400).json({ error: 'Missing or invalid ?num= parameter' });
+  const type = cleanAction(req.query.type) === 'followers' ? 'followers' : 'following';
+  const filterCol = type === 'followers' ? 'target_num' : 'follower_num';
+  const otherCol = type === 'followers' ? 'follower_num' : 'target_num';
+
+  const { data, error } = await supabase
+    .from('follows')
+    .select(`${otherCol}`)
+    .eq(filterCol, num)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(200);
+
+  if (missingRelationshipTable(error)) return res.status(200).json({ success: true, num, type, items: [] });
+  if (error) {
+    console.error('Social follows list error:', error);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  const nums = [...new Set((data || []).map((r) => Number(r[otherCol])).filter(Number.isInteger))];
+  let names = new Map();
+  if (nums.length) {
+    const { data: regs } = await supabase
+      .from('registrations')
+      .select('inscription_num, display_name')
+      .in('inscription_num', nums)
+      .eq('status', 'active');
+    names = new Map((regs || []).map((r) => [Number(r.inscription_num), r.display_name]));
+  }
+  const items = nums.map((n) => ({ num: n, display_name: names.get(n) || null }));
+  return res.status(200).json({ success: true, num, type, items });
+}
+
 module.exports = async (req, res) => {
   setCors(req, res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -832,6 +867,7 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=60');
     const view = cleanAction(req.query.view);
     if (view === 'feed') return handleFeed(req, res);
+    if (view === 'follows') return handleFollowsList(req, res);
     return res.status(400).json({ error: 'Unknown social view' });
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

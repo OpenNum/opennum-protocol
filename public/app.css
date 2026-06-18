@@ -254,6 +254,14 @@ img { max-width: 100%; }
 .profile-counts strong { color: var(--ink); font-weight: 820; }
 .trait-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .trait-pill { display: inline-flex; align-items: center; padding: 4px 11px; border: 1px solid var(--gold); border-radius: 20px; background: #fffaf0; color: var(--gold-deep); font-size: 12px; font-weight: 780; }
+.count-link { border: 0; background: transparent; padding: 0; cursor: pointer; color: var(--muted); font-size: 14px; }
+.count-link:hover { color: var(--ink); }
+.count-link strong { color: var(--ink); font-weight: 820; }
+.follow-list { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--wash); max-width: 360px; }
+.follow-list-title { font-size: 12px; font-weight: 820; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px 8px; }
+.follow-list-row { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 7px; color: var(--ink); font-size: 14px; text-decoration: none; }
+.follow-list-row:hover { background: white; }
+.follow-list-row span { color: var(--muted); }
 .conversation { margin-top: 76px; padding-top: 34px; border-top: 1px solid var(--line); }
 .conversation-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .conversation-head h2 { font-size: 34px; line-height: 1.1; font-weight: 840; letter-spacing: 0; }

@@ -70,9 +70,10 @@
           </div>
           <div class="number" id="profileNum"></div>
           <div class="profile-counts" id="profileCounts" style="display:none">
-            <span><strong id="followersCount">0</strong> followers</span>
-            <span><strong id="followingCount">0</strong> following</span>
+            <button type="button" class="count-link" onclick="showFollowList('followers')"><strong id="followersCount">0</strong> followers</button>
+            <button type="button" class="count-link" onclick="showFollowList('following')"><strong id="followingCount">0</strong> following</button>
           </div>
+          <div class="follow-list" id="followList" style="display:none"></div>
           <div class="trait-badges" id="traitBadges" style="display:none"></div>
           <h1 class="profile-display-name" id="profileName" style="display:none"></h1>
           <p class="profile-bio" id="profileBio" style="display:none"></p>
@@ -221,6 +222,7 @@
     let viewerNum = null;
     let viewerWallet = null;
     let isFollowing = false;
+    let isProfileOwner = false;
 
     (async () => {
       const match = window.location.pathname.match(/\/n\/(\d+)/);
@@ -358,6 +360,8 @@
       renderCounts(data.followers, data.following);
       if (!dormant) {
         checkOwnership(data.wallet);
+        isProfileOwner = !!(viewerWallet && viewerWallet === data.wallet);
+        if (isProfileOwner) document.getElementById('satflowLink').style.display = 'none';
         isFollowing = !!data.viewer_follows;
         setupFollowButton();
       }
@@ -468,6 +472,33 @@
         setAlert('followError', e?.message || 'Could not update follow.');
       } finally {
         btn.disabled = false;
+      }
+    }
+
+    async function showFollowList(type) {
+      const box = document.getElementById('followList');
+      if (box.dataset.open === type && box.style.display !== 'none') {
+        box.style.display = 'none';
+        box.dataset.open = '';
+        return;
+      }
+      box.dataset.open = type;
+      box.style.display = 'block';
+      box.innerHTML = '<div class="empty">Loading…</div>';
+      const title = type === 'followers' ? 'Followers' : 'Following';
+      try {
+        const res = await fetch(`/api/social?view=follows&num=${currentNumber}&type=${type}`);
+        const data = await res.json();
+        const items = data.items || [];
+        if (!items.length) {
+          box.innerHTML = `<div class="follow-list-title">${title}</div><div class="empty">${type === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}</div>`;
+          return;
+        }
+        box.innerHTML = `<div class="follow-list-title">${title}</div>` + items.map((it) =>
+          `<a class="follow-list-row" href="/n/${it.num}"><strong>#${it.num}</strong>${it.display_name ? ` <span>${escapeHtml(it.display_name)}</span>` : ''}</a>`
+        ).join('');
+      } catch (_) {
+        box.innerHTML = '<div class="empty">Could not load list.</div>';
       }
     }
 
