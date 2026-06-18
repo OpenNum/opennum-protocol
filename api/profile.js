@@ -59,6 +59,19 @@ async function loadSocialCounts(num) {
   };
 }
 
+async function viewerFollows(viewerNum, targetNum) {
+  if (!Number.isInteger(viewerNum)) return false;
+  const { data, error } = await supabase
+    .from('follows')
+    .select('id')
+    .eq('follower_num', viewerNum)
+    .eq('target_num', targetNum)
+    .eq('status', 'active')
+    .limit(1);
+  if (error) return false;
+  return !!(data && data.length);
+}
+
 async function fetchInscription(inscriptionId) {
   const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
     headers: {
@@ -83,6 +96,8 @@ module.exports = async (req, res) => {
   if (isNaN(num)) return res.status(400).json({ error: 'Invalid inscription number' });
   const traits = computeNumberTraits(num);
   const socialCounts = await loadSocialCounts(num);
+  const viewerNum = parseInt(String(req.query.viewer || '').replace(/^#/, ''), 10);
+  const viewerFollowsTarget = Number.isInteger(viewerNum) ? await viewerFollows(viewerNum, num) : false;
 
   const { data, error } = await supabase
     .from('registrations')
@@ -167,6 +182,7 @@ module.exports = async (req, res) => {
     followers: socialCounts.followers,
     following: socialCounts.following,
     social_counts: socialCounts,
+    viewer_follows: viewerFollowsTarget,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     owner_checked_at: ownership.ownerCheckedAt,

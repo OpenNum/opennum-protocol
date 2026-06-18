@@ -66,10 +66,17 @@
           <div class="identity-topline">
             <div class="status" id="profileStatus">Active</div>
             <button class="quiet-button" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit profile</button>
+            <button class="quiet-button follow-btn" id="followBtn" style="display:none" onclick="toggleFollow()">Follow</button>
           </div>
           <div class="number" id="profileNum"></div>
+          <div class="profile-counts" id="profileCounts" style="display:none">
+            <span><strong id="followersCount">0</strong> followers</span>
+            <span><strong id="followingCount">0</strong> following</span>
+          </div>
+          <div class="trait-badges" id="traitBadges" style="display:none"></div>
           <h1 class="profile-display-name" id="profileName" style="display:none"></h1>
           <p class="profile-bio" id="profileBio" style="display:none"></p>
+          <div class="alert alert-error" id="followError" style="margin-top:10px"></div>
 
           <div class="claim-note" id="claimNote" style="display:none"></div>
           <div class="sale-note" id="saleNote" style="display:none"></div>
@@ -219,7 +226,9 @@
       currentNumber = num;
       document.title = `#${num} — OpenNum`;
       try {
-        const res = await fetch(`/api/profile?num=${num}`);
+        const viewer = await getViewer();
+        const viewerParam = viewer ? `&viewer=${viewer.num}` : '';
+        const res = await fetch(`/api/profile?num=${num}${viewerParam}`);
         const data = await res.json();
         if (res.status === 404 || !res.ok) return showNotFound(num);
         renderProfile(num, data);
@@ -341,7 +350,125 @@
 
       renderSocialLinks(data.links || {});
       renderCollections(data.collections || []);
-      if (!dormant) checkOwnership(data.wallet);
+      renderTraits(data.traits || {});
+      renderCounts(data.followers, data.following);
+      if (!dormant) {
+        checkOwnership(data.wallet);
+        isFollowing = !!data.viewer_follows;
+        setupFollowButton();
+      }
+    }
+
+    const TRAIT_DEFS = [
+      { key: 'is_sub_100', label: 'Sub 100' },
+      { key: 'is_sub_1k', label: 'Sub 1K' },
+      { key: 'is_sub_10k', label: 'Sub 10K' },
+      { key: 'is_palindrome', label: 'Palindrome' },
+      { key: 'is_repdigit', label: 'Repeating digits' },
+      { key: 'is_year', label: 'Year number' }
+    ];
+
+    function renderTraits(traits) {
+      // Show the most specific sub-tier only (sub_100 > sub_1k > sub_10k)
+      const shown = [];
+      if (traits.is_sub_100) shown.push('Sub 100');
+      else if (traits.is_sub_1k) shown.push('Sub 1K');
+      else if (traits.is_sub_10k) shown.push('Sub 10K');
+      if (traits.is_palindrome) shown.push('Palindrome');
+      if (traits.is_repdigit) shown.push('Repeating digits');
+      if (traits.is_year) shown.push('Year number');
+      const box = document.getElementById('traitBadges');
+      if (!shown.length) { box.style.display = 'none'; return; }
+      box.style.display = 'flex';
+      box.innerHTML = shown.map((t) => `<span class="trait-pill">${t}</span>`).join('');
+    }
+
+    function renderCounts(followers, following) {
+      if (followers === undefined && following === undefined) return;
+      document.getElementById('followersCount').textContent = followers || 0;
+      document.getElementById('followingCount').textContent = following || 0;
+      document.getElementById('profileCounts').style.display = 'flex';
+    }
+
+    // ---- Viewer context + signed social action foundation ----
+    let viewerNum = null;
+    let viewerWallet = null;
+    let isFollowing = false;
+
+    async function getViewer() {
+      if (viewerNum !== null) return { num: viewerNum, wallet: viewerWallet };
+      if (!window.unisat) return null;
+      try {
+        const accounts = await window.unisat.getAccounts();
+        if (!accounts || !accounts[0]) return null;
+        viewerWallet = accounts[0];
+        const res = await fetch(`/api/wallet?wallet=${viewerWallet}`);
+        const data = await res.json();
+        if (data.has_active_id && data.registration) {
+          viewerNum = data.registration.inscription_num;
+          return { num: viewerNum, wallet: viewerWallet };
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    // Fetch nonce, sign opennum:<action>:<actor>:<target>:<ts>:<nonce>, POST /api/social
+    async function signedSocialAction(action, target, extra = {}) {
+      if (!window.unisat) throw new Error('Unisat Wallet is required.');
+      const accounts = await window.unisat.requestAccounts();
+      const wallet = accounts[0];
+      const wres = await fetch(`/api/wallet?wallet=${wallet}`);
+      const wdata = await wres.json();
+      if (!wdata.has_active_id || !wdata.registration) throw new Error('You need an active OpenNum to do this.');
+      const actorNum = wdata.registration.inscription_num;
+      viewerNum = actorNum; viewerWallet = wallet;
+
+      const cres = await fetch('/api/challenge', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet, action })
+      });
+      const cdata = await cres.json();
+      if (!cres.ok) throw new Error(cdata.error || 'Could not start the signing challenge.');
+
+      const ts = Math.floor(Date.now() / 1000);
+      const message = `opennum:${action}:${actorNum}:${target ?? ''}:${ts}:${cdata.nonce}`;
+      const signature = await window.unisat.signMessage(message, 'ecdsa');
+
+      const res = await fetch('/api/social', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, actor_num: actorNum, wallet, signature, ts, nonce: cdata.nonce, ...extra })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Action failed.');
+      return { ...data, actorNum };
+    }
+
+    async function setupFollowButton() {
+      const viewer = await getViewer();
+      if (!viewer || viewer.num === currentNumber) return; // not connected, or own profile
+      const btn = document.getElementById('followBtn');
+      btn.style.display = '';
+      btn.textContent = isFollowing ? 'Following' : 'Follow';
+    }
+
+    async function toggleFollow() {
+      setAlert('followError', '');
+      const btn = document.getElementById('followBtn');
+      const goingToFollow = !isFollowing;
+      btn.disabled = true;
+      try {
+        await signedSocialAction(goingToFollow ? 'follow' : 'unfollow', currentNumber, { target_num: currentNumber });
+        isFollowing = goingToFollow;
+        btn.textContent = isFollowing ? 'Following' : 'Follow';
+        // optimistic count update
+        const el = document.getElementById('followersCount');
+        const n = parseInt(el.textContent, 10) || 0;
+        el.textContent = Math.max(0, n + (isFollowing ? 1 : -1));
+      } catch (e) {
+        setAlert('followError', e?.message || 'Could not update follow.');
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function renderCollections(collections) {
