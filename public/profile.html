@@ -34,7 +34,7 @@
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/my">My OpenNum</a>
+        <a href="/my" id="myOpenNumNav">My OpenNum</a>
       </div>
     </nav>
   </header>
@@ -218,6 +218,9 @@
     let currentProfile = null;
     let currentNumber = null;
     let replyParentId = null;
+    let viewerNum = null;
+    let viewerWallet = null;
+    let isFollowing = false;
 
     (async () => {
       const match = window.location.pathname.match(/\/n\/(\d+)/);
@@ -227,6 +230,7 @@
       document.title = `#${num} — OpenNum`;
       try {
         const viewer = await getViewer();
+        if (viewer && viewer.num) document.getElementById('myOpenNumNav').textContent = `My OpenNum #${viewer.num}`;
         const viewerParam = viewer ? `&viewer=${viewer.num}` : '';
         const res = await fetch(`/api/profile?num=${num}${viewerParam}`);
         const data = await res.json();
@@ -391,10 +395,6 @@
     }
 
     // ---- Viewer context + signed social action foundation ----
-    let viewerNum = null;
-    let viewerWallet = null;
-    let isFollowing = false;
-
     async function getViewer() {
       if (viewerNum !== null) return { num: viewerNum, wallet: viewerWallet };
       if (!window.unisat) return null;
