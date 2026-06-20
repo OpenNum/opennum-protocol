@@ -88,7 +88,7 @@
 
           <div class="primary-actions" id="send">
             <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC</button>
-            <a class="btn" href="#messages">Message</a>
+            <a class="btn" id="messageJumpBtn" href="#messages">Message</a>
             <a class="btn" id="claimBtn" href="/register" style="display:none">Claim this OpenNum</a>
           </div>
 
@@ -361,7 +361,11 @@
       if (!dormant) {
         checkOwnership(data.wallet);
         isProfileOwner = !!(viewerWallet && viewerWallet === data.wallet);
-        if (isProfileOwner) document.getElementById('satflowLink').style.display = 'none';
+        if (isProfileOwner) {
+          document.getElementById('satflowLink').style.display = 'none';
+          document.getElementById('sendButton').style.display = 'none';
+          document.getElementById('messageJumpBtn').style.display = 'none';
+        }
         isFollowing = !!data.viewer_follows;
         setupFollowButton();
       }
@@ -464,15 +468,20 @@
         await signedSocialAction(goingToFollow ? 'follow' : 'unfollow', currentNumber, { target_num: currentNumber });
         isFollowing = goingToFollow;
         btn.textContent = isFollowing ? 'Following' : 'Follow';
-        // optimistic count update
-        const el = document.getElementById('followersCount');
-        const n = parseInt(el.textContent, 10) || 0;
-        el.textContent = Math.max(0, n + (isFollowing ? 1 : -1));
+        await refreshFollowCounts();
       } catch (e) {
         setAlert('followError', e?.message || 'Could not update follow.');
       } finally {
         btn.disabled = false;
       }
+    }
+
+    async function refreshFollowCounts() {
+      try {
+        const res = await fetch(`/api/profile?num=${currentNumber}`);
+        const data = await res.json();
+        renderCounts(data.followers, data.following);
+      } catch (_) {}
     }
 
     async function showFollowList(type) {
@@ -728,6 +737,15 @@
     }
 
     function renderMessage(m, isReply) {
+      const status = m.status || 'active';
+      if (status !== 'active') {
+        const label = status === 'withdrawn_by_author' ? 'Message withdrawn by author'
+          : status === 'hidden_by_profile_owner' ? 'Message hidden by profile owner'
+          : 'Message removed';
+        return `<article class="message ${isReply ? 'reply' : ''} message-removed">
+          <div class="message-content"><div class="message-body muted">${label}</div></div>
+        </article>`;
+      }
       const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
       const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       const avatar = m.author_inscription_id

@@ -383,7 +383,7 @@ async function handleFollow(req, res, body) {
     });
   }
 
-  return res.status(200).json({ success: true, follow: result.data });
+  return res.status(200).json({ success: true, duplicate: !!result.duplicate, follow: result.data });
 }
 
 async function handleUnfollow(req, res, body) {
@@ -407,7 +407,7 @@ async function handleUnfollow(req, res, body) {
     console.error('Social unfollow error:', error);
     return res.status(500).json({ error: 'Database error' });
   }
-  return res.status(200).json({ success: true, updated: data?.length || 0 });
+  return res.status(200).json({ success: true, changed: !!(data && data.length), updated: data?.length || 0, unfollow: data?.[0] || null });
 }
 
 async function handleWatch(req, res, body) {
