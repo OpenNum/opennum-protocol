@@ -34,7 +34,7 @@
       <div class="nav-links" id="navLinks">
         <a href="/">Search</a>
         <a href="/register">Register</a>
-        <a href="/my" id="myOpenNumNav">My OpenNum</a>
+        <a href="/my" id="myOpenNumNav" onclick="return onMyOpenNumClick(event)">My OpenNum</a>
       </div>
     </nav>
   </header>
@@ -178,7 +178,7 @@
             <div class="composer-actions">
               <span>280 characters · public and permanent</span>
               <div>
-                <button class="quiet-button" onclick="clearReply()">Cancel reply</button>
+                <button class="quiet-button" id="cancelReplyBtn" style="display:none" onclick="clearReply()">Cancel reply</button>
                 <button class="btn btn-primary btn-small" id="messagePostBtn" onclick="signGuestbookMessage()">Sign &amp; Post</button>
               </div>
             </div>
@@ -232,12 +232,11 @@
       document.title = `#${num} — OpenNum`;
       try {
         const viewer = await getViewer();
-        if (viewer && viewer.num) document.getElementById('myOpenNumNav').textContent = `My OpenNum #${viewer.num}`;
         const viewerParam = viewer ? `&viewer=${viewer.num}` : '';
         const res = await fetch(`/api/profile?num=${num}${viewerParam}`);
         const data = await res.json();
         if (res.status === 404 || !res.ok) return showNotFound(num);
-        renderProfile(num, data);
+        await renderProfile(num, data);
         loadGuestbook();
         const hash = window.location.hash;
         if (hash === '#send') {
@@ -277,7 +276,7 @@
       } catch (_) {}
     }
 
-    function renderProfile(num, data) {
+    async function renderProfile(num, data) {
       currentProfile = data;
       const dormant = data.status === 'dormant' || data.claim_required;
       const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
@@ -344,7 +343,7 @@
 
       if (!dormant && data.for_sale) {
         document.getElementById('saleNote').style.display = 'block';
-        document.getElementById('saleNote').textContent = data.ask_note || 'This owner has marked the number open to offers.';
+        document.getElementById('saleNote').innerHTML = `<span class="sale-note-label">For sale</span>${escapeHtml(data.ask_note || 'This owner has marked the number open to offers.')}`;
       }
 
       const m = data.metadata;
@@ -360,14 +359,13 @@
       renderCounts(data.followers, data.following);
       if (!dormant) {
         checkOwnership(data.wallet);
-        isProfileOwner = !!(viewerWallet && viewerWallet === data.wallet);
-        if (isProfileOwner) {
-          document.getElementById('satflowLink').style.display = 'none';
-          document.getElementById('sendButton').style.display = 'none';
-          document.getElementById('messageJumpBtn').style.display = 'none';
-        }
-        isFollowing = !!data.viewer_follows;
-        setupFollowButton();
+        isFollowing = !!data.viewer_follows;   // initial value (valid when IIFE passed a viewer param)
+        // Show Follow as a call-to-action for everyone (even before connecting a wallet).
+        // applyViewerContext() then corrects the state and hides it on your own profile.
+        const fb = document.getElementById('followBtn');
+        fb.style.display = '';
+        fb.textContent = isFollowing ? 'Following' : 'Follow';
+        await applyViewerContext();             // authoritative: nav number + own-profile hide + real follow state
       }
     }
 
@@ -420,6 +418,78 @@
       return null;
     }
 
+    // Single source of truth for all wallet-dependent UI. Safe to call repeatedly.
+    async function applyViewerContext() {
+      const viewer = await getViewer();        // passive; returns null when not connected (e.g. incognito)
+      if (!viewer || !viewer.num) return false;
+
+      // a. nav shows your number and points to your profile
+      const nav = document.getElementById('myOpenNumNav');
+      if (nav) {
+        nav.textContent = `My OpenNum #${viewer.num}`;
+        nav.setAttribute('href', `/n/${viewer.num}`);
+      }
+
+      // b. own profile: hide actions that make no sense on yourself
+      if (currentProfile) {
+        isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
+        if (isProfileOwner) {
+          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+          });
+        }
+      }
+
+      // c. real follow state (only on someone else's profile)
+      if (viewer.num !== currentNumber && !isProfileOwner) {
+        let following = isFollowing;
+        try {
+          const res = await fetch(`/api/profile?num=${currentNumber}&viewer=${viewer.num}`);
+          const data = await res.json();
+          following = !!data.viewer_follows;
+        } catch (_) { /* keep current state if lookup fails */ }
+        isFollowing = following;
+        const btn = document.getElementById('followBtn');
+        if (btn) {
+          btn.style.display = '';
+          btn.textContent = isFollowing ? 'Following' : 'Follow';
+        }
+      }
+      return true;
+    }
+
+    // Nav number only — safe to call after a follow/unfollow without clobbering local follow state
+    async function updateNavNumber() {
+      const viewer = await getViewer();
+      if (!viewer || !viewer.num) return;
+      const nav = document.getElementById('myOpenNumNav');
+      if (nav) {
+        nav.textContent = `My OpenNum #${viewer.num}`;
+        nav.setAttribute('href', `/n/${viewer.num}`);
+      }
+    }
+
+    async function connectWallet() {
+      if (!window.unisat) { window.location.href = '/my'; return; } // no extension -> /my has install guidance
+      try {
+        await window.unisat.requestAccounts();   // triggers the authorization popup
+        viewerNum = null; viewerWallet = null;   // clear cache so getViewer re-reads
+        await applyViewerContext();
+      } catch (_) { /* user cancelled */ }
+    }
+
+    // nav "My OpenNum": when we don't know your number yet, click connects instead of navigating away
+    async function onMyOpenNumClick(e) {
+      if (viewerNum) return true;   // known -> follow href to /n/<num>
+      e.preventDefault();
+      await connectWallet();
+      return false;
+    }
+
+    // Passive auto-detect once the page (and the wallet extension) is ready
+    window.addEventListener('load', () => { applyViewerContext(); });
+
     // Fetch nonce, sign opennum:<action>:<actor>:<target>:<ts>:<nonce>, POST /api/social
     async function signedSocialAction(action, target, extra = {}) {
       if (!window.unisat) throw new Error('Unisat Wallet is required.');
@@ -451,14 +521,6 @@
       return { ...data, actorNum };
     }
 
-    async function setupFollowButton() {
-      const viewer = await getViewer();
-      if (!viewer || viewer.num === currentNumber) return; // not connected, or own profile
-      const btn = document.getElementById('followBtn');
-      btn.style.display = '';
-      btn.textContent = isFollowing ? 'Following' : 'Follow';
-    }
-
     async function toggleFollow() {
       setAlert('followError', '');
       const btn = document.getElementById('followBtn');
@@ -469,6 +531,7 @@
         isFollowing = goingToFollow;
         btn.textContent = isFollowing ? 'Following' : 'Follow';
         await refreshFollowCounts();
+        await updateNavNumber();   // first follow in incognito connects the wallet -> fill nav number (do NOT re-derive follow state here)
       } catch (e) {
         setAlert('followError', e?.message || 'Could not update follow.');
       } finally {
@@ -743,7 +806,8 @@
           : status === 'hidden_by_profile_owner' ? 'Message hidden by profile owner'
           : 'Message removed';
         return `<article class="message ${isReply ? 'reply' : ''} message-removed">
-          <div class="message-content"><div class="message-body muted">${label}</div></div>
+          <span class="message-avatar" aria-hidden="true"></span>
+          <div class="message-content"><div class="message-body" style="color:var(--soft-ink);font-style:italic">${label}</div></div>
         </article>`;
       }
       const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
@@ -769,12 +833,14 @@
       const box = document.getElementById('replyContext');
       box.textContent = `Replying to ${author}`;
       box.style.display = 'block';
+      document.getElementById('cancelReplyBtn').style.display = '';
       document.getElementById('guestbookMessage').focus();
     }
 
     function clearReply() {
       replyParentId = null;
       document.getElementById('replyContext').style.display = 'none';
+      document.getElementById('cancelReplyBtn').style.display = 'none';
     }
 
     async function signGuestbookMessage() {
