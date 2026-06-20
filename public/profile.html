@@ -123,8 +123,8 @@
               <textarea class="textarea" id="editBio" maxlength="200" rows="2" placeholder="Short bio..."></textarea>
             </div>
             <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">X / Twitter URL</label>
-              <input class="input" id="editX" type="url" placeholder="https://x.com/yourhandle" />
+              <label class="data-key" style="display:block;margin-bottom:4px">X / Twitter</label>
+              <input class="input" id="editX" type="text" placeholder="@yourhandle or https://x.com/yourhandle" />
             </div>
             <div>
               <label class="data-key" style="display:block;margin-bottom:4px">Instagram URL</label>
@@ -625,13 +625,25 @@
       } catch (_) { return url.slice(0, 28); }
     }
 
+    function normalizeSocialInput(value, key) {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      if (/^https?:\/\//i.test(raw)) return raw;
+      const handle = raw.replace(/^@+/, '');
+      if (key === 'x') return `https://x.com/${handle}`;
+      if (key === 'instagram') return `https://instagram.com/${handle}`;
+      if (key === 'telegram') return `https://t.me/${handle}`;
+      return `https://${raw}`;
+    }
+
     function renderSocialLinks(links) {
       const rows = SOCIAL_DEFS
-        .filter(d => links[d.key])
+        .map(d => ({ ...d, url: d.key === 'x' ? (links.x || links.twitter) : links[d.key] }))
+        .filter(d => d.url)
         .map(d => {
-          const handle = parseHandle(links[d.key], d.key);
+          const handle = parseHandle(d.url, d.key);
           const iconBg = d.bg.startsWith('linear') ? `background:${d.bg}` : `background:${d.bg}`;
-          return `<a class="social-row" href="${escapeHtml(links[d.key])}" target="_blank" rel="noopener noreferrer">
+          return `<a class="social-row" href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer">
             <span class="social-icon-wrap" style="${iconBg};color:${d.color}">${d.icon}</span>
             <span class="social-platform">${d.label}</span>
             <span class="social-handle">${escapeHtml(handle)}</span>
@@ -684,7 +696,7 @@
           document.getElementById('editName').value = currentProfile.display_name || '';
           document.getElementById('editBio').value = currentProfile.bio || '';
           const links = currentProfile.links || {};
-          document.getElementById('editX').value = links.x || '';
+          document.getElementById('editX').value = links.x || links.twitter || '';
           document.getElementById('editInstagram').value = links.instagram || '';
           document.getElementById('editTelegram').value = links.telegram || '';
           document.getElementById('editWebsite').value = links.website || '';
@@ -714,10 +726,10 @@
         const ig = document.getElementById('editInstagram').value.trim();
         const tg = document.getElementById('editTelegram').value.trim();
         const ws = document.getElementById('editWebsite').value.trim();
-        if (x) links.x = x;
-        if (ig) links.instagram = ig;
-        if (tg) links.telegram = tg;
-        if (ws) links.website = ws;
+        if (x) links.x = normalizeSocialInput(x, 'x');
+        if (ig) links.instagram = normalizeSocialInput(ig, 'instagram');
+        if (tg) links.telegram = normalizeSocialInput(tg, 'telegram');
+        if (ws) links.website = normalizeSocialInput(ws, 'website');
 
         const res = await fetch('/api/update', {
           method: 'PATCH',
