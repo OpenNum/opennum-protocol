@@ -53,7 +53,7 @@
     <section class="home-hero">
       <div class="shell home-grid">
         <div class="home-copy">
-          <h1>Your inscription number is your Bitcoin identity.</h1>
+          <h1><span>Your inscription</span><span>number is your</span><span>Bitcoin identity.</span></h1>
           <p class="lead">Find a number, see who owns it, leave a signed message, or claim it as yours.</p>
 
           <form class="number-desk" onsubmit="searchNumber(event)">
@@ -63,7 +63,11 @@
               <button class="btn btn-primary" type="submit">Search</button>
             </div>
           </form>
-          <a class="claim-link" href="/register">Claim my number <span aria-hidden="true">→</span></a>
+          <div class="home-actions" aria-label="Primary OpenNum actions">
+            <a href="/register">Register</a>
+            <a href="/market">Buy / offer</a>
+            <a href="/my">Sell</a>
+          </div>
         </div>
 
         <aside class="number-preview" aria-label="Early inscription carousel">
