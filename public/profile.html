@@ -68,6 +68,7 @@
             <div class="status" id="profileStatus">Active</div>
             <button class="quiet-button" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit profile</button>
             <button class="quiet-button follow-btn" id="followBtn" style="display:none" onclick="toggleFollow()">Follow</button>
+            <button class="quiet-button" id="watchlistBtn" style="display:none" onclick="toggleWatchlist()">Save to watchlist</button>
           </div>
           <div class="number" id="profileNum"></div>
           <div class="profile-counts" id="profileCounts" style="display:none">
@@ -226,6 +227,7 @@
     let viewerNum = null;
     let viewerWallet = null;
     let isFollowing = false;
+    let isWatchlisted = false;
     let isProfileOwner = false;
 
     (async () => {
@@ -364,6 +366,7 @@
       if (!dormant) {
         checkOwnership(data.wallet);
         isFollowing = !!data.viewer_follows;   // initial value (valid when IIFE passed a viewer param)
+        isWatchlisted = false;                  // private state is only confirmed from /my; add is idempotent
         // Show Follow as a call-to-action for everyone (even before connecting a wallet).
         // applyViewerContext() then corrects the state and hides it on your own profile.
         const fb = document.getElementById('followBtn');
@@ -438,7 +441,7 @@
       if (currentProfile) {
         isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
         if (isProfileOwner) {
-          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn'].forEach((id) => {
+          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn', 'watchlistBtn'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
@@ -458,6 +461,11 @@
         if (btn) {
           btn.style.display = '';
           btn.textContent = isFollowing ? 'Following' : 'Follow';
+        }
+        const wb = document.getElementById('watchlistBtn');
+        if (wb) {
+          wb.style.display = '';
+          wb.textContent = isWatchlisted ? '✓ Saved' : 'Save to watchlist';
         }
       }
       return true;
@@ -480,6 +488,7 @@
         await window.unisat.requestAccounts();   // triggers the authorization popup
         viewerNum = null; viewerWallet = null;   // clear cache so getViewer re-reads
         await applyViewerContext();
+        loadGuestbook();   // re-render so withdraw/hide buttons reflect the now-known viewer
       } catch (_) { /* user cancelled */ }
     }
 
@@ -549,6 +558,28 @@
         const data = await res.json();
         renderCounts(data.followers, data.following);
       } catch (_) {}
+    }
+
+    async function toggleWatchlist() {
+      setAlert('followError', '');
+      const btn = document.getElementById('watchlistBtn');
+      if (!btn) return;
+      btn.disabled = true;
+      try {
+        if (!isWatchlisted) {
+          await signedSocialAction('watchlist_add', currentNumber, { target_num: currentNumber });
+          isWatchlisted = true;
+        } else {
+          await signedSocialAction('watchlist_remove', currentNumber, { target_num: currentNumber });
+          isWatchlisted = false;
+        }
+        btn.textContent = isWatchlisted ? '✓ Saved' : 'Save to watchlist';
+        await updateNavNumber();
+      } catch (e) {
+        setAlert('followError', e?.message || 'Could not update watchlist.');
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function showFollowList(type) {
@@ -794,28 +825,37 @@
       try {
         const res = await fetch(`/api/guestbook?num=${currentNumber}`);
         const data = await res.json();
-        const messages = data.messages || [];
-        if (!messages.length) {
+        const current = data.current || data.messages || [];
+        const archived = data.archived || [];
+        if (!current.length && !archived.length) {
           list.innerHTML = '<div class="empty">No public messages yet.</div>';
           return;
         }
-        list.innerHTML = renderMessages(messages);
+        let html = current.length ? renderMessages(current, false) : '<div class="empty">No messages for the current holder yet.</div>';
+        if (archived.length) {
+          html += `<details class="archived-thread">
+            <summary>Messages from previous holders (${archived.length})</summary>
+            <p class="archived-note">Left while a previous holder owned this number. Archived and read-only.</p>
+            ${renderMessages(archived, true)}
+          </details>`;
+        }
+        list.innerHTML = html;
       } catch (_) {
         list.innerHTML = '<div class="empty">Guestbook is temporarily unavailable.</div>';
       }
     }
 
-    function renderMessages(messages) {
+    function renderMessages(messages, readOnly) {
       const byParent = new Map();
       messages.forEach((m) => {
         const key = m.parent_id || 'root';
         if (!byParent.has(key)) byParent.set(key, []);
         byParent.get(key).push(m);
       });
-      return (byParent.get('root') || []).map((m) => renderMessage(m, false) + (byParent.get(m.id) || []).map((r) => renderMessage(r, true)).join('')).join('');
+      return (byParent.get('root') || []).map((m) => renderMessage(m, false, readOnly) + (byParent.get(m.id) || []).map((r) => renderMessage(r, true, readOnly)).join('')).join('');
     }
 
-    function renderMessage(m, isReply) {
+    function renderMessage(m, isReply, readOnly) {
       const status = m.status || 'active';
       if (status !== 'active') {
         const label = status === 'withdrawn_by_author' ? 'Message withdrawn by author'
@@ -831,6 +871,16 @@
       const avatar = m.author_inscription_id
         ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
         : (m.author_number ? `#${m.author_number}` : '#');
+      // Action buttons: Reply (roots), Withdraw (author), or Hide (current profile owner, current period)
+      let actions = '';
+      if (!readOnly) {
+        const isAuthor = m.author_number && viewerNum && Number(m.author_number) === Number(viewerNum);
+        const parts = [];
+        if (!isReply) parts.push(`<button class="reply-btn" onclick="setReply('${m.id}', '${escapeAttr(author)}')">Reply</button>`);
+        if (isAuthor) parts.push(`<button class="reply-btn msg-danger" onclick="withdrawMessage('${m.id}')">Withdraw</button>`);
+        else if (isProfileOwner && m.is_current_period) parts.push(`<button class="reply-btn msg-danger" onclick="hideMessage('${m.id}')">Hide</button>`);
+        if (parts.length) actions = `<div class="msg-actions">${parts.join('')}</div>`;
+      }
       return `<article class="message ${isReply ? 'reply' : ''}">
         <a class="message-avatar" ${m.author_number ? `href="/n/${m.author_number}"` : ''}>${avatar}</a>
         <div class="message-content">
@@ -839,9 +889,35 @@
             <span>${date}</span>
           </div>
           <div class="message-body">${escapeHtml(m.message)}</div>
-          ${isReply ? '' : `<button class="reply-btn" onclick="setReply('${m.id}', '${escapeAttr(author)}')">Reply</button>`}
+          ${actions}
         </div>
       </article>`;
+    }
+
+    async function withdrawMessage(id) {
+      if (!window.confirm('Withdraw this message? It will no longer be visible to anyone.')) return;
+      setAlert('guestbookError', '');
+      setAlert('guestbookSuccess', '');
+      try {
+        await signedSocialAction('message_withdraw', id, { message_id: id });
+        setAlert('guestbookSuccess', 'Message withdrawn.');
+        loadGuestbook();
+      } catch (e) {
+        setAlert('guestbookError', e?.message || 'Could not withdraw the message.');
+      }
+    }
+
+    async function hideMessage(id) {
+      if (!window.confirm('Hide this message from your profile? It will be shown as hidden.')) return;
+      setAlert('guestbookError', '');
+      setAlert('guestbookSuccess', '');
+      try {
+        await signedSocialAction('message_hide', id, { message_id: id, owner_num: currentNumber });
+        setAlert('guestbookSuccess', 'Message hidden.');
+        loadGuestbook();
+      } catch (e) {
+        setAlert('guestbookError', e?.message || 'Could not hide the message.');
+      }
     }
 
     function setReply(id, author) {

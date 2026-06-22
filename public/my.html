@@ -60,6 +60,12 @@
           <a class="btn" id="tradeLink" href="#" target="_blank" rel="noopener noreferrer" style="min-height:48px;font-size:15px">Trade on Satflow ↗</a>
         </div>
       </div>
+      <div id="watchlistSection" style="max-width:520px;margin:28px auto 0">
+        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Watchlist</div>
+        <div id="watchlistBox">
+          <button class="btn" onclick="viewWatchlist()">View my watchlist</button>
+        </div>
+      </div>
       <p class="small" style="margin-top:16px;text-align:center;color:var(--muted)">
         Selling your inscription will automatically release this OpenNum to the new holder.
       </p>
@@ -91,6 +97,9 @@
   </footer>
 
   <script>
+    let currentWallet = '';
+    let currentActorNum = null;
+
     function toggleNav(btn) {
       const links = document.getElementById('navLinks');
       const open = links.classList.toggle('open');
@@ -113,6 +122,82 @@
       const el = document.getElementById(id);
       el.textContent = msg || '';
       el.classList.toggle('visible', !!msg);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    async function signedSocial(action, target, actorNum, wallet, extra = {}) {
+      const cres = await fetch('/api/challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet, action })
+      });
+      const cdata = await cres.json();
+      if (!cres.ok) throw new Error(cdata.error || 'Could not start signing.');
+      const ts = Math.floor(Date.now() / 1000);
+      const message = `opennum:${action}:${actorNum}:${target ?? ''}:${ts}:${cdata.nonce}`;
+      const signature = await window.unisat.signMessage(message, 'ecdsa');
+      const res = await fetch('/api/social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, actor_num: actorNum, wallet, signature, ts, nonce: cdata.nonce, ...extra })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Action failed.');
+      return data;
+    }
+
+    function renderWatchlistGate() {
+      const box = document.getElementById('watchlistBox');
+      if (!box) return;
+      box.innerHTML = '<button class="btn" onclick="viewWatchlist()">View my watchlist</button>';
+    }
+
+    function viewWatchlist() {
+      if (!currentWallet || currentActorNum === null) return;
+      loadWatchlist(currentWallet, currentActorNum);
+    }
+
+    async function loadWatchlist(wallet, actorNum) {
+      const box = document.getElementById('watchlistBox');
+      if (!box) return;
+      box.innerHTML = '<div class="empty" style="padding:12px 0">Sign to open your private watchlist…</div>';
+      try {
+        const data = await signedSocial('watchlist_list', '', actorNum, wallet);
+        const items = data.items || [];
+        if (!items.length) {
+          box.innerHTML = '<div class="empty" style="padding:12px 0">No saved numbers yet. Open any profile and tap “Save to watchlist”.</div>';
+          return;
+        }
+        box.innerHTML = items.map((it) => `
+          <div class="watch-row">
+            <a class="watch-num" href="/n/${it.target_num}">#${it.target_num}</a>
+            ${it.note ? `<span class="watch-note">${escapeHtml(it.note)}</span>` : '<span class="watch-note"></span>'}
+            <button class="reply-btn msg-danger" onclick="removeWatch(${it.target_num})">Remove</button>
+          </div>
+        `).join('');
+      } catch (e) {
+        box.innerHTML = `<div class="empty" style="padding:12px 0">Could not load watchlist. <button class="reply-btn" onclick="viewWatchlist()">Retry</button></div>`;
+      }
+    }
+
+    async function removeWatch(targetNum) {
+      if (!currentWallet || currentActorNum === null) return;
+      const box = document.getElementById('watchlistBox');
+      try {
+        await signedSocial('watchlist_remove', String(targetNum), currentActorNum, currentWallet, { target_num: targetNum });
+        await loadWatchlist(currentWallet, currentActorNum);
+      } catch (_) {
+        if (box) box.insertAdjacentHTML('afterbegin', '<div class="alert alert-error visible" style="margin-bottom:10px">Could not remove this number.</div>');
+      }
     }
 
     async function connectAndLoad() {
@@ -152,6 +237,9 @@
 
         // Populate "has OpenNum" state
         const num = reg.inscription_num;
+        currentWallet = wallet;
+        currentActorNum = num;
+        renderWatchlistGate();
         const inscId = reg.inscription_id || (reg.inscription_txid ? `${reg.inscription_txid}i0` : '');
         document.getElementById('myNum').textContent = `#${num}`;
         document.getElementById('myStatus').textContent = reg.status === 'dormant' ? 'Dormant' : (reg.for_sale ? 'For sale' : 'Active');

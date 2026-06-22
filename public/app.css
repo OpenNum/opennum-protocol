@@ -412,9 +412,21 @@ img { max-width: 100%; }
 .message-meta { display: flex; justify-content: flex-start; align-items: baseline; gap: 10px; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 .message-meta a, .message-meta > span:first-child { color: var(--ink); font-size: 14px; font-weight: 820; }
 .message-body { color: var(--ink); white-space: pre-wrap; word-break: break-word; }
-.reply-btn { margin-top: 9px; border: 0; background: transparent; color: var(--soft-ink); font-size: 12px; font-weight: 760; cursor: pointer; }
+.reply-btn { margin-top: 9px; border: 0; background: transparent; color: var(--soft-ink); font-size: 12px; font-weight: 760; cursor: pointer; padding: 0; }
 .reply-btn:hover { color: var(--copper); }
+.msg-actions { display: flex; gap: 16px; margin-top: 9px; }
+.msg-actions .reply-btn { margin-top: 0; }
+.reply-btn.msg-danger:hover { color: #c0392b; }
+.archived-thread { margin-top: 14px; border-top: 1px solid var(--line); }
+.archived-thread > summary { cursor: pointer; color: var(--soft-ink); font-size: 13px; font-weight: 760; padding: 14px 0 4px; list-style: none; }
+.archived-thread > summary::-webkit-details-marker { display: none; }
+.archived-thread > summary::before { content: '▸  '; color: var(--muted); }
+.archived-thread[open] > summary::before { content: '▾  '; }
+.archived-note { color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
 .empty { color: var(--soft-ink); padding: 24px 0; border: 0; background: transparent; }
+.watch-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.watch-num { font-weight: 820; color: var(--ink); text-decoration: none; }
+.watch-note { color: var(--soft-ink); font-size: 14px; flex: 1; min-width: 0; }
 
 .market-hero { padding: 70px 0 28px; }
 .search-card { padding: 12px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 24px; }
