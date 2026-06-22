@@ -70,7 +70,8 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Invalid signature. Make sure you are signing with the correct wallet.' });
     }
   } catch (e) {
-    return res.status(400).json({ error: 'Signature verification failed: ' + e.message });
+    console.error('Signature verification error:', e && e.message);
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
   // Confirm this wallet is the current owner of this OpenNum

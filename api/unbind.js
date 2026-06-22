@@ -37,7 +37,8 @@ module.exports = async (req, res) => {
     const valid = Verifier.verifySignature(wallet, message, signature);
     if (!valid) return res.status(400).json({ error: 'Invalid signature' });
   } catch (e) {
-    return res.status(400).json({ error: 'Signature verification failed: ' + e.message });
+    console.error('Signature verification error:', e && e.message);
+    return res.status(400).json({ error: 'Invalid signature' });
   }
 
   const { data: existing, error: selectError } = await supabase

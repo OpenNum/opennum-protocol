@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy — OpenNum</title>
+  <meta name="description" content="OpenNum Privacy. We never see or store your private keys, use cookie-free analytics, and never sell your data." />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/app.css" />
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
+  <style>
+    .legal { max-width: 760px; margin: 0 auto; padding: 56px 0 90px; }
+    .legal h1 { font-size: 34px; color: var(--ink); letter-spacing: -0.01em; }
+    .legal .updated { color: var(--soft-ink); font-size: 14px; margin: 10px 0 36px; }
+    .legal h2 { font-size: 19px; color: var(--ink); margin: 34px 0 8px; }
+    .legal p, .legal li { color: var(--soft-ink); font-size: 16px; line-height: 1.66; }
+    .legal ul { padding-left: 20px; margin: 8px 0; }
+    .legal li { margin: 6px 0; }
+    .legal a { color: var(--gold-deep); }
+    .legal .intro { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav shell" aria-label="Primary">
+      <a class="brand" href="/">
+        <span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span>
+        <span>OpenNum</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Search</a>
+        <a href="/register">Register</a>
+        <a href="/my">My OpenNum</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <article class="legal">
+      <h1>Privacy</h1>
+      <div class="updated">Last updated: 21 June 2026</div>
+
+      <p class="intro">OpenNum is built to be privacy-preserving and non-custodial. We never see or store your private keys, and we never ask for your seed phrase.</p>
+
+      <h2>What we store</h2>
+      <ul>
+        <li><strong>Wallet address</strong> — the public Bitcoin address you connect and sign with. This is already public on the blockchain.</li>
+        <li><strong>Profile data you submit</strong> — display name, bio, links, and for-sale flag/notes. All of this is intended to be public.</li>
+        <li><strong>Public messages</strong> — stored and displayed publicly, and may be permanent.</li>
+        <li><strong>Minimal technical metadata</strong> — used only for security and rate-limiting.</li>
+      </ul>
+      <p>We do <strong>not</strong> collect your name, email, or any off-chain personal identity, and we never request your private keys or seed phrase.</p>
+
+      <h2>Third parties we use</h2>
+      <ul>
+        <li><strong>Unisat (wallet)</strong> — you authorize and sign through your own wallet extension; we only receive your public address and your signatures.</li>
+        <li><strong>Supabase (database hosting)</strong> — stores the public registry, profiles, and messages.</li>
+        <li><strong>Cloudflare Web Analytics</strong> — privacy-first, cookie-free, aggregate traffic statistics. It does not use cookies, does not fingerprint visitors, and collects no personal data — which is why OpenNum shows no cookie banner.</li>
+        <li><strong>ordinals.com / Bitcoin indexers</strong> — queried to verify inscription ownership.</li>
+      </ul>
+
+      <h2>Cookies</h2>
+      <p>OpenNum does not use tracking cookies.</p>
+
+      <h2>Your data is public by design</h2>
+      <p>Because OpenNum is a public identity protocol, the information you publish is visible to anyone and may be cached or indexed elsewhere (search engines, archives, the blockchain). Removing it later may not erase copies that already exist.</p>
+
+      <h2>We don’t sell your data</h2>
+      <p>OpenNum does not sell or rent your data to anyone.</p>
+
+      <h2>Changes</h2>
+      <p>We may update this policy. When we do, the “last updated” date above will change.</p>
+
+      <h2>Contact</h2>
+      <p>Questions? Reach us on X at <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">@OpenNumBTC</a>.</p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <div>OpenNum is non-custodial. Ownership follows the inscription on Bitcoin.</div>
+      <div class="footer-links">
+        <a href="/whitepaper-en">Whitepaper</a>
+        <a href="/faq">FAQ</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+  </script>
+</body>
+</html>

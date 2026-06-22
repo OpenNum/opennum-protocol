@@ -647,7 +647,7 @@
 &nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"H9k2mN...Xp4q"</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// signed by operator wallet</span><br />
 <span class="k">}</span>
   </div>
-  <p>An operator may register multiple agent wallets under a single inscription number, creating a verifiable fleet of agents operating under one accountable identity. Validity rules for agent registrations follow the same principles as standard registrations: the signing wallet must currently hold the claimed inscription.</p>
+  <p>An operator may authorize multiple agent wallets under their single inscription number — the inscription itself stays in the operator's wallet (one number, one owner), while agent wallets are registered beneath it as delegated operators, not owners. This creates a verifiable fleet of agents operating under one accountable identity. Validity rules for agent registrations follow the same principles as standard registrations: the signing wallet must currently hold the claimed inscription.</p>
 
   <h3>9.4 The Human-Agent Trust Bridge</h3>
   <p>This architecture connects two worlds that have previously been disconnected: the human ownership of on-chain assets, and the autonomous activity of AI agents. Practical implications include:</p>
@@ -713,12 +713,12 @@
   
   <!-- 10. EXTENDED WALLET APPLICATIONS -->
   <h2 id="extended">10. Extended Wallet Applications</h2>
-  <p>Beyond the core use cases described in Section 4, OpenNum unlocks a broader set of applications that emerge from the nature of Bitcoin inscription ownership. These scenarios address real problems facing current Bitcoin and Ordinals users — from abandoned assets to identity flexibility to multi-context payments.</p>
+  <p>Beyond the core use cases described in Section 4, OpenNum unlocks a broader set of applications that emerge from the nature of Bitcoin inscription ownership. These scenarios address real problems facing current Bitcoin and Ordinals users — from reviving abandoned assets, to keeping identity clean and uncluttered, to keeping desirable numbers liquid and circulating.</p>
 
   <h3>10.1 Reviving Abandoned Inscriptions</h3>
   <p>Hundreds of millions of inscriptions currently sit dormant in Bitcoin wallets — acquired during the BRC-20 mania of 2023, early Ordinals speculation, or casual minting, and now treated as digital clutter. By many estimates, the majority of Bitcoin inscriptions have never been sold, traded, or used in any meaningful way since creation.</p>
   <p>OpenNum fundamentally reframes the value of any inscription: <strong>what matters is not the inscription's content, but its permanent integer identity.</strong> A "worthless" BRC-20 mint inscription from inscription #8,400,221 carries a globally unique, immutable number — a number that can become its holder's permanent Bitcoin identity. The inscription that was gathering dust becomes a social address, a payment routing number, and a community membership credential simultaneously.</p>
-  <p>This is genuine value creation from existing on-chain assets, requiring no new protocol, no new token, and no additional Bitcoin transactions beyond the OpenNum registration signature.</p>
+  <p>This is genuine value creation from existing on-chain assets, requiring no new protocol, no new token, and no additional Bitcoin transactions beyond the OpenNum registration signature. Crucially, that value is realized through the market, not by self-assignment: a number matters because others may want it, and the more desirable the number, the more it circulates.</p>
 
   <h3>10.2 BRC-20 Tokens as Community Identity</h3>
   <p>BRC-20 tokens — the experimental fungible token standard built on Bitcoin Ordinals — created a unique phenomenon: tens of thousands of inscription holders who share a common ticker symbol, a common aesthetic, and a common financial stake. ORDI holders, SATS holders, MEME holders, and hundreds of other communities already exist in a latent form. What they lack is a shared on-chain identity infrastructure.</p>
@@ -733,18 +733,14 @@
     A BRC-20 token that is worth zero satoshis as a currency is still worth something as a permanent, on-chain identity number. OpenNum is the bridge between worthless tokens and useful identities.
   </div>
 
-  <h3>10.3 Identity on Demand</h3>
-  <p>The cost to create a Bitcoin inscription has fallen dramatically since 2023. At current fee rates, a minimal text inscription can be created for a few dollars or less. This opens a powerful capability: <strong>any user can create a fresh inscription at any time, instantly obtaining a new OpenNum identity number — without changing their existing wallet.</strong></p>
-  <p>Practical scenarios:</p>
-  <ul>
-    <li>A user who already holds inscription #2025 as their primary identity wants a separate identity for a business venture. They inscribe a simple logo or text, receive inscription #29,400,800, and register it as their business OpenNum ID — all from the same wallet.</li>
-    <li>A developer building on OpenNum wants a "testnet identity" for experimentation. They inscribe a throwaway image, obtain a new number, and use it for testing without contaminating their primary identity.</li>
-    <li>A creator wants a project-specific identity for a new NFT drop or community campaign. They inscribe the project's image, register it with OpenNum, and promote the project number as its community handle.</li>
-  </ul>
-  <p>The wallet does not change. The private key does not change. Only the inscription — and therefore the OpenNum number — changes. This gives users full identity flexibility within a single Bitcoin wallet.</p>
+  <h3>10.3 One Flagship Identity Per Wallet</h3>
+  <p>OpenNum binds <strong>one active identity to each wallet</strong>. A wallet may hold hundreds of inscriptions, but only one can be its live OpenNum at a time. This is a deliberate design choice, and it does two things at once.</p>
+  <p><strong>It keeps identity clean.</strong> One wallet presents one number — a single, unambiguous public identity, not a cluttered list of hundreds of inscriptions competing to represent you.</p>
+  <p><strong>It keeps desirable numbers in circulation.</strong> If you hold many good numbers but can only activate one per wallet, the rest don't sit frozen as dead weight. You either spread them across additional wallets (see §10.4) or list them on the market — which is exactly what pushes scarce, desirable numbers toward the people who want them most.</p>
+  <p>This is a nudge, not a cage: anyone can run multiple wallets. But the more valuable an <em>active</em> OpenNum becomes — through its profile, reputation, and social graph — the more an idle number feels like inventory worth selling rather than hoarding. Scarce activation slots, combined with a liquid market, keep the ecosystem moving instead of frozen.</p>
 
-  <h3>10.4 Multi-Number Routing: One Wallet, Multiple Identities</h3>
-  <p>A single Bitcoin wallet can hold multiple inscriptions. OpenNum allows each inscription in a wallet to be registered independently, creating a multi-number system analogous to having multiple phone numbers on a single device. Each number can serve a distinct role:</p>
+  <h3>10.4 Multiple Identities, Cleanly Separated</h3>
+  <p>Because each OpenNum number binds to exactly one active wallet, an operator who wants several identities holds each in its own wallet — analogous to carrying several SIM cards: one person, distinct lines, no cross-contamination. Each number serves a distinct role:</p>
   <table>
     <thead>
       <tr><th>Number</th><th>Role</th><th>Used For</th></tr>
@@ -756,12 +752,12 @@
       <tr><td>#29,400,800</td><td>Ephemeral identity</td><td>One-time transactions, privacy-preserving payments</td></tr>
     </tbody>
   </table>
-  <p>All four numbers resolve to wallets controlled by the same private key. The operator chooses which number to share in any given context. Counterparties paying to different numbers route to different wallets or the same wallet — as the operator configures. This gives users a level of payment routing sophistication previously only available to corporate treasury systems.</p>
+  <p>Each number resolves to its own wallet, all operated by the same person. The operator chooses which number — and which wallet — to share in any given context, and counterparties paying different numbers route to cleanly separated wallets. This gives users a level of identity and payment separation previously only available to corporate treasury systems.</p>
   <p>Privacy applications are also meaningful: a user can share a high-number inscription (which carries less social context and cannot be linked to their primary identity without their disclosure) for transactions where they prefer not to reveal their primary OpenNum number. The numbers are on-chain, but the association between them is private unless the owner chooses to disclose it.</p>
 
   <h3>10.5 The Long Tail of Inscription Value</h3>
-  <p>Taken together, these four scenarios point toward a significant revaluation of the inscription ecosystem. If OpenNum achieves meaningful adoption, every inscription — including the hundreds of millions currently considered worthless — acquires a floor value as a potential identity number. The inscription's content becomes secondary; its permanent integer number is the durable asset.</p>
-  <p>This does not require any change to the Bitcoin protocol, any new token issuance, or any centralized authority to declare which inscriptions have value. Value emerges from adoption of the OpenNum identity layer — a positive-sum outcome for all inscription holders, regardless of when or why they acquired their inscriptions.</p>
+  <p>Taken together, these scenarios point toward a significant revaluation of the inscription ecosystem. If OpenNum achieves meaningful adoption, every inscription becomes <strong>liquid inventory in an identity market</strong> — not because every number is automatically valuable, but because every number is now something another person can want, claim, and trade. Value concentrates on the desirable numbers: low numbers, palindromes, repeating digits, year numbers, and recognized collections.</p>
+  <p>The one-active-per-wallet rule and the social identity layer work together to keep this market moving: scarce activation slots push surplus numbers toward sale, while the rising value of an active identity makes idle numbers worth circulating rather than hoarding. This requires no change to the Bitcoin protocol, no new token issuance, and no centralized authority to declare which inscriptions have value — value emerges from adoption, and from the market that adoption creates.</p>
 
   <!-- 10. CONCLUSION -->
   <h2 id="conclusion">11. Conclusion</h2>

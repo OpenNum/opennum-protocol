@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Use — OpenNum</title>
+  <meta name="description" content="OpenNum Terms of Use. OpenNum is a non-custodial Bitcoin Ordinals identity protocol — it never holds your funds, inscriptions, or keys." />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/app.css" />
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
+  <style>
+    .legal { max-width: 760px; margin: 0 auto; padding: 56px 0 90px; }
+    .legal h1 { font-size: 34px; color: var(--ink); letter-spacing: -0.01em; }
+    .legal .updated { color: var(--soft-ink); font-size: 14px; margin: 10px 0 36px; }
+    .legal h2 { font-size: 19px; color: var(--ink); margin: 34px 0 8px; }
+    .legal p, .legal li { color: var(--soft-ink); font-size: 16px; line-height: 1.66; }
+    .legal ul { padding-left: 20px; margin: 8px 0; }
+    .legal li { margin: 6px 0; }
+    .legal a { color: var(--gold-deep); }
+    .legal .intro { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav shell" aria-label="Primary">
+      <a class="brand" href="/">
+        <span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span>
+        <span>OpenNum</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Search</a>
+        <a href="/register">Register</a>
+        <a href="/my">My OpenNum</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <article class="legal">
+      <h1>Terms of Use</h1>
+      <div class="updated">Last updated: 21 June 2026</div>
+
+      <p class="intro">OpenNum is a non-custodial identity protocol built on Bitcoin Ordinals: an inscription number becomes a public, ownable identity. By using OpenNum you agree to these terms.</p>
+
+      <h2>1. No custody — you control your keys</h2>
+      <p>OpenNum never holds your Bitcoin, your inscriptions, or your private keys. Every action — registering, editing a profile, messaging, following, or sending BTC — is authorized by a signature from your own wallet. OpenNum cannot move, freeze, or recover your assets, and cannot restore access if you lose your wallet.</p>
+
+      <h2>2. Ownership follows the chain</h2>
+      <p>The current on-chain owner of an inscription is the ultimate authority over its OpenNum identity. When an inscription is transferred, the identity becomes dormant until the new owner claims it by signing. OpenNum reads ownership from public Bitcoin indexers and does not guarantee real-time accuracy.</p>
+
+      <h2>3. Public and permanent data</h2>
+      <p>Your display name, bio, links, and public messages are stored publicly and may be permanent. Do not publish anything you are not comfortable making public forever.</p>
+
+      <h2>4. No trading or custody by OpenNum</h2>
+      <p>OpenNum does not buy, sell, escrow, or execute trades. “Make offer” and similar links route to third-party marketplaces (for example, Satflow). Any transaction there is solely between you and that third party, at your own risk.</p>
+
+      <h2>5. Not financial advice</h2>
+      <p>Nothing on OpenNum is investment, legal, or tax advice. Inscription numbers may have no value. You are solely responsible for your own decisions.</p>
+
+      <h2>6. No warranty; limitation of liability</h2>
+      <p>OpenNum is provided “as is,” without warranties of any kind. The service may change, break, or be discontinued at any time. To the maximum extent permitted by law, OpenNum and its operators are not liable for any loss arising from your use of the service.</p>
+
+      <h2>7. Acceptable use</h2>
+      <p>Do not use OpenNum to impersonate others, harass, defraud, or violate any law. We may hide or remove content and restrict access to keep the service safe.</p>
+
+      <h2>8. Governing law</h2>
+      <p>To the extent applicable, these terms are governed by the laws of New South Wales, Australia.</p>
+
+      <h2>9. Contact</h2>
+      <p>Questions? Reach us on X at <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">@OpenNumBTC</a>.</p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <div>OpenNum is non-custodial. Ownership follows the inscription on Bitcoin.</div>
+      <div class="footer-links">
+        <a href="/whitepaper-en">Whitepaper</a>
+        <a href="/faq">FAQ</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ — OpenNum</title>
+  <meta name="description" content="Frequently asked questions about OpenNum — the non-custodial Bitcoin Ordinals identity protocol. How registration, ownership, messaging, and offers work." />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/app.css" />
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
+  <style>
+    .legal { max-width: 760px; margin: 0 auto; padding: 56px 0 90px; }
+    .legal h1 { font-size: 34px; color: var(--ink); letter-spacing: -0.01em; }
+    .legal .updated { color: var(--soft-ink); font-size: 14px; margin: 10px 0 36px; }
+    .legal h2 { font-size: 18px; color: var(--ink); margin: 30px 0 6px; }
+    .legal p, .legal li { color: var(--soft-ink); font-size: 16px; line-height: 1.66; }
+    .legal a { color: var(--gold-deep); }
+    .legal .intro { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav shell" aria-label="Primary">
+      <a class="brand" href="/">
+        <span class="brand-mark" style="overflow:hidden;padding:0"><img src="/img/opennum-mark-final.svg" width="38" height="38" alt="" style="display:block"></span>
+        <span>OpenNum</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Search</a>
+        <a href="/register">Register</a>
+        <a href="/my">My OpenNum</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <article class="legal">
+      <h1>Frequently asked questions</h1>
+      <div class="updated">Last updated: 21 June 2026</div>
+
+      <p class="intro">OpenNum turns a Bitcoin Ordinals inscription number into a public, ownable identity — a profile, a payable handle, and a place to receive signed messages.</p>
+
+      <h2>What is OpenNum?</h2>
+      <p>An identity protocol on Bitcoin. Your inscription number becomes your public identity: a searchable profile, a way to receive BTC, and a wall of provably-signed messages.</p>
+
+      <h2>Is it custodial?</h2>
+      <p>No. OpenNum never holds your Bitcoin, your inscriptions, or your keys. Every action is signed by your own wallet.</p>
+
+      <h2>How do I register?</h2>
+      <p>Connect your Unisat wallet, pick an inscription you own, and sign a message. That binds the number to your wallet as your active OpenNum identity.</p>
+
+      <h2>Does it cost anything?</h2>
+      <p>Registration is free. You only pay normal Bitcoin network fees if and when you send BTC.</p>
+
+      <h2>One wallet, one active number — why?</h2>
+      <p>Each wallet activates one flagship OpenNum at a time. Extra numbers you hold can be activated in other wallets or listed for sale. This is deliberate: it keeps a clean, single public identity per wallet and keeps desirable numbers in circulation rather than frozen. See <a href="/whitepaper-en">whitepaper §10</a>.</p>
+
+      <h2>What happens when I transfer or sell the inscription?</h2>
+      <p>The identity goes dormant. The new on-chain owner can claim it by signing with their wallet, starting a fresh profile. Messages from the previous holder are archived, not deleted.</p>
+
+      <h2>How do messages work?</h2>
+      <p>Public messages on a profile are signed by the sender’s active OpenNum, so every message is provably from a real identity — no bots. You can withdraw your own messages; a profile owner can hide messages shown on their page.</p>
+
+      <h2>How do offers and trading work?</h2>
+      <p>OpenNum doesn’t hold funds or execute trades. Mark your number “open to offers,” and buyers reach you via the linked marketplace (for example, Satflow). Trades settle off OpenNum.</p>
+
+      <h2>Why do I have to sign every action?</h2>
+      <p>Each signature proves you authorize that specific action with your own wallet. That’s what makes OpenNum non-custodial and tamper-proof — no password, no account takeover.</p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <div>OpenNum is non-custodial. Ownership follows the inscription on Bitcoin.</div>
+      <div class="footer-links">
+        <a href="/whitepaper-en">Whitepaper</a>
+        <a href="/faq">FAQ</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+  </script>
+</body>
+</html>
