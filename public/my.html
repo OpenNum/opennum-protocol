@@ -66,6 +66,12 @@
           <button class="btn" onclick="viewWatchlist()">View my watchlist</button>
         </div>
       </div>
+      <div id="offersSection" style="max-width:520px;margin:28px auto 0">
+        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Offers received</div>
+        <div id="offersBox">
+          <button class="btn" onclick="viewOffers()">View offers</button>
+        </div>
+      </div>
       <p class="small" style="margin-top:16px;text-align:center;color:var(--muted)">
         Selling your inscription will automatically release this OpenNum to the new holder.
       </p>
@@ -161,9 +167,20 @@
       box.innerHTML = '<button class="btn" onclick="viewWatchlist()">View my watchlist</button>';
     }
 
+    function renderOffersGate() {
+      const box = document.getElementById('offersBox');
+      if (!box) return;
+      box.innerHTML = '<button class="btn" onclick="viewOffers()">View offers</button>';
+    }
+
     function viewWatchlist() {
       if (!currentWallet || currentActorNum === null) return;
       loadWatchlist(currentWallet, currentActorNum);
+    }
+
+    function viewOffers() {
+      if (!currentWallet || currentActorNum === null) return;
+      loadOffers(currentWallet, currentActorNum);
     }
 
     async function loadWatchlist(wallet, actorNum) {
@@ -198,6 +215,44 @@
       } catch (_) {
         if (box) box.insertAdjacentHTML('afterbegin', '<div class="alert alert-error visible" style="margin-bottom:10px">Could not remove this number.</div>');
       }
+    }
+
+    async function loadOffers(wallet, actorNum) {
+      const box = document.getElementById('offersBox');
+      if (!box) return;
+      box.innerHTML = '<div class="empty" style="padding:12px 0">Sign to open your private offers…</div>';
+      try {
+        const data = await signedSocial('offer_list', '', actorNum, wallet);
+        const offers = (data.offers || []).filter((offer) => offer.status === 'open');
+        if (!offers.length) {
+          box.innerHTML = '<div class="empty" style="padding:12px 0">No open offers right now.</div>';
+          return;
+        }
+        box.innerHTML = offers.map((offer) => `
+          <div class="offer-row">
+            <div class="offer-head">
+              <a class="watch-num" href="/n/${offer.buyer_num}">#${offer.buyer_num}</a>
+              ${offer.price_text ? `<span class="offer-price">${escapeHtml(offer.price_text)}</span>` : ''}
+            </div>
+            ${offer.note ? `<div class="offer-note">${escapeHtml(offer.note)}</div>` : ''}
+            ${offer.satflow_url ? `<a class="offer-link" href="${escapeHtml(offer.satflow_url)}" target="_blank" rel="noopener noreferrer">Buyer’s Satflow link ↗</a>` : ''}
+            <div class="offer-actions">
+              <button class="reply-btn" onclick="setOfferStatus(${offer.id}, 'rejected')">Reject</button>
+              <button class="reply-btn" onclick="setOfferStatus(${offer.id}, 'archived')">Archive</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        box.innerHTML = `<div class="empty" style="padding:12px 0">Could not load offers. <button class="reply-btn" onclick="viewOffers()">Retry</button></div>`;
+      }
+    }
+
+    async function setOfferStatus(offerId, status) {
+      if (!currentWallet || currentActorNum === null) return;
+      try {
+        await signedSocial('offer_status', String(offerId), currentActorNum, currentWallet, { offer_id: offerId, status });
+        await loadOffers(currentWallet, currentActorNum);
+      } catch (_) {}
     }
 
     async function connectAndLoad() {
@@ -240,6 +295,7 @@
         currentWallet = wallet;
         currentActorNum = num;
         renderWatchlistGate();
+        renderOffersGate();
         const inscId = reg.inscription_id || (reg.inscription_txid ? `${reg.inscription_txid}i0` : '');
         document.getElementById('myNum').textContent = `#${num}`;
         document.getElementById('myStatus').textContent = reg.status === 'dormant' ? 'Dormant' : (reg.for_sale ? 'For sale' : 'Active');

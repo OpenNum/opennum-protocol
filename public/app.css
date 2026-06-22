@@ -427,6 +427,12 @@ img { max-width: 100%; }
 .watch-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .watch-num { font-weight: 820; color: var(--ink); text-decoration: none; }
 .watch-note { color: var(--soft-ink); font-size: 14px; flex: 1; min-width: 0; }
+.offer-row { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.offer-head { display: flex; align-items: baseline; gap: 12px; }
+.offer-price { font-weight: 820; color: var(--ink); }
+.offer-note { color: var(--soft-ink); font-size: 14px; margin-top: 6px; }
+.offer-link { display: inline-block; margin-top: 6px; color: var(--gold-deep); font-size: 13px; }
+.offer-actions { display: flex; gap: 16px; margin-top: 10px; }
 
 .market-hero { padding: 70px 0 28px; }
 .search-card { padding: 12px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 24px; }

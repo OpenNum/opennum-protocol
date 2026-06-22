@@ -91,6 +91,7 @@
           <div class="primary-actions" id="send">
             <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC</button>
             <a class="btn" id="messageJumpBtn" href="#messages">Message</a>
+            <button class="btn" id="makeOfferBtn" onclick="toggleOfferPanel()">Make a private offer</button>
             <a class="btn" id="claimBtn" href="/register" style="display:none">Claim this OpenNum</a>
           </div>
 
@@ -159,6 +160,22 @@
           </div>
           <div class="alert alert-error" id="editError"></div>
           <div class="alert alert-success" id="editSuccess"></div>
+          </div>
+
+          <div class="send-panel" id="offerPanel">
+          <div style="font-weight:780;margin-bottom:12px;color:var(--ink)">Send a private offer</div>
+          <div class="small" style="margin-bottom:12px">Only the current holder sees this, in their OpenNum inbox. OpenNum never holds funds — settle the trade on Satflow.</div>
+          <div style="display:grid;gap:12px">
+            <input class="input" id="offerPrice" type="text" maxlength="80" placeholder="Your offer, e.g. 0.05 BTC" />
+            <textarea class="textarea" id="offerNote" maxlength="280" rows="2" placeholder="Message to the holder (optional)"></textarea>
+            <input class="input" id="offerSatflow" type="url" placeholder="Your Satflow listing/offer URL (optional)" />
+          </div>
+          <div class="form-row" style="margin-top:14px">
+            <button class="btn btn-primary" onclick="submitOffer()">Sign &amp; send offer</button>
+            <button class="btn" onclick="toggleOfferPanel()">Cancel</button>
+          </div>
+          <div class="alert alert-error" id="offerError"></div>
+          <div class="alert alert-success" id="offerSuccess"></div>
           </div>
         </div>
       </div>
@@ -340,6 +357,7 @@
         document.getElementById('claimNote').style.display = 'block';
         document.getElementById('claimNote').textContent = 'This inscription has moved on-chain. The previous OpenNum profile is historical until the current holder signs and claims it again.';
         document.getElementById('sendButton').style.display = 'none';
+        document.getElementById('makeOfferBtn').style.display = 'none';
         document.getElementById('claimBtn').style.display = '';
         document.getElementById('messagePostBtn').style.display = 'none';
         document.getElementById('guestbookMessage').disabled = true;
@@ -441,7 +459,7 @@
       if (currentProfile) {
         isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
         if (isProfileOwner) {
-          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn', 'watchlistBtn'].forEach((id) => {
+          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn', 'watchlistBtn', 'makeOfferBtn'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
@@ -707,6 +725,7 @@
     function toggleSendPanel() {
       if (currentProfile?.claim_required || currentProfile?.status === 'dormant') return;
       document.getElementById('editPanel').classList.remove('visible');
+      document.getElementById('offerPanel').classList.remove('visible');
       document.getElementById('sendPanel').classList.toggle('visible');
       const mobile = isMobile();
       document.getElementById('unisatRow').style.display = mobile ? 'none' : '';
@@ -715,7 +734,42 @@
 
     function toggleEditPanel() {
       document.getElementById('sendPanel').classList.remove('visible');
+      document.getElementById('offerPanel').classList.remove('visible');
       document.getElementById('editPanel').classList.toggle('visible');
+    }
+
+    function toggleOfferPanel() {
+      if (currentProfile?.claim_required || currentProfile?.status === 'dormant') return;
+      document.getElementById('sendPanel').classList.remove('visible');
+      document.getElementById('editPanel').classList.remove('visible');
+      document.getElementById('offerPanel').classList.toggle('visible');
+    }
+
+    async function submitOffer() {
+      setAlert('offerError', '');
+      setAlert('offerSuccess', '');
+      const price = document.getElementById('offerPrice').value.trim();
+      const note = document.getElementById('offerNote').value.trim();
+      const satflow = document.getElementById('offerSatflow').value.trim();
+      if (!price && !note) return setAlert('offerError', 'Add at least a price or a note.');
+      try {
+        await signedSocialAction('offer', currentNumber, {
+          target_num: currentNumber,
+          price_text: price || null,
+          note: note || null,
+          satflow_url: satflow || null
+        });
+        document.getElementById('offerPrice').value = '';
+        document.getElementById('offerNote').value = '';
+        document.getElementById('offerSatflow').value = '';
+        setAlert('offerSuccess', 'Offer sent to the holder’s inbox.');
+        setTimeout(() => {
+          setAlert('offerSuccess', '');
+          document.getElementById('offerPanel').classList.remove('visible');
+        }, 2500);
+      } catch (e) {
+        setAlert('offerError', e?.message || 'Could not send the offer.');
+      }
     }
 
     function setAlert(id, message) {
