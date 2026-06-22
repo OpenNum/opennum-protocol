@@ -14,6 +14,7 @@ const supabase = createClient(
 const NONCE_TTL_MS = 10 * 60 * 1000;
 const ACTIONS = new Set([
   'register',
+  'session',
   'update',
   'unbind',
   'guestbook',

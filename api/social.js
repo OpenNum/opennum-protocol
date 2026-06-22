@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { setCors, sanitizeText, sanitizeUrl, checkRateLimit, sendRateLimit } = require('../lib/_security');
-const { verifyAction } = require('../lib/_auth');
+const { verifyAction, verifySession } = require('../lib/_auth');
 const { emitEvent, isMissingActivityTable } = require('../lib/_activity');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,6 +20,19 @@ const REPORT_TARGET_TYPES = new Set(['profile', 'message', 'number']);
 const OFFER_STATUS_VALUES = new Set(['archived', 'rejected']);
 const INBOX_OWN_EVENTS = ['public_message_received', 'followed', 'offer_received'];
 const INBOX_WATCH_EVENTS = ['ownership_transferred', 'marked_for_sale'];
+const SESSION_ALLOWED = new Set([
+  'watchlist_list',
+  'offer_list',
+  'inbox',
+  'follow',
+  'unfollow',
+  'watch',
+  'unwatch',
+  'watchlist_add',
+  'watchlist_remove',
+  'message_withdraw',
+  'message_hide'
+]);
 
 function cleanAction(value) {
   return String(value || '').trim().toLowerCase();
@@ -73,6 +86,24 @@ function normalizeOffset(raw) {
 
 async function verifySocialAction({ body, action, actorNum, target }) {
   const { wallet, signature, ts, timestamp, nonce } = body;
+  if (body.session_token && SESSION_ALLOWED.has(action) && wallet && actorNum !== null) {
+    const session = await verifySession({
+      wallet,
+      actor_num: actorNum,
+      token: body.session_token
+    });
+    if (session.ok) {
+      return {
+        auth: {
+          actor_num: actorNum,
+          session: true
+        },
+        wallet: session.wallet
+      };
+    }
+    // Invalid/expired/missing session store deliberately falls through to signature auth.
+  }
+
   if (!wallet || !signature || !(ts || timestamp) || !nonce || actorNum === null) {
     return { error: { status: 400, message: 'Missing required fields' } };
   }
@@ -228,28 +259,18 @@ async function updateMessageStatus(messageId, status) {
 }
 
 async function handleWithdraw(req, res, body) {
-  const { wallet, signature, ts, timestamp, nonce, message_id, actor_num } = body;
+  const { wallet, message_id, actor_num } = body;
   const actorNum = normalizeNumber(actor_num);
-  if (!wallet || !signature || !(ts || timestamp) || !nonce || !message_id || actorNum === null) {
+  if (!wallet || !message_id || actorNum === null) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const auth = await verifyAction({
-    wallet,
-    action: 'message_withdraw',
-    actor_num: actorNum,
-    target: message_id,
-    ts: ts || timestamp,
-    nonce,
-    signature,
-    requireActiveId: true,
-    requireOwnership: false
-  });
-  if (!auth.ok) return res.status(auth.status || 401).json({ error: auth.error || 'Authentication failed' });
+  const verified = await verifySocialAction({ body, action: 'message_withdraw', actorNum, target: message_id });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
 
   const { data: message, error } = await loadMessage(message_id);
   if (error) return res.status(error.status).json({ error: error.message });
-  if (message.author_wallet !== wallet) {
+  if (message.author_wallet !== verified.wallet) {
     return res.status(403).json({ error: 'Only the message author can withdraw this message' });
   }
 
@@ -259,24 +280,14 @@ async function handleWithdraw(req, res, body) {
 }
 
 async function handleHide(req, res, body) {
-  const { wallet, signature, ts, timestamp, nonce, message_id, owner_num } = body;
+  const { message_id, owner_num } = body;
   const ownerNum = normalizeNumber(owner_num);
-  if (!wallet || !signature || !(ts || timestamp) || !nonce || !message_id || ownerNum === null) {
+  if (!message_id || ownerNum === null) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const auth = await verifyAction({
-    wallet,
-    action: 'message_hide',
-    actor_num: ownerNum,
-    target: message_id,
-    ts: ts || timestamp,
-    nonce,
-    signature,
-    requireActiveId: true,
-    requireOwnership: false
-  });
-  if (!auth.ok) return res.status(auth.status || 401).json({ error: auth.error || 'Authentication failed' });
+  const verified = await verifySocialAction({ body, action: 'message_hide', actorNum: ownerNum, target: message_id });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
 
   const { data: message, error } = await loadMessage(message_id);
   if (error) return res.status(error.status).json({ error: error.message });
@@ -295,7 +306,7 @@ async function handleHide(req, res, body) {
     console.error('Social profile owner lookup error:', registrationError);
     return res.status(500).json({ error: 'Database error' });
   }
-  if (!registration || registration.wallet_address !== wallet) {
+  if (!registration || registration.wallet_address !== verified.wallet) {
     return res.status(403).json({ error: 'Only the current profile owner can hide this message' });
   }
 

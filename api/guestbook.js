@@ -1,7 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, checkRateLimit, sendRateLimit } = require('../lib/_security');
-const { verifyAction } = require('../lib/_auth');
+const { verifyAction, verifySession } = require('../lib/_auth');
 const { emitEvent } = require('../lib/_activity');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -177,26 +177,47 @@ module.exports = async (req, res) => {
   const rate = checkRateLimit(req, 'guestbook', 30, 60 * 60 * 1000);
   if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
-  const { inscription_num, parent_id, author_wallet, message, signature, timestamp, nonce, actor_num, author_number } = req.body || {};
+  const { inscription_num, parent_id, author_wallet, message, signature, timestamp, nonce, actor_num, author_number, session_token } = req.body || {};
   const num = normalizeNumber(inscription_num);
   const rawMessage = String(message || '').trim();
   const cleanMessage = sanitizeText(rawMessage, MAX_MESSAGE_LENGTH);
 
-  if (num === null || !author_wallet || !rawMessage || !cleanMessage || !signature || !timestamp) {
-    return res.status(400).json({ error: 'Missing required fields: inscription_num, author_wallet, message, signature, timestamp' });
+  if (num === null || !author_wallet || !rawMessage || !cleanMessage) {
+    return res.status(400).json({ error: 'Missing required fields: inscription_num, author_wallet, message' });
   }
   if (rawMessage.length > MAX_MESSAGE_LENGTH) {
     return res.status(400).json({ error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` });
-  }
-  if (Math.abs(Date.now() - Number(timestamp) * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
-    return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
   let signedMessage = `opennum:guestbook:${num}:${author_wallet}:${rawMessage}:${timestamp}`;
   let authorNumber = null;
   let author = null;
+  let sessionVerified = false;
 
-  if (nonce) {
+  const sessionActorNum = normalizeNumber(actor_num ?? author_number);
+  if (session_token && sessionActorNum !== null) {
+    const session = await verifySession({
+      wallet: author_wallet,
+      actor_num: sessionActorNum,
+      token: session_token
+    });
+    if (session.ok) {
+      sessionVerified = true;
+      authorNumber = sessionActorNum;
+      signedMessage = `opennum:guestbook:${num}:${author_wallet}:session:${sessionActorNum}`;
+    }
+    // Invalid/expired/missing session store deliberately falls through to signature auth.
+  }
+
+  if (!sessionVerified && (!signature || !timestamp)) {
+    return res.status(400).json({ error: 'Missing required fields: signature, timestamp' });
+  }
+
+  if (!sessionVerified && Math.abs(Date.now() - Number(timestamp) * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
+    return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
+  }
+
+  if (!sessionVerified && nonce) {
     const actorNum = normalizeNumber(actor_num ?? author_number);
     if (actorNum === null) {
       return res.status(400).json({ error: 'Missing or invalid actor_num for nonce guestbook auth' });
@@ -218,7 +239,7 @@ module.exports = async (req, res) => {
     author = auth.actor_registration;
     authorNumber = Number(author.inscription_num);
     signedMessage = auth.signed_message;
-  } else {
+  } else if (!sessionVerified) {
     try {
       const valid = Verifier.verifySignature(author_wallet, signedMessage, signature);
       if (!valid) return res.status(400).json({ error: 'Invalid signature' });
@@ -254,7 +275,12 @@ module.exports = async (req, res) => {
       .limit(1)
       .maybeSingle();
     author = authorData;
-    if (author) authorNumber = author.inscription_num;
+    if (author && (!sessionVerified || Number(author.inscription_num) === Number(authorNumber))) {
+      authorNumber = author.inscription_num;
+    } else if (sessionVerified) {
+      author = null;
+      authorNumber = null;
+    }
   }
   if (!authorNumber) {
     return res.status(403).json({ error: 'You need an active OpenNum ID before you can leave public messages.' });
