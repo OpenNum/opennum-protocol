@@ -434,7 +434,7 @@
       const nav = document.getElementById('myOpenNumNav');
       if (nav) {
         nav.textContent = `My OpenNum #${viewer.num}`;
-        nav.setAttribute('href', `/n/${viewer.num}`);
+        nav.setAttribute('href', '/my');
       }
 
       // b. own profile: hide actions that make no sense on yourself
@@ -478,7 +478,7 @@
       const nav = document.getElementById('myOpenNumNav');
       if (nav) {
         nav.textContent = `My OpenNum #${viewer.num}`;
-        nav.setAttribute('href', `/n/${viewer.num}`);
+        nav.setAttribute('href', '/my');
       }
     }
 
@@ -506,7 +506,9 @@
     // Fetch nonce, sign opennum:<action>:<actor>:<target>:<ts>:<nonce>, POST /api/social
     async function signedSocialAction(action, target, extra = {}) {
       if (!window.unisat) throw new Error('Unisat Wallet is required.');
-      const accounts = await window.unisat.requestAccounts();
+      // Use the already-connected account when possible (no extra connect popup); only prompt to connect if needed.
+      let accounts = await window.unisat.getAccounts();
+      if (!accounts || !accounts[0]) accounts = await window.unisat.requestAccounts();
       const wallet = accounts[0];
       const wres = await fetch(`/api/wallet?wallet=${wallet}`);
       const wdata = await wres.json();
@@ -819,11 +821,13 @@
       }
     }
 
-    async function loadGuestbook() {
+    async function loadGuestbook(fresh) {
       const list = document.getElementById('guestbookList');
       list.innerHTML = '<div class="empty">Loading messages...</div>';
       try {
-        const res = await fetch(`/api/guestbook?num=${currentNumber}`);
+        // After a write (withdraw/hide/post), bypass the CDN cache (s-maxage=20) so the change shows immediately.
+        const bust = fresh ? `&_=${Date.now()}` : '';
+        const res = await fetch(`/api/guestbook?num=${currentNumber}${bust}`, fresh ? { cache: 'no-store' } : {});
         const data = await res.json();
         const current = data.current || data.messages || [];
         const archived = data.archived || [];
@@ -900,11 +904,17 @@
       setAlert('guestbookSuccess', '');
       try {
         await signedSocialAction('message_withdraw', id, { message_id: id });
-        setAlert('guestbookSuccess', 'Message withdrawn.');
-        loadGuestbook();
+        await loadGuestbook(true);
+        flashGuestbookSuccess('Message withdrawn.');
       } catch (e) {
         setAlert('guestbookError', e?.message || 'Could not withdraw the message.');
       }
+    }
+
+    function flashGuestbookSuccess(msg) {
+      setAlert('guestbookSuccess', msg);
+      clearTimeout(window.__gbSuccessTimer);
+      window.__gbSuccessTimer = setTimeout(() => setAlert('guestbookSuccess', ''), 3500);
     }
 
     async function hideMessage(id) {
@@ -913,8 +923,8 @@
       setAlert('guestbookSuccess', '');
       try {
         await signedSocialAction('message_hide', id, { message_id: id, owner_num: currentNumber });
-        setAlert('guestbookSuccess', 'Message hidden.');
-        loadGuestbook();
+        await loadGuestbook(true);
+        flashGuestbookSuccess('Message hidden.');
       } catch (e) {
         setAlert('guestbookError', e?.message || 'Could not hide the message.');
       }
@@ -943,7 +953,8 @@
       if (!text) return setAlert('guestbookError', 'Write a message first.');
       if (!window.unisat) return setAlert('guestbookError', 'Unisat Wallet is required to sign public messages.');
       try {
-        const accounts = await window.unisat.requestAccounts();
+        let accounts = await window.unisat.getAccounts();
+        if (!accounts || !accounts[0]) accounts = await window.unisat.requestAccounts();
         const authorWallet = accounts[0];
         const timestamp = Math.floor(Date.now() / 1000);
         const signedMessage = `opennum:guestbook:${currentNumber}:${authorWallet}:${text}:${timestamp}`;
@@ -964,8 +975,8 @@
         if (!res.ok) return setAlert('guestbookError', data.error || 'Message could not be posted.');
         document.getElementById('guestbookMessage').value = '';
         clearReply();
-        setAlert('guestbookSuccess', 'Message posted.');
-        loadGuestbook();
+        await loadGuestbook(true);
+        flashGuestbookSuccess('Message posted.');
       } catch (e) {
         setAlert('guestbookError', e?.message || 'Signing failed.');
       }
