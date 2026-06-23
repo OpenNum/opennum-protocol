@@ -143,10 +143,21 @@
     // ---- Session token: sign once, then private reads + low-risk writes skip per-action signatures ----
     const SESSION_ELIGIBLE = new Set(['watchlist_list', 'offer_list', 'inbox', 'watchlist_remove', 'follow', 'unfollow', 'watch', 'unwatch', 'watchlist_add']);
 
+    let _session = null;          // in-memory token cache (survives a flaky sessionStorage within a page view)
+    let _sessionInflight = null;  // single in-flight establish, so concurrent calls never double-sign
+
+    function sessionValid(s) {
+      return s && s.token && s.expires_at && new Date(s.expires_at).getTime() > Date.now() + 5000;
+    }
+    function clearSession() {
+      _session = null;
+      try { sessionStorage.removeItem('on_session'); } catch (_) {}
+    }
     function getSession() {
+      if (sessionValid(_session)) return _session;
       try {
         const s = JSON.parse(sessionStorage.getItem('on_session') || 'null');
-        if (s && s.token && s.expires_at && new Date(s.expires_at).getTime() > Date.now() + 5000) return s;
+        if (sessionValid(s)) { _session = s; return s; }
       } catch (_) {}
       return null;
     }
@@ -166,13 +177,16 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not unlock your session.');
-      sessionStorage.setItem('on_session', JSON.stringify({ token: data.token, expires_at: data.expires_at, wallet, actor_num: actorNum }));
+      _session = { token: data.token, expires_at: data.expires_at, wallet, actor_num: actorNum };
+      try { sessionStorage.setItem('on_session', JSON.stringify(_session)); } catch (_) {}
       return data.token;
     }
     async function ensureSession(wallet, actorNum) {
       const s = getSession();
       if (s && s.wallet === wallet && Number(s.actor_num) === Number(actorNum)) return s.token;
-      return await establishSession(wallet, actorNum);
+      if (_sessionInflight) return _sessionInflight;   // reuse the in-flight establish (no concurrent double-sign)
+      _sessionInflight = establishSession(wallet, actorNum).finally(() => { _sessionInflight = null; });
+      return _sessionInflight;
     }
 
     // Token-first for eligible actions (reads + low-risk); per-action signature otherwise (e.g. offer_status).
@@ -188,7 +202,7 @@
           const data = await res.json();
           if (res.ok) return data;
           if (res.status !== 401) throw new Error(data.error || 'Action failed.');
-          sessionStorage.removeItem('on_session'); // token stale -> fall through to signature
+          clearSession(); // token stale -> fall through to signature
         }
       }
       const cres = await fetch('/api/challenge', {

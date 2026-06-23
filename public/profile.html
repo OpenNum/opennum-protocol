@@ -524,10 +524,21 @@
     // ---- Session token: sign once, then low-risk actions skip per-action signatures ----
     const SESSION_ELIGIBLE = new Set(['follow','unfollow','watch','unwatch','watchlist_add','watchlist_remove','message_withdraw','message_hide']);
 
+    let _session = null;          // in-memory token cache (survives a flaky sessionStorage within a page view)
+    let _sessionInflight = null;  // single in-flight establish, so concurrent calls never double-sign
+
+    function sessionValid(s) {
+      return s && s.token && s.expires_at && new Date(s.expires_at).getTime() > Date.now() + 5000;
+    }
+    function clearSession() {
+      _session = null;
+      try { sessionStorage.removeItem('on_session'); } catch (_) {}
+    }
     function getSession() {
+      if (sessionValid(_session)) return _session;
       try {
         const s = JSON.parse(sessionStorage.getItem('on_session') || 'null');
-        if (s && s.token && s.expires_at && new Date(s.expires_at).getTime() > Date.now() + 5000) return s;
+        if (sessionValid(s)) { _session = s; return s; }
       } catch (_) {}
       return null;
     }
@@ -547,13 +558,16 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not unlock your session.');
-      sessionStorage.setItem('on_session', JSON.stringify({ token: data.token, expires_at: data.expires_at, wallet, actor_num: actorNum }));
+      _session = { token: data.token, expires_at: data.expires_at, wallet, actor_num: actorNum };
+      try { sessionStorage.setItem('on_session', JSON.stringify(_session)); } catch (_) {}
       return data.token;
     }
     async function ensureSession(wallet, actorNum) {
       const s = getSession();
       if (s && s.wallet === wallet && Number(s.actor_num) === Number(actorNum)) return s.token;
-      return await establishSession(wallet, actorNum);
+      if (_sessionInflight) return _sessionInflight;   // reuse the in-flight establish (no concurrent double-sign)
+      _sessionInflight = establishSession(wallet, actorNum).finally(() => { _sessionInflight = null; });
+      return _sessionInflight;
     }
 
     // Token-first for low-risk actions (one session sign covers many); per-action signature for high-value / fallback.
@@ -580,7 +594,7 @@
           const data = await res.json();
           if (res.ok) return { ...data, actorNum };
           if (res.status !== 401) throw new Error(data.error || 'Action failed.'); // real error, don't re-prompt
-          sessionStorage.removeItem('on_session'); // token stale -> fall through to signature
+          clearSession(); // token stale -> fall through to signature
         }
       }
 
@@ -1077,7 +1091,7 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ inscription_num: currentNumber, parent_id: replyParentId, author_wallet: authorWallet, author_number: actorNum, actor_num: actorNum, message: text, session_token: token })
             });
-            if (res.status === 401) { sessionStorage.removeItem('on_session'); res = null; } // token stale -> sign
+            if (res.status === 401) { clearSession(); res = null; } // token stale -> sign
           }
         }
 
