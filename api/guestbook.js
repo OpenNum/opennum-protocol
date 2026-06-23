@@ -320,7 +320,8 @@ module.exports = async (req, res) => {
     message: cleanMessage,
     author_wallet,
     author_number: authorNumber,
-    signature,
+    // signature column is NOT NULL; session-token posts have no per-message signature, so store the session marker.
+    signature: sessionVerified ? (signedMessage || 'session-token') : signature,
     signed_message: signedMessage
   };
 
