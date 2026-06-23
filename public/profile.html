@@ -521,10 +521,44 @@
     // Passive auto-detect once the page (and the wallet extension) is ready
     window.addEventListener('load', () => { applyViewerContext(); });
 
-    // Fetch nonce, sign opennum:<action>:<actor>:<target>:<ts>:<nonce>, POST /api/social
+    // ---- Session token: sign once, then low-risk actions skip per-action signatures ----
+    const SESSION_ELIGIBLE = new Set(['follow','unfollow','watch','unwatch','watchlist_add','watchlist_remove','message_withdraw','message_hide']);
+
+    function getSession() {
+      try {
+        const s = JSON.parse(sessionStorage.getItem('on_session') || 'null');
+        if (s && s.token && s.expires_at && new Date(s.expires_at).getTime() > Date.now() + 5000) return s;
+      } catch (_) {}
+      return null;
+    }
+    async function establishSession(wallet, actorNum) {
+      const cres = await fetch('/api/challenge', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet, action: 'session' })
+      });
+      const cdata = await cres.json();
+      if (!cres.ok) throw new Error(cdata.error || 'Could not start the signing challenge.');
+      const ts = Math.floor(Date.now() / 1000);
+      const message = `opennum:session:${actorNum}::${ts}:${cdata.nonce}`;
+      const signature = await window.unisat.signMessage(message, 'ecdsa');
+      const res = await fetch('/api/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet, actor_num: actorNum, signature, ts, nonce: cdata.nonce })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not unlock your session.');
+      sessionStorage.setItem('on_session', JSON.stringify({ token: data.token, expires_at: data.expires_at, wallet, actor_num: actorNum }));
+      return data.token;
+    }
+    async function ensureSession(wallet, actorNum) {
+      const s = getSession();
+      if (s && s.wallet === wallet && Number(s.actor_num) === Number(actorNum)) return s.token;
+      return await establishSession(wallet, actorNum);
+    }
+
+    // Token-first for low-risk actions (one session sign covers many); per-action signature for high-value / fallback.
     async function signedSocialAction(action, target, extra = {}) {
       if (!window.unisat) throw new Error('Unisat Wallet is required.');
-      // Use the already-connected account when possible (no extra connect popup); only prompt to connect if needed.
       let accounts = await window.unisat.getAccounts();
       if (!accounts || !accounts[0]) accounts = await window.unisat.requestAccounts();
       const wallet = accounts[0];
@@ -534,17 +568,32 @@
       const actorNum = wdata.registration.inscription_num;
       viewerNum = actorNum; viewerWallet = wallet;
 
+      // Token path: low-risk actions go through the session token (no per-action popup).
+      if (SESSION_ELIGIBLE.has(action)) {
+        let token = null;
+        try { token = await ensureSession(wallet, actorNum); } catch (_) { token = null; } // declined/failed -> sign instead
+        if (token) {
+          const res = await fetch('/api/social', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, actor_num: actorNum, wallet, session_token: token, ...extra })
+          });
+          const data = await res.json();
+          if (res.ok) return { ...data, actorNum };
+          if (res.status !== 401) throw new Error(data.error || 'Action failed.'); // real error, don't re-prompt
+          sessionStorage.removeItem('on_session'); // token stale -> fall through to signature
+        }
+      }
+
+      // Per-action signature (high-value actions like offer, or session fallback).
       const cres = await fetch('/api/challenge', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ wallet, action })
       });
       const cdata = await cres.json();
       if (!cres.ok) throw new Error(cdata.error || 'Could not start the signing challenge.');
-
       const ts = Math.floor(Date.now() / 1000);
       const message = `opennum:${action}:${actorNum}:${target ?? ''}:${ts}:${cdata.nonce}`;
       const signature = await window.unisat.signMessage(message, 'ecdsa');
-
       const res = await fetch('/api/social', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, actor_num: actorNum, wallet, signature, ts, nonce: cdata.nonce, ...extra })
@@ -1010,21 +1059,39 @@
         let accounts = await window.unisat.getAccounts();
         if (!accounts || !accounts[0]) accounts = await window.unisat.requestAccounts();
         const authorWallet = accounts[0];
-        const timestamp = Math.floor(Date.now() / 1000);
-        const signedMessage = `opennum:guestbook:${currentNumber}:${authorWallet}:${text}:${timestamp}`;
-        const signature = await window.unisat.signMessage(signedMessage, 'ecdsa');
-        const res = await fetch('/api/guestbook', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            inscription_num: currentNumber,
-            parent_id: replyParentId,
-            author_wallet: authorWallet,
-            message: text,
-            signature,
-            timestamp
-          })
-        });
+
+        // Resolve the author's active number (needed to post via the session token).
+        let actorNum = null;
+        try {
+          const wd = await (await fetch(`/api/wallet?wallet=${authorWallet}`)).json();
+          if (wd.has_active_id && wd.registration) actorNum = wd.registration.inscription_num;
+        } catch (_) {}
+
+        let res = null;
+        // Token path: no per-message signature when a session exists (or can be established once).
+        if (actorNum !== null) {
+          let token = null;
+          try { token = await ensureSession(authorWallet, actorNum); } catch (_) { token = null; }
+          if (token) {
+            res = await fetch('/api/guestbook', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ inscription_num: currentNumber, parent_id: replyParentId, author_wallet: authorWallet, author_number: actorNum, actor_num: actorNum, message: text, session_token: token })
+            });
+            if (res.status === 401) { sessionStorage.removeItem('on_session'); res = null; } // token stale -> sign
+          }
+        }
+
+        // Signature path (no active id / no session / stale token).
+        if (!res) {
+          const timestamp = Math.floor(Date.now() / 1000);
+          const signedMessage = `opennum:guestbook:${currentNumber}:${authorWallet}:${text}:${timestamp}`;
+          const signature = await window.unisat.signMessage(signedMessage, 'ecdsa');
+          res = await fetch('/api/guestbook', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inscription_num: currentNumber, parent_id: replyParentId, author_wallet: authorWallet, message: text, signature, timestamp })
+          });
+        }
+
         const data = await res.json();
         if (!res.ok) return setAlert('guestbookError', data.error || 'Message could not be posted.');
         document.getElementById('guestbookMessage').value = '';

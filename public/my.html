@@ -140,10 +140,59 @@
       }[char]));
     }
 
-    async function signedSocial(action, target, actorNum, wallet, extra = {}) {
+    // ---- Session token: sign once, then private reads + low-risk writes skip per-action signatures ----
+    const SESSION_ELIGIBLE = new Set(['watchlist_list', 'offer_list', 'inbox', 'watchlist_remove', 'follow', 'unfollow', 'watch', 'unwatch', 'watchlist_add']);
+
+    function getSession() {
+      try {
+        const s = JSON.parse(sessionStorage.getItem('on_session') || 'null');
+        if (s && s.token && s.expires_at && new Date(s.expires_at).getTime() > Date.now() + 5000) return s;
+      } catch (_) {}
+      return null;
+    }
+    async function establishSession(wallet, actorNum) {
       const cres = await fetch('/api/challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet, action: 'session' })
+      });
+      const cdata = await cres.json();
+      if (!cres.ok) throw new Error(cdata.error || 'Could not start signing.');
+      const ts = Math.floor(Date.now() / 1000);
+      const message = `opennum:session:${actorNum}::${ts}:${cdata.nonce}`;
+      const signature = await window.unisat.signMessage(message, 'ecdsa');
+      const res = await fetch('/api/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet, actor_num: actorNum, signature, ts, nonce: cdata.nonce })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not unlock your session.');
+      sessionStorage.setItem('on_session', JSON.stringify({ token: data.token, expires_at: data.expires_at, wallet, actor_num: actorNum }));
+      return data.token;
+    }
+    async function ensureSession(wallet, actorNum) {
+      const s = getSession();
+      if (s && s.wallet === wallet && Number(s.actor_num) === Number(actorNum)) return s.token;
+      return await establishSession(wallet, actorNum);
+    }
+
+    // Token-first for eligible actions (reads + low-risk); per-action signature otherwise (e.g. offer_status).
+    async function signedSocial(action, target, actorNum, wallet, extra = {}) {
+      if (SESSION_ELIGIBLE.has(action)) {
+        let token = null;
+        try { token = await ensureSession(wallet, actorNum); } catch (_) { token = null; }
+        if (token) {
+          const res = await fetch('/api/social', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, actor_num: actorNum, wallet, session_token: token, ...extra })
+          });
+          const data = await res.json();
+          if (res.ok) return data;
+          if (res.status !== 401) throw new Error(data.error || 'Action failed.');
+          sessionStorage.removeItem('on_session'); // token stale -> fall through to signature
+        }
+      }
+      const cres = await fetch('/api/challenge', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ wallet, action })
       });
       const cdata = await cres.json();
@@ -152,13 +201,24 @@
       const message = `opennum:${action}:${actorNum}:${target ?? ''}:${ts}:${cdata.nonce}`;
       const signature = await window.unisat.signMessage(message, 'ecdsa');
       const res = await fetch('/api/social', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, actor_num: actorNum, wallet, signature, ts, nonce: cdata.nonce, ...extra })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Action failed.');
       return data;
+    }
+
+    // One signature unlocks the session, then watchlist + offers load with no further popups.
+    // If the user declines, the "View" gate buttons remain as a fallback.
+    async function autoUnlockPrivate(wallet, actorNum) {
+      try {
+        await ensureSession(wallet, actorNum);
+      } catch (_) {
+        return; // declined or failed -> keep gate buttons
+      }
+      loadWatchlist(wallet, actorNum);
+      loadOffers(wallet, actorNum);
     }
 
     function renderWatchlistGate() {
@@ -327,6 +387,7 @@
         document.getElementById('tradeLink').href = satflowUrl;
 
         setState('stateHas');
+        autoUnlockPrivate(wallet, num);   // one sign -> watchlist + offers load automatically
       } catch (_) {
         setState('stateConnect');
         setAlert('connectError', 'Could not load registry. Please try again.');
