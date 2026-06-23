@@ -18,7 +18,7 @@ const MAX_OFFER_PRICE_LENGTH = 80;
 const MAX_OFFER_NOTE_LENGTH = 280;
 const REPORT_TARGET_TYPES = new Set(['profile', 'message', 'number']);
 const OFFER_STATUS_VALUES = new Set(['archived', 'rejected']);
-const INBOX_OWN_EVENTS = ['public_message_received', 'followed', 'offer_received'];
+const INBOX_OWN_EVENTS = ['public_message_received', 'followed', 'offer_received', 'offer_rejected', 'offer_archived'];
 const INBOX_WATCH_EVENTS = ['ownership_transferred', 'marked_for_sale'];
 const SESSION_ALLOWED = new Set([
   'watchlist_list',
@@ -761,6 +761,16 @@ async function handleOfferStatus(req, res, body) {
     console.error('Social offer status update error:', error);
     return res.status(500).json({ error: 'Database error' });
   }
+
+  // Notify the buyer in their inbox that their offer was rejected/archived.
+  await emitEvent({
+    event_type: nextStatus === 'rejected' ? 'offer_rejected' : 'offer_archived',
+    subject_num: Number(offer.buyer_num),
+    actor_num: actorNum,
+    holder_period_id: offer.target_period_id,
+    visibility: 'inbox_only',
+    payload: { offer_id: offerId, status: nextStatus, target_num: Number(offer.target_num) }
+  });
 
   return res.status(200).json({ success: true, offer: data });
 }

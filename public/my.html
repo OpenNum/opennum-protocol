@@ -72,6 +72,12 @@
           <button class="btn" onclick="viewOffers()">View offers</button>
         </div>
       </div>
+      <div id="inboxSection" style="max-width:520px;margin:28px auto 0">
+        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Activity</div>
+        <div id="inboxBox">
+          <button class="btn" onclick="viewInbox()">View activity</button>
+        </div>
+      </div>
       <p class="small" style="margin-top:16px;text-align:center;color:var(--muted)">
         Selling your inscription will automatically release this OpenNum to the new holder.
       </p>
@@ -233,6 +239,7 @@
       }
       loadWatchlist(wallet, actorNum);
       loadOffers(wallet, actorNum);
+      loadInbox(wallet, actorNum);
     }
 
     function renderWatchlistGate() {
@@ -245,6 +252,52 @@
       const box = document.getElementById('offersBox');
       if (!box) return;
       box.innerHTML = '<button class="btn" onclick="viewOffers()">View offers</button>';
+    }
+
+    function renderInboxGate() {
+      const box = document.getElementById('inboxBox');
+      if (!box) return;
+      box.innerHTML = '<button class="btn" onclick="viewInbox()">View activity</button>';
+    }
+
+    function viewInbox() {
+      if (!currentWallet || currentActorNum === null) return;
+      loadInbox(currentWallet, currentActorNum);
+    }
+
+    function inboxLine(ev) {
+      const actor = ev.actor_num != null ? `#${ev.actor_num}` : 'Someone';
+      const tnum = ev.payload && ev.payload.target_num != null ? `#${ev.payload.target_num}` : 'a number';
+      switch (ev.event_type) {
+        case 'followed': return `<a class="watch-num" href="/n/${ev.actor_num}">${actor}</a> followed you`;
+        case 'public_message_received': return `<a class="watch-num" href="/n/${ev.actor_num}">${actor}</a> left you a message`;
+        case 'offer_received': return `<a class="watch-num" href="/n/${ev.actor_num}">${actor}</a> sent you a private offer`;
+        case 'offer_rejected': return `Your offer to ${tnum} was declined`;
+        case 'offer_archived': return `Your offer to ${tnum} was archived`;
+        case 'ownership_transferred': return `<a class="watch-num" href="/n/${ev.subject_num}">#${ev.subject_num}</a> (watched) changed hands`;
+        case 'marked_for_sale': return `<a class="watch-num" href="/n/${ev.subject_num}">#${ev.subject_num}</a> (watched) is now open to offers`;
+        default: return '';
+      }
+    }
+
+    async function loadInbox(wallet, actorNum) {
+      const box = document.getElementById('inboxBox');
+      if (!box) return;
+      box.innerHTML = '<div class="empty" style="padding:12px 0">Loading activity…</div>';
+      try {
+        const data = await signedSocial('inbox', '', actorNum, wallet);
+        const events = (data.inbox || []).map((ev) => ({ ev, line: inboxLine(ev) })).filter((x) => x.line);
+        if (!events.length) {
+          box.innerHTML = '<div class="empty" style="padding:12px 0">No activity yet. Follows, messages, and offers will show up here.</div>';
+          return;
+        }
+        box.innerHTML = events.map(({ ev, line }) => {
+          const date = ev.created_at ? new Date(ev.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }) : '';
+          return `<div class="inbox-row"><span class="inbox-text">${line}</span><span class="inbox-date">${date}</span></div>`;
+        }).join('');
+      } catch (e) {
+        box.innerHTML = '<div class="empty" style="padding:12px 0">Could not load activity. <button class="reply-btn" onclick="viewInbox()">Retry</button></div>';
+      }
     }
 
     function viewWatchlist() {
@@ -370,6 +423,7 @@
         currentActorNum = num;
         renderWatchlistGate();
         renderOffersGate();
+        renderInboxGate();
         const inscId = reg.inscription_id || (reg.inscription_txid ? `${reg.inscription_txid}i0` : '');
         document.getElementById('myNum').textContent = `#${num}`;
         document.getElementById('myStatus').textContent = reg.status === 'dormant' ? 'Dormant' : (reg.for_sale ? 'For sale' : 'Active');

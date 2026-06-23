@@ -433,6 +433,9 @@ img { max-width: 100%; }
 .offer-note { color: var(--soft-ink); font-size: 14px; margin-top: 6px; }
 .offer-link { display: inline-block; margin-top: 6px; color: var(--gold-deep); font-size: 13px; }
 .offer-actions { display: flex; gap: 16px; margin-top: 10px; }
+.inbox-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.inbox-text { color: var(--ink); font-size: 14px; }
+.inbox-date { color: var(--muted); font-size: 12px; white-space: nowrap; }
 
 .market-hero { padding: 70px 0 28px; }
 .search-card { padding: 12px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 24px; }
