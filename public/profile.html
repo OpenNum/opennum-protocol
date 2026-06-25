@@ -210,6 +210,16 @@
         <div class="thread" id="guestbookList"><div class="empty">Loading messages...</div></div>
       </section>
 
+      <section class="conversation" id="activitySection" style="display:none">
+        <div class="conversation-head">
+          <div>
+            <h2>Recent activity</h2>
+            <p>Public events on this OpenNum.</p>
+          </div>
+        </div>
+        <div id="activityFeed"></div>
+      </section>
+
       <details class="ownership-details">
         <summary>Ownership &amp; inscription details</summary>
         <div class="data-list">
@@ -263,6 +273,7 @@
         if (res.status === 404 || !res.ok) return showNotFound(num);
         await renderProfile(num, data);
         loadGuestbook();
+        loadPublicFeed(num);
         const hash = window.location.hash;
         if (hash === '#send') {
           setTimeout(() => { toggleSendPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
@@ -967,6 +978,34 @@
       } catch (e) {
         setAlert('sendError', e?.message || 'Wallet rejected or failed to submit the transaction.');
       }
+    }
+
+    function feedLine(ev) {
+      const actor = ev.actor_num != null ? `#${ev.actor_num}` : 'Someone';
+      switch (ev.event_type) {
+        case 'followed': return `<a href="/n/${ev.actor_num}">${actor}</a> followed this number`;
+        case 'public_message_received': return `<a href="/n/${ev.actor_num}">${actor}</a> left a public message`;
+        case 'marked_for_sale': return 'Marked open to offers';
+        case 'number_claimed': return 'Registered as an OpenNum';
+        case 'new_holder_claimed': return 'Claimed by a new holder';
+        case 'ownership_transferred': return 'Changed hands on-chain';
+        default: return '';
+      }
+    }
+
+    // Public activity feed for this number (no auth). Section stays hidden when there's nothing public.
+    async function loadPublicFeed(num) {
+      try {
+        const res = await fetch(`/api/social?view=feed&num=${num}`);
+        const data = await res.json();
+        const events = (data.events || []).map((ev) => ({ ev, line: feedLine(ev) })).filter((x) => x.line);
+        if (!events.length) return;
+        document.getElementById('activityFeed').innerHTML = events.map(({ ev, line }) => {
+          const date = ev.created_at ? new Date(ev.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }) : '';
+          return `<div class="inbox-row"><span class="inbox-text">${line}</span><span class="inbox-date">${date}</span></div>`;
+        }).join('');
+        document.getElementById('activitySection').style.display = 'block';
+      } catch (_) { /* feed is best-effort */ }
     }
 
     async function loadGuestbook(fresh) {
