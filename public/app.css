@@ -436,6 +436,10 @@ img { max-width: 100%; }
 .inbox-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .inbox-text { color: var(--ink); font-size: 14px; }
 .inbox-date { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.offer-status { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; }
+.offer-status.open { color: var(--gold-deep); background: var(--wash); }
+.offer-status.declined { color: #c0392b; background: #fbeae8; }
+.offer-status.archived { color: var(--muted); background: var(--wash); }
 
 .market-hero { padding: 70px 0 28px; }
 .search-card { padding: 12px; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 24px; }

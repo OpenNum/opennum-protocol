@@ -72,6 +72,12 @@
           <button class="btn" onclick="viewOffers()">View offers</button>
         </div>
       </div>
+      <div id="sentSection" style="max-width:520px;margin:28px auto 0">
+        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Offers you sent</div>
+        <div id="sentBox">
+          <button class="btn" onclick="viewSent()">View sent offers</button>
+        </div>
+      </div>
       <div id="inboxSection" style="max-width:520px;margin:28px auto 0">
         <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Activity</div>
         <div id="inboxBox">
@@ -147,7 +153,7 @@
     }
 
     // ---- Session token: sign once, then private reads + low-risk writes skip per-action signatures ----
-    const SESSION_ELIGIBLE = new Set(['watchlist_list', 'offer_list', 'inbox', 'watchlist_remove', 'follow', 'unfollow', 'watch', 'unwatch', 'watchlist_add']);
+    const SESSION_ELIGIBLE = new Set(['watchlist_list', 'offer_list', 'offer_sent', 'inbox', 'watchlist_remove', 'follow', 'unfollow', 'watch', 'unwatch', 'watchlist_add']);
 
     let _session = null;          // in-memory token cache (survives a flaky sessionStorage within a page view)
     let _sessionInflight = null;  // single in-flight establish, so concurrent calls never double-sign
@@ -239,6 +245,7 @@
       }
       loadWatchlist(wallet, actorNum);
       loadOffers(wallet, actorNum);
+      loadSent(wallet, actorNum);
       loadInbox(wallet, actorNum);
     }
 
@@ -258,6 +265,48 @@
       const box = document.getElementById('inboxBox');
       if (!box) return;
       box.innerHTML = '<button class="btn" onclick="viewInbox()">View activity</button>';
+    }
+
+    function renderSentGate() {
+      const box = document.getElementById('sentBox');
+      if (!box) return;
+      box.innerHTML = '<button class="btn" onclick="viewSent()">View sent offers</button>';
+    }
+
+    function viewSent() {
+      if (!currentWallet || currentActorNum === null) return;
+      loadSent(currentWallet, currentActorNum);
+    }
+
+    function offerStatusLabel(status) {
+      if (status === 'rejected') return '<span class="offer-status declined">Declined</span>';
+      if (status === 'archived') return '<span class="offer-status archived">Archived</span>';
+      return '<span class="offer-status open">Open</span>';
+    }
+
+    async function loadSent(wallet, actorNum) {
+      const box = document.getElementById('sentBox');
+      if (!box) return;
+      box.innerHTML = '<div class="empty" style="padding:12px 0">Loading…</div>';
+      try {
+        const data = await signedSocial('offer_sent', '', actorNum, wallet);
+        const offers = data.offers || [];
+        if (!offers.length) {
+          box.innerHTML = '<div class="empty" style="padding:12px 0">You haven’t sent any offers yet.</div>';
+          return;
+        }
+        box.innerHTML = offers.map((o) => `
+          <div class="offer-row">
+            <div class="offer-head">
+              <span>To <a class="watch-num" href="/n/${o.target_num}">#${o.target_num}</a></span>
+              ${o.price_text ? `<span class="offer-price">${escapeHtml(o.price_text)}</span>` : ''}
+              ${offerStatusLabel(o.status)}
+            </div>
+            ${o.note ? `<div class="offer-note">${escapeHtml(o.note)}</div>` : ''}
+          </div>`).join('');
+      } catch (e) {
+        box.innerHTML = '<div class="empty" style="padding:12px 0">Could not load your sent offers. <button class="reply-btn" onclick="viewSent()">Retry</button></div>';
+      }
     }
 
     function viewInbox() {
@@ -423,6 +472,7 @@
         currentActorNum = num;
         renderWatchlistGate();
         renderOffersGate();
+        renderSentGate();
         renderInboxGate();
         const inscId = reg.inscription_id || (reg.inscription_txid ? `${reg.inscription_txid}i0` : '');
         document.getElementById('myNum').textContent = `#${num}`;

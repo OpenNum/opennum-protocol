@@ -72,6 +72,19 @@ async function viewerFollows(viewerNum, targetNum) {
   return !!(data && data.length);
 }
 
+async function viewerWatches(viewerNum, targetNum) {
+  if (!Number.isInteger(viewerNum)) return false;
+  const { data, error } = await supabase
+    .from('number_watches')
+    .select('id')
+    .eq('watcher_num', viewerNum)
+    .eq('target_num', targetNum)
+    .eq('status', 'active')
+    .limit(1);
+  if (error) return false;
+  return !!(data && data.length);
+}
+
 async function fetchInscription(inscriptionId) {
   const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
     headers: {
@@ -98,6 +111,7 @@ module.exports = async (req, res) => {
   const socialCounts = await loadSocialCounts(num);
   const viewerNum = parseInt(String(req.query.viewer || '').replace(/^#/, ''), 10);
   const viewerFollowsTarget = Number.isInteger(viewerNum) ? await viewerFollows(viewerNum, num) : false;
+  const viewerWatchesTarget = Number.isInteger(viewerNum) ? await viewerWatches(viewerNum, num) : false;
 
   const { data, error } = await supabase
     .from('registrations')
@@ -183,6 +197,7 @@ module.exports = async (req, res) => {
     following: socialCounts.following,
     social_counts: socialCounts,
     viewer_follows: viewerFollowsTarget,
+    viewer_watches: viewerWatchesTarget,
     indexer_ruleset: data.indexer_ruleset,
     registered_at: data.registered_at,
     owner_checked_at: ownership.ownerCheckedAt,

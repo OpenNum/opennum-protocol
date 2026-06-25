@@ -34,6 +34,7 @@ const ACTIONS = new Set([
   'claim',
   'offer',
   'offer_list',
+  'offer_sent',
   'offer_status',
   'inbox'
 ]);

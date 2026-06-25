@@ -23,6 +23,7 @@ const INBOX_WATCH_EVENTS = ['ownership_transferred', 'marked_for_sale'];
 const SESSION_ALLOWED = new Set([
   'watchlist_list',
   'offer_list',
+  'offer_sent',
   'inbox',
   'follow',
   'unfollow',
@@ -718,6 +719,30 @@ async function handleOfferList(req, res, body) {
   });
 }
 
+// Offers the signer has SENT (buyer side), with their current status.
+async function handleOfferSent(req, res, body) {
+  const actorNum = normalizeNumber(body.actor_num);
+  if (actorNum === null) return res.status(400).json({ error: 'Missing or invalid actor_num' });
+
+  const verified = await verifySocialAction({ body, action: 'offer_sent', actorNum, target: '' });
+  if (verified.error) return res.status(verified.error.status).json({ error: verified.error.message });
+
+  const { data, error } = await supabase
+    .from('private_offers')
+    .select('id, buyer_num, target_num, price_text, note, satflow_url, status, created_at')
+    .eq('buyer_wallet', verified.wallet)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (missingRelationshipTable(error)) return res.status(503).json({ error: 'Private offers table is not installed yet. Run the Supabase migration in docs/database.md.' });
+  if (error) {
+    console.error('Social offer sent error:', error);
+    return res.status(500).json({ error: 'Database error' });
+  }
+
+  return res.status(200).json({ success: true, offers: data || [] });
+}
+
 async function handleOfferStatus(req, res, body) {
   const actorNum = normalizeNumber(body.actor_num);
   const offerId = normalizeOfferId(body.offer_id ?? body.target);
@@ -913,6 +938,7 @@ module.exports = async (req, res) => {
   if (action === 'report') return handleReport(req, res, body);
   if (action === 'offer') return handleOffer(req, res, body);
   if (action === 'offer_list') return handleOfferList(req, res, body);
+  if (action === 'offer_sent') return handleOfferSent(req, res, body);
   if (action === 'offer_status') return handleOfferStatus(req, res, body);
   if (action === 'inbox') return handleInbox(req, res, body);
 
