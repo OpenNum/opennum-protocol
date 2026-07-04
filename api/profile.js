@@ -160,7 +160,7 @@ module.exports = async (req, res) => {
   const ownershipVerified = ownership.ownershipVerified;
   const ownerMismatch = ownership.ownerMismatch;
   const effectiveStatus = ownerMismatch ? 'dormant' : (data.status === 'dormant' && !ownerMismatch ? 'active' : data.status);
-  const collections = await resolveCollections(inscriptionId);
+  const collections = await resolveCollections(inscriptionId, num);
   const members = collections.length
     ? await collectionMembers(collections.map((c) => c.collection_slug), inscriptionId)
     : [];
