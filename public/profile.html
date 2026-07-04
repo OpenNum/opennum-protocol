@@ -89,6 +89,11 @@
             <div id="socialGrid" class="social-grid"></div>
           </div>
 
+          <div id="collectionCircle" class="collection-circle" style="display:none">
+            <div class="collection-circle-title" id="collectionCircleTitle"></div>
+            <div class="collection-circle-rows" id="collectionCircleRows"></div>
+          </div>
+
           <div class="primary-actions" id="send">
             <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC</button>
             <a class="btn" id="messageJumpBtn" href="#messages">Message</a>
@@ -128,32 +133,42 @@
             </div>
             <div>
               <label class="data-key" style="display:block;margin-bottom:4px">X / Twitter</label>
-              <input class="input" id="editX" type="text" placeholder="@yourhandle or https://x.com/yourhandle" />
+              <input class="input" id="editX" type="text" placeholder="@yourhandle" />
             </div>
-            <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">Instagram URL</label>
-              <input class="input" id="editInstagram" type="url" placeholder="https://instagram.com/yourhandle" />
-            </div>
-            <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">Telegram URL</label>
-              <input class="input" id="editTelegram" type="url" placeholder="https://t.me/yourhandle" />
-            </div>
-            <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">Website</label>
-              <input class="input" id="editWebsite" type="url" placeholder="https://yoursite.com" />
-            </div>
-            <label class="checkbox-row">
-              <input id="editForSale" type="checkbox" />
-              <span>This number is open to offers</span>
-            </label>
-            <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">Selling note</label>
-              <textarea class="textarea" id="editAskNote" maxlength="240" rows="2" placeholder="e.g. Open to serious offers for this birthday number."></textarea>
-            </div>
-            <div>
-              <label class="data-key" style="display:block;margin-bottom:4px">Satflow URL</label>
-              <input class="input" id="editSatflowUrl" type="url" placeholder="https://www.satflow.com/ordinal/..." />
-            </div>
+            <details class="edit-group">
+              <summary>More links <span>Instagram · Telegram · Website</span></summary>
+              <div style="display:grid;gap:12px;padding-top:12px">
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Instagram</label>
+                  <input class="input" id="editInstagram" type="text" placeholder="@yourhandle" />
+                </div>
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Telegram</label>
+                  <input class="input" id="editTelegram" type="text" placeholder="@yourhandle" />
+                </div>
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Website</label>
+                  <input class="input" id="editWebsite" type="url" placeholder="https://yoursite.com" />
+                </div>
+              </div>
+            </details>
+            <details class="edit-group" id="sellingGroup">
+              <summary>Selling <span>open to offers · note · Satflow link</span></summary>
+              <div style="display:grid;gap:12px;padding-top:12px">
+                <label class="checkbox-row">
+                  <input id="editForSale" type="checkbox" />
+                  <span>This number is open to offers</span>
+                </label>
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Selling note</label>
+                  <textarea class="textarea" id="editAskNote" maxlength="240" rows="2" placeholder="e.g. Open to serious offers for this birthday number."></textarea>
+                </div>
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Satflow URL</label>
+                  <input class="input" id="editSatflowUrl" type="url" placeholder="https://www.satflow.com/ordinal/..." />
+                </div>
+              </div>
+            </details>
           </div>
           <div class="form-row" style="margin-top:16px">
             <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
@@ -392,6 +407,7 @@
 
       renderSocialLinks(data.links || {});
       renderCollections(data.collections || []);
+      renderCollectionCircle(data.collections || [], data.collection_members || []);
       renderTraits(data.traits || {});
       renderCounts(data.followers, data.following);
       if (!dormant) {
@@ -743,10 +759,25 @@
       }
       box.style.display = 'flex';
       box.innerHTML = collections.map((c) => `
-        <span class="collection-item">
+        <a class="collection-item" href="https://ordinalswallet.com/collection/${encodeURIComponent(c.collection_slug)}" target="_blank" rel="noopener noreferrer" title="View collection">
           <span aria-hidden="true">✓</span> ${escapeHtml(c.collection_name || c.collection_slug)}
-        </span>
+        </a>
       `).join('');
+    }
+
+    // Fellow collection holders who registered an OpenNum — the collection social layer.
+    function renderCollectionCircle(collections, members) {
+      const box = document.getElementById('collectionCircle');
+      if (!collections.length || !members.length) { box.style.display = 'none'; return; }
+      const name = collections[0].collection_name || collections[0].collection_slug;
+      document.getElementById('collectionCircleTitle').textContent = `${name} on OpenNum`;
+      document.getElementById('collectionCircleRows').innerHTML = members.map((m) => `
+        <a class="cc-row" href="/n/${m.num}">
+          <span class="cc-avatar"><img src="https://ordinals.com/content/${escapeHtml(m.inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" /></span>
+          <strong>#${m.num}</strong>${m.display_name ? `<span>${escapeHtml(m.display_name)}</span>` : ''}
+        </a>
+      `).join('');
+      box.style.display = 'block';
     }
 
     const SOCIAL_DEFS = [
@@ -899,6 +930,13 @@
           document.getElementById('editForSale').checked = !!currentProfile.for_sale;
           document.getElementById('editAskNote').value = currentProfile.ask_note || '';
           document.getElementById('editSatflowUrl').value = currentProfile.satflow_url || '';
+          // Open the folded groups when they already hold values, so nothing looks lost.
+          if (links.instagram || links.telegram || links.website) {
+            document.querySelector('.edit-group').open = true;
+          }
+          if (currentProfile.for_sale || currentProfile.ask_note || currentProfile.satflow_url) {
+            document.getElementById('sellingGroup').open = true;
+          }
         }
       } catch (_) {}
     }

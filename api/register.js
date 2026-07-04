@@ -156,15 +156,18 @@ module.exports = async (req, res) => {
     }
     const oldPeriodId = await closeCurrentHolderPeriod(existing, 'transfer');
 
-    // Verified transfer/reactivation: update existing row and reset public profile for the new holder.
+    // Verified transfer/reactivation: update existing row and reset the public profile
+    // for the new holder (seeded with whatever they provided at claim time).
+    const claimDisplayName = sanitizeText(display_name, 48);
+    const claimLinks = (links && typeof links === 'object') ? sanitizeLinks(links) : {};
     const updatePayload = {
       inscription_txid,
       inscription_id: inscription_id || `${inscription_txid}i0`,
       wallet_address: wallet,
       signature,
-      display_name: null,
+      display_name: claimDisplayName,
       bio: null,
-      links: {},
+      links: claimLinks,
       for_sale: false,
       ask_note: null,
       satflow_url: null,
@@ -205,9 +208,9 @@ module.exports = async (req, res) => {
       inscription_num,
       wallet,
       profile: {
-        display_name: null,
+        display_name: claimDisplayName,
         bio: null,
-        links: {},
+        links: claimLinks,
         for_sale: false,
         ask_note: null,
         satflow_url: null

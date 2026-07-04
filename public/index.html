@@ -96,6 +96,13 @@
       </div>
     </section>
 
+    <section class="home-recent" id="homeRecent" style="display:none">
+      <div class="shell">
+        <div class="home-recent-title">Recently claimed numbers</div>
+        <div class="home-recent-rows" id="homeRecentRows"></div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer">
@@ -311,6 +318,23 @@
     document.addEventListener('DOMContentLoaded', initCarousel);
     window.addEventListener('load', initCarousel);
     setTimeout(initCarousel, 0);
+
+    // Recently claimed numbers — social proof strip under the hero.
+    (async function loadRecent() {
+      try {
+        const res = await fetch('/api/list?limit=8', { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        const regs = (data.registrations || []).filter((r) => r.status === 'active');
+        if (!regs.length) return;
+        document.getElementById('homeRecentRows').innerHTML = regs.map((r) => `
+          <a class="cc-row" href="/n/${r.inscription_num}">
+            <span class="cc-avatar"><img src="https://ordinals.com/content/${r.inscription_id}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" /></span>
+            <strong>#${r.inscription_num}</strong>${r.display_name ? `<span>${String(r.display_name).replace(/[&<>"']/g, '')}</span>` : ''}
+          </a>
+        `).join('');
+        document.getElementById('homeRecent').style.display = 'block';
+      } catch (_) { /* strip is best-effort */ }
+    })();
 
     function startCarousel() {
       clearTimeout(carouselTimer);

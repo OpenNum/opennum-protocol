@@ -248,6 +248,9 @@ img { max-width: 100%; }
 .preview-actions { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
 .preview-actions .btn { flex: 1 1 auto; }
 
+.home-recent { padding: 26px 0 58px; }
+.home-recent-title { color: var(--muted); font-size: 12px; font-weight: 820; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.home-recent-rows { display: flex; flex-wrap: wrap; gap: 10px; }
 .home-strip { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--wash); }
 .workflow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); }
 .workflow-item { display: block; min-height: 210px; padding: 30px; background: var(--paper); }
@@ -285,8 +288,18 @@ img { max-width: 100%; }
 }
 .profile-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .collection-list { margin-top: 14px; gap: 8px; flex-wrap: wrap; }
-.collection-item { display: inline-flex; align-items: center; gap: 7px; color: var(--deep); font-size: 13px; font-weight: 760; }
-.collection-item > span { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--deep); color: white; font-size: 11px; }
+.collection-item { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 6px; border: 1px solid #d7e4e8; border-radius: 20px; background: var(--wash); color: var(--deep); font-size: 13px; font-weight: 760; transition: border-color 0.15s, background 0.15s; }
+.collection-item:hover { border-color: var(--copper); background: #fffaf0; color: var(--gold-deep); }
+.collection-item > span { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: var(--deep); color: white; font-size: 11px; flex-shrink: 0; }
+.collection-circle { margin-top: 28px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--wash); }
+.collection-circle-title { color: var(--muted); font-size: 12px; font-weight: 820; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.collection-circle-rows { display: flex; flex-wrap: wrap; gap: 8px; }
+.cc-row { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border: 1px solid var(--line); border-radius: 22px; background: white; color: var(--ink); font-size: 14px; transition: border-color 0.15s, transform 0.12s; }
+.cc-row:hover { border-color: var(--copper); transform: translateY(-1px); }
+.cc-row strong { font-weight: 820; }
+.cc-row span:not(.cc-avatar) { color: var(--muted); font-size: 13px; }
+.cc-avatar { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--wash); border: 1px solid var(--line); color: var(--deep); font-size: 11px; font-weight: 850; flex-shrink: 0; }
+.cc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .art-links { display: flex; justify-content: space-between; gap: 20px; padding: 16px 2px 0; color: var(--soft-ink); font-size: 13px; font-weight: 720; }
 .art-links a:hover { color: var(--copper); }
 .profile-identity {
@@ -397,6 +410,12 @@ img { max-width: 100%; }
 .input:focus, .textarea:focus { border-color: var(--copper); box-shadow: 0 0 0 3px rgba(201, 135, 47, 0.13), 0 10px 24px rgba(14,45,57,0.05); }
 .textarea { min-height: 96px; resize: vertical; }
 .amount-input { max-width: 170px; }
+.edit-group { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: white; }
+.edit-group > summary { cursor: pointer; color: var(--ink); font-size: 14px; font-weight: 780; list-style: none; display: flex; align-items: baseline; gap: 10px; }
+.edit-group > summary::-webkit-details-marker { display: none; }
+.edit-group > summary::before { content: '▸'; color: var(--muted); }
+.edit-group[open] > summary::before { content: '▾'; }
+.edit-group > summary span { color: var(--muted); font-size: 12px; font-weight: 720; }
 .checkbox-row { display: flex; align-items: flex-start; gap: 10px; color: var(--ink); font-weight: 760; }
 .checkbox-row input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--deep); }
 .alert { display: none; margin-top: 12px; padding: 11px 12px; border-radius: 8px; font-size: 13px; }

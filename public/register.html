@@ -37,23 +37,23 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --black:  #f8f6ef;
-      --white:  #102033;
-      --orange: #f7931a;
-      --dim:    #536273;
-      --muted:  #8a918f;
-      --border: #e5dfd2;
-      --card:   #fffdf7;
-      --green:  #22c55e;
-      --red:    #ef4444;
+      --black:  #ffffff;
+      --white:  #173746;
+      --orange: #c9872f;
+      --dim:    #566a73;
+      --muted:  #87959b;
+      --border: #e3eaed;
+      --card:   #ffffff;
+      --green:  #149660;
+      --red:    #c94b4b;
     }
     html { scroll-behavior: smooth; }
     body { background: var(--black); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; min-height: 100vh; }
     a { color: inherit; text-decoration: none; }
-    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #141414; padding: 2px 8px; border-radius: 3px; color: var(--orange); }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #f7fafa; padding: 2px 8px; border-radius: 3px; color: var(--orange); }
 
     /* NAV */
-    nav { position: sticky; top: 0; z-index: 100; background: rgba(248,246,239,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
     .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
     .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
     .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
@@ -86,48 +86,58 @@
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
     .btn:hover { opacity: 0.88; }
     .btn:active { transform: scale(0.98); }
-    .btn-primary { background: var(--orange); color: #000; }
+    .btn-primary { background: linear-gradient(180deg, #214d5c 0%, #0e2d39 100%); color: #fff; }
     .btn-outline { background: transparent; color: var(--white); border: 1.5px solid var(--border); }
     .btn-outline:hover { border-color: var(--orange); color: var(--orange); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     /* WALLET STATUS */
-    .wallet-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 18px; background: #fffaf0; border: 1px solid var(--border); border-radius: 8px; }
+    .wallet-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 18px; background: #f7fafa; border: 1px solid var(--border); border-radius: 8px; }
     .wallet-indicator { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 6px var(--green); }
     .wallet-indicator.off { background: var(--muted); box-shadow: none; }
     .wallet-addr { font-family: 'SF Mono', monospace; font-size: 12px; color: var(--dim); }
     .wallet-label { font-size: 13px; font-weight: 600; }
-    .bound-card { margin-top: 18px; padding: 18px; border: 1px solid var(--border); border-radius: 8px; background: #fffaf0; }
+    .bound-card { margin-top: 18px; padding: 18px; border: 1px solid var(--border); border-radius: 8px; background: #f7fafa; }
     .bound-num { font-size: 34px; line-height: 1; font-weight: 900; color: var(--orange); letter-spacing: -1px; margin: 8px 0; }
     .bound-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 
     /* INSCRIPTION GRID */
     .inscription-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
-    .insc-card { background: #fffaf0; border: 1.5px solid var(--border); border-radius: 8px; padding: 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
+    .insc-card { background: #fff; border: 1.5px solid var(--border); border-radius: 8px; padding: 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; box-shadow: 0 8px 22px rgba(14,45,57,0.05); }
     .insc-card:hover { border-color: var(--orange); }
     .insc-card.selected { border-color: var(--orange); background: rgba(247,147,26,0.05); }
     .insc-card.selected::after { content: '✓'; position: absolute; top: 8px; right: 10px; color: var(--orange); font-size: 14px; font-weight: 700; }
-    .insc-preview { width: 100%; aspect-ratio: 1; background: #f1eadc; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .insc-preview { width: 100%; aspect-ratio: 1; background: #f7fafa; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .insc-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
     .insc-preview .insc-type { font-size: 11px; color: var(--muted); text-align: center; padding: 4px; }
     .insc-num { font-size: 20px; font-weight: 800; color: var(--orange); letter-spacing: -0.5px; }
     .insc-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .insc-already { position: absolute; top: 8px; left: 10px; font-size: 10px; font-weight: 700; background: rgba(34,197,94,0.15); color: var(--green); padding: 2px 6px; border-radius: 3px; }
 
-    .load-more { display: block; text-align: center; padding: 12px; margin-top: 16px; font-size: 13px; color: var(--orange); cursor: pointer; border: 1px dashed #2a2a2a; border-radius: 8px; }
+    .load-more { display: block; text-align: center; padding: 12px; margin-top: 16px; font-size: 13px; color: var(--orange); cursor: pointer; border: 1px dashed var(--border); border-radius: 8px; }
     .load-more:hover { border-color: var(--orange); background: rgba(247,147,26,0.04); }
 
     /* DISPLAY NAME */
     .input-wrap { margin-bottom: 20px; }
     .input-label { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; display: block; }
-    .input-field { width: 100%; background: #fffaf0; border: 1px solid var(--border); color: var(--white); font-size: 14px; font-family: inherit; padding: 12px 16px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+    .input-field { width: 100%; background: #fff; border: 1px solid var(--border); color: var(--white); font-size: 14px; font-family: inherit; padding: 12px 16px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
     .input-field::placeholder { color: var(--muted); }
     .input-field:focus { border-color: var(--orange); }
 
     /* SIGNING PREVIEW */
-    .sign-box { background: #fffaf0; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .sign-box { background: #f7fafa; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .sign-hero { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .sign-hero-art { width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: #fff; display: grid; place-items: center; color: var(--orange); font-weight: 800; flex-shrink: 0; }
+    .sign-hero-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sign-hero-num { font-size: 30px; font-weight: 900; color: var(--orange); letter-spacing: -1px; line-height: 1.1; }
+    .sign-hero-sub { font-size: 12px; color: var(--dim); }
+    .tech-details { margin-top: 10px; }
+    .tech-details summary { cursor: pointer; font-size: 12px; color: var(--muted); padding: 6px 0; list-style: none; }
+    .tech-details summary::-webkit-details-marker { display: none; }
+    .tech-details summary::before { content: '▸ '; }
+    .tech-details[open] summary::before { content: '▾ '; }
     .sign-box-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
-    .sign-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
+    .sign-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
     .sign-row:last-child { border-bottom: none; }
     .sign-key { font-size: 12px; color: var(--muted); }
     .sign-val { font-size: 13px; font-weight: 600; color: var(--white); font-family: 'SF Mono', monospace; }
@@ -161,7 +171,7 @@
     hr.sep { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
     /* FOOTER NOTE */
-    .footnote { font-size: 12px; color: #444; line-height: 1.7; margin-top: 16px; }
+    .footnote { font-size: 12px; color: var(--dim); line-height: 1.7; margin-top: 16px; }
     .footnote a { color: var(--muted); text-decoration: underline; }
 
     .nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); cursor: pointer; padding: 8px 9px; flex-shrink: 0; }
@@ -172,7 +182,7 @@
     @media (max-width: 600px) {
       nav { padding: 0 20px; }
       .nav-toggle { display: flex; }
-      .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; gap: 2px; padding: 10px 12px 14px; background: rgba(248,246,239,0.98); border-bottom: 1px solid var(--border); box-shadow: 0 12px 32px rgba(16,32,51,0.10); z-index: 40; }
+      .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; gap: 2px; padding: 10px 12px 14px; background: rgba(255,255,255,0.98); border-bottom: 1px solid var(--border); box-shadow: 0 12px 32px rgba(16,32,51,0.10); z-index: 40; }
       .nav-links.open { display: flex; }
       .nav-links a { padding: 11px 14px; border-radius: 8px; font-size: 15px; }
       .panel { padding: 24px 20px; }
@@ -199,9 +209,9 @@
 <div class="page-wrap">
 
   <!-- HEADER -->
-  <div class="page-eyebrow">Bitcoin Identity · Phase 2</div>
+  <div class="page-eyebrow">Bitcoin Identity</div>
   <h1 class="page-title">Claim Your <span>Number</span></h1>
-  <p class="page-desc">Connect Unisat, pick an inscription you own, and sign once. This alpha registration flow writes to the live OpenNum resolver — no gas, no smart contract, no middleman.</p>
+  <p class="page-desc">Connect your wallet, pick an inscription you own, sign once. Free, no gas, done in a minute — your number becomes a public Bitcoin identity page.</p>
 
   <!-- STEP INDICATORS -->
   <div class="steps" id="steps">
@@ -270,22 +280,33 @@
   <!-- STEP 3: SIGN & CONFIRM -->
   <div id="step3" class="panel" style="display:none">
     <div class="panel-title">Sign &amp; Register</div>
-    <div class="panel-desc">Review your registration details and sign with your wallet. This proves you own inscription <span id="signNum" style="color:var(--orange);font-weight:700"></span>.</div>
+    <div class="panel-desc">One signature proves you own inscription <span id="signNum" style="color:var(--orange);font-weight:700"></span>. Free — no on-chain transaction.</div>
     <div class="alert alert-error" id="err3"></div>
     <div class="sign-box">
-      <div class="sign-box-label">Registration Preview</div>
-      <div class="sign-row"><span class="sign-key">Inscription Number</span><span class="sign-val orange" id="prevNum"></span></div>
-      <div class="sign-row"><span class="sign-key">Inscription ID</span><span class="sign-val" id="prevInscriptionId" style="font-size:11px"></span></div>
-      <div class="sign-row"><span class="sign-key">Inscription Txid</span><span class="sign-val" id="prevTxid" style="font-size:11px"></span></div>
+      <div class="sign-hero">
+        <div class="sign-hero-art" id="signHeroArt">#</div>
+        <div>
+          <div class="sign-hero-num" id="prevNum"></div>
+          <div class="sign-hero-sub">becomes your OpenNum identity</div>
+        </div>
+      </div>
       <div class="sign-row"><span class="sign-key">Your Wallet</span><span class="sign-val" id="prevWallet" style="font-size:11px"></span></div>
-      <div class="sign-row"><span class="sign-key">Protocol</span><span class="sign-val">opennum v1.0</span></div>
-      <div class="sign-row"><span class="sign-key">Indexer</span><span class="sign-val">ord-v0.18-mainnet</span></div>
-      <div class="sign-row"><span class="sign-key">Endpoint</span><span class="sign-val">POST /api/register</span></div>
       <div class="sign-row"><span class="sign-key">Cost</span><span class="sign-val" style="color:var(--green)">Free — no on-chain transaction</span></div>
+      <details class="tech-details">
+        <summary>Technical details</summary>
+        <div class="sign-row"><span class="sign-key">Inscription ID</span><span class="sign-val" id="prevInscriptionId" style="font-size:11px"></span></div>
+        <div class="sign-row"><span class="sign-key">Inscription Txid</span><span class="sign-val" id="prevTxid" style="font-size:11px"></span></div>
+        <div class="sign-row"><span class="sign-key">Protocol</span><span class="sign-val">opennum v1.0</span></div>
+        <div class="sign-row"><span class="sign-key">Indexer</span><span class="sign-val">ord-v0.18-mainnet</span></div>
+      </details>
     </div>
     <div style="margin-bottom:20px">
       <label class="input-label">Display Name <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
       <input type="text" class="input-field" id="displayNameInput" placeholder="e.g. Satoshi, vince.btc" maxlength="48" />
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="input-label">X / Twitter <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional — shown on your profile)</span></label>
+      <input type="text" class="input-field" id="xHandleInput" placeholder="@yourhandle" maxlength="60" />
     </div>
     <div class="sign-message-raw" id="signMessagePreview" style="display:none"></div>
     <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
@@ -615,6 +636,12 @@
 
     document.getElementById('signNum').textContent = `#${num}`;
     document.getElementById('prevNum').textContent = `#${num}`;
+    const heroArt = document.getElementById('signHeroArt');
+    if ((selectedInscription.contentType || '').startsWith('image/')) {
+      heroArt.innerHTML = `<img src="https://ordinals.com/content/${selectedInscription.inscriptionId}" alt="#${num}" onerror="this.parentElement.textContent='#'" />`;
+    } else {
+      heroArt.textContent = `#${num}`;
+    }
     document.getElementById('prevInscriptionId').textContent = selectedInscription.inscriptionId;
     document.getElementById('prevTxid').textContent = txid;
     document.getElementById('prevWallet').textContent = walletAddr;
@@ -643,6 +670,12 @@
     const num = selectedInscription.inscriptionNumber;
     const txid = selectedInscription.txid;
     const displayName = document.getElementById('displayNameInput').value.trim();
+    const xRaw = document.getElementById('xHandleInput').value.trim();
+    let links;
+    if (xRaw) {
+      const xUrl = /^https?:\/\//i.test(xRaw) ? xRaw : `https://x.com/${xRaw.replace(/^@+/, '')}`;
+      links = { x: xUrl };
+    }
     const ts = document.getElementById('signMessagePreview')._timestamp || Math.floor(Date.now() / 1000);
     const message = `opennum:register:${num}:${walletAddr}:${ts}`;
 
@@ -673,7 +706,8 @@
           wallet: walletAddr,
           signature,
           timestamp: ts,
-          display_name: displayName || undefined
+          display_name: displayName || undefined,
+          links
         })
       });
       const data = await res.json();

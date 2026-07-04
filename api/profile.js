@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { setCors } = require('../lib/_security');
 const { resolveOwnershipState } = require('../lib/_ownership');
+const { resolveCollections, collectionMembers } = require('../lib/_collections');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -159,20 +160,10 @@ module.exports = async (req, res) => {
   const ownershipVerified = ownership.ownershipVerified;
   const ownerMismatch = ownership.ownerMismatch;
   const effectiveStatus = ownerMismatch ? 'dormant' : (data.status === 'dormant' && !ownerMismatch ? 'active' : data.status);
-  let collections = [];
-  try {
-    const result = await supabase
-      .from('inscription_collections')
-      .select('collection_slug, collection_name, source, verified_at')
-      .eq('inscription_id', inscriptionId)
-      .order('collection_name', { ascending: true });
-    if (!result.error) collections = result.data || [];
-    else if (!/relation .*inscription_collections/i.test(result.error.message || '')) {
-      console.error('Collection lookup error:', result.error);
-    }
-  } catch (_) {
-    collections = [];
-  }
+  const collections = await resolveCollections(inscriptionId);
+  const members = collections.length
+    ? await collectionMembers(collections.map((c) => c.collection_slug), inscriptionId)
+    : [];
 
   return res.status(200).json({
     inscription_num: data.inscription_num,
@@ -192,6 +183,7 @@ module.exports = async (req, res) => {
     ask_note: data.ask_note || null,
     satflow_url: data.satflow_url || null,
     collections,
+    collection_members: members,
     traits,
     followers: socialCounts.followers,
     following: socialCounts.following,
