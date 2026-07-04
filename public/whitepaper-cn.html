@@ -206,7 +206,7 @@
     <div class="doc-subtitle">比特币 Ordinals 时代的原生身份标准</div>
     <div class="doc-meta">
       <span>版本 1.0</span>
-      <span>2026年3月</span>
+      <span>2026年3月 · 2026年7月修订</span>
       <span>OpenNum Team</span>
       <span>opennum.org</span>
       <span>开源协议：MIT</span>
@@ -232,7 +232,6 @@
           <li><a href="#indexer">索引器架构</a></li>
           <li><a href="#authority">编号权威与确定性基础</a></li>
           <li><a href="#statemachine">身份状态机</a></li>
-          <li><a href="#btcsuffix">.btc 域名铭刻作为显示别名</a></li>
         </ol>
       </li>
       <li><a href="#usecases">应用场景</a></li>
@@ -291,7 +290,8 @@
 <span class="k">{</span><br />
 &nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
 &nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.0"</span>,<br />
-&nbsp;&nbsp;<span class="k">"inscription_id"</span>: <span class="v">"[铭刻编号，整数]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_number"</span>: <span class="v">2025</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// 人类可读编号</span><br />
+&nbsp;&nbsp;<span class="k">"inscription_txid"</span>: <span class="v">"[铭刻交易ID]"</span>,&nbsp;&nbsp;&nbsp;<span class="c">// 共识锚点（见 §3.5）</span><br />
 &nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"[比特币 Taproot 地址]"</span>,<br />
 &nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">"[Unix 时间戳]"</span>,<br />
 &nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"[对上述字段的 secp256k1 签名]"</span><br />
@@ -363,7 +363,7 @@
   </div>
 
   <h3 id="statemachine">3.6 身份状态机</h3>
-  <p>每个 OpenNum 编号在任何时刻处于四种状态之一。这个<strong>身份状态机</strong>（Identity State Machine）是 OpenNum 协议的核心机制，确保铭刻所有权变更时身份状态的清晰传递。</p>
+  <p>每个 OpenNum 编号会解析到以下状态之一。每次查询都会向 Ordinals 索引器重新核验所有权，因此状态始终反映当前的链上事实：</p>
   <table>
     <thead>
       <tr>
@@ -377,51 +377,25 @@
       <tr>
         <td><strong>活跃（Active）</strong></td>
         <td>🟢</td>
-        <td>已注册且有效；铭刻当前持有者已完成签名注册</td>
+        <td>已注册且有效；签名的钱包仍持有该铭刻</td>
         <td>返回当前钱包地址</td>
+      </tr>
+      <tr>
+        <td><strong>出售中（For sale）</strong></td>
+        <td>🟠</td>
+        <td>活跃编号，且持有者已标记"接受报价"</td>
+        <td>返回钱包地址 + 出售标记及说明</td>
       </tr>
       <tr>
         <td><strong>休眠（Dormant）</strong></td>
         <td>⚫</td>
-        <td>铭刻已转让；旧注册自动失效，新持有者尚未注册</td>
-        <td>返回"休眠"，不可用于支付</td>
-      </tr>
-      <tr>
-        <td><strong>冷却（Cooling）</strong></td>
-        <td>🟠 + 倒计时</td>
-        <td>铭刻在过去30天内发生转让；提示接收方尽快激活身份</td>
-        <td>返回"冷却中"及剩余天数</td>
-      </tr>
-      <tr>
-        <td><strong>标记（Flagged）</strong></td>
-        <td>🔵</td>
-        <td>前任持有者主动发布了链下转让声明；新持有者已获公开通知</td>
-        <td>返回"标记"及声明内容</td>
+        <td>铭刻已在链上转手；旧注册自动失效，新持有者尚未认领</td>
+        <td>返回"休眠"；认领前支付与留言暂停</td>
       </tr>
     </tbody>
   </table>
-  <p>状态转换规则如下：</p>
-  <ul>
-    <li><strong>活跃 → 休眠：</strong>铭刻发生比特币层面的所有权转移，旧注册自动失效</li>
-    <li><strong>休眠 → 冷却：</strong>转移发生时间在30天内，系统自动进入冷却状态提示激活</li>
-    <li><strong>冷却/休眠 → 活跃：</strong>新持有者完成 OpenNum 注册签名</li>
-    <li><strong>任何状态 → 标记：</strong>前任持有者主动发布链下转让声明（可附接收方联系方式）</li>
-  </ul>
   <div class="callout">
-    <strong>冷却期的设计意义：</strong>铭刻市场交易活跃，30天冷却窗口给予钱包应用、外部集成方和新持有者充足的缓冲时间处理所有权变更。冷却期内 OpenNum ID 以醒目的橙色标志显示，而非直接进入无声的休眠状态，大幅减少新持有者因未及时注册而错过支付的情况。
-  </div>
-
-  <h3 id="btcsuffix">3.7 .btc 域名铭刻作为显示别名</h3>
-  <p>比特币 Ordinals 生态中存在大量以 JSON 格式铭刻的域名注册——如 <code>{"p":"sns","op":"reg","name":"satoshi.btc"}</code>。这些铭刻通过标准 Ordinals 协议写入比特币，具有与任何其他铭刻相同的链上存在性和唯一编号。</p>
-  <p>OpenNum 索引器在解析身份时，<strong>自动读取</strong>铭刻内容中符合 SNS（Satoshi Name Service）格式的域名注册，并将其作为该编号的<strong>显示别名元数据</strong>：</p>
-  <ul>
-    <li>若持有者的铭刻本身是一个 .btc 域名注册，OpenNum 个人主页将自动显示 <code>satoshi.btc</code> 作为别名</li>
-    <li>显示别名不影响编号的唯一性——<code>#2025</code> 仍是规范标识符，<code>satoshi.btc</code> 是可选的人类友好展示名</li>
-    <li>持有者可在 OpenNum 个人主页选择展示或隐藏其 .btc 别名</li>
-    <li>btcmap、unisat 域名等其他符合公开 JSON 格式的铭刻域名体系同样受到支持</li>
-  </ul>
-  <div class="callout">
-    如果说编号是你的门牌号，.btc 就是你房子上挂的名字牌。两者并存，各司其职。OpenNum 不垄断命名，它聚合现有的所有链上身份信号。
+    休眠是自动检测的：由于每次查询都核验所有权，铭刻一旦易手，编号立即进入休眠；新持有者一旦签名认领，立即恢复活跃。没有手动步骤，没有过期映射——身份永远跟随铭刻。
   </div>
 
   <h2 id="usecases">4. 应用场景</h2>
@@ -446,6 +420,19 @@
 
   <h3>4.7 钱包新用户引导</h3>
   <p>比特币钱包服务商可以批量铭刻低成本的文字铭刻，在新用户注册时赠送一枚。从入驻第一天起，用户就拥有了一个永久的、唯一的铭刻编号——他们的比特币身份号码。这消除了让新用户望而却步的"空钱包"问题，给了他们立即参与比特币生态的理由。</p>
+
+  <h3>4.8 已上线的社交层</h3>
+  <p>上述场景不是画饼——opennum.org 的参考应用已经在每一个身份周围跑通了一整套社交层。所有写操作都由钱包签名证明；无托管，不触碰比特币协议。</p>
+  <ul>
+    <li><strong>签名公开留言。</strong>任何拥有活跃 OpenNum 的人都可以在别人的编号主页上留言。每条留言都经过签名、署上作者编号、支持回复成串——一个无法冒充的留言簿。</li>
+    <li><strong>关注与粉丝。</strong>编号之间可以互相关注，构建一张锚定在铭刻（而非用户名）上的公开社交图谱。</li>
+    <li><strong>私密报价。</strong>买家可以把一条私密、已签名的报价直接发进持有人的收件箱——价格、留言、可选的 Satflow 链接。OpenNum 从不托管资金，交易在站外非托管成交。</li>
+    <li><strong>关注清单与动态收件箱。</strong>持有者可以私下关注在意的编号，并收到相关事件的收件箱动态——新粉丝、留言、报价，以及所关注编号的链上转移。</li>
+    <li><strong>一次签名，多次操作。</strong>短时会话令牌让已登录的持有者无需为每次点击重新签名即可完成低风险操作（关注、收藏、留言），而高价值操作（报价、注册、编辑资料）始终要求当场重新签名。</li>
+  </ul>
+  <div class="callout">
+    身份只是一半。另一半是：这些身份现在能互相找到、互相留言、互相交易——原生于比特币，唯一的凭证就是一个签名。
+  </div>
 
   <h2 id="comparison">5. 竞争格局与对比分析</h2>
   <table>
@@ -623,18 +610,18 @@
       </tr>
       <tr>
         <td>第三阶段：社交</td>
-        <td>2026年 Q3</td>
-        <td>消息功能 · 铭刻赠送 · 社交账号绑定 · 社区门控</td>
+        <td>2026年 Q2–Q3 · <strong>大部分已上线</strong></td>
+        <td>签名公开留言 · 关注图谱 · 私密报价与收件箱 · 关注清单 · collection 自动识别、成员圈与档位圈 · 一次签名会话</td>
       </tr>
       <tr>
-        <td>第四阶段：SDK</td>
+        <td>第四阶段：SDK 与集成</td>
         <td>2026年 Q4</td>
-        <td>开源钱包 SDK · 第三方钱包集成 · 商家收款工具</td>
+        <td>开源钱包 SDK · 第三方钱包集成 · 商家收款工具 · 社交账号绑定</td>
       </tr>
       <tr>
-        <td>第五阶段：规模</td>
+        <td>第五阶段：协议扩展</td>
         <td>2027年+</td>
-        <td>移动端应用 · 多语言 · 全球扩张</td>
+        <td>.btc / SNS 显示别名 · 更丰富的转移状态（冷却、转让声明）· 索引器间 P2P gossip · 移动端 · 多语言</td>
       </tr>
     </tbody>
   </table>
@@ -759,8 +746,9 @@
     <li><strong>社区内支付。</strong>同一 BRC-20 代币持有者之间可以通过 OpenNum 号码互相发送比特币，在代币社区内部构建内部经济体。</li>
     <li><strong>废物利用。</strong>一个作为货币已失去投机价值的 BRC-20 代币，作为社区成员资格凭证和身份锚点依然保有永久价值——真正的变废为宝。</li>
   </ul>
+  <p>这个 collection 层<strong>今天已经上线</strong>，而且不限于 BRC-20 代币。当任何编号被打开时，OpenNum 会自动识别底层铭文所属的 collection，并在主页上显示一枚已验证的 collection 徽章。随后它会展示一条 <strong>"&lt;Collection&gt; on OpenNum"</strong> 成员条——同一 collection 里其他已注册的成员——把一个共同的 collection 变成一个可发现的社交圈。编号还会归入<strong>档位圈</strong>，档位直接由编号本身计算（Sub 100 / Sub 1K / Sub 10K / Sub 100K），因此即便一个早期低编号不属于任何具名 collection，它也会和同档位的同类聚在一起。同一套 NodeMonkes、同一批 Ordinal Punks，或仅仅同属 sub-10K 档位的持有者，现在都能自动找到彼此。</p>
   <div class="callout">
-    一个作为货币价值归零的 BRC-20 代币，作为永久的链上身份号码依然有其价值。OpenNum 是一文不值的代币与有用身份之间的桥梁。
+    一个作为货币价值归零的 BRC-20 代币，作为永久的链上身份号码依然有其价值。OpenNum 是一文不值的代币与有用身份之间的桥梁——也是同一 collection 里此前彼此难以找到的持有者之间的桥梁。
   </div>
 
   <h3>10.3 一个钱包，一个旗舰身份</h3>

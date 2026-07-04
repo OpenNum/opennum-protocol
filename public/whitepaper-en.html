@@ -235,7 +235,7 @@
     <div class="doc-subtitle">A Bitcoin-Native Identity Standard for the Ordinals Era</div>
     <div class="doc-meta">
       <span>Version 1.0</span>
-      <span>March 2026</span>
+      <span>March 2026 · Revised July 2026</span>
       <span>OpenNum Team</span>
       <span>opennum.org</span>
       <span>License: MIT</span>
@@ -263,7 +263,6 @@
           <li><a href="#indexer">Indexer Architecture</a></li>
           <li><a href="#authority">Number Authority &amp; Determinism</a></li>
           <li><a href="#statemachine">Identity State Machine</a></li>
-          <li><a href="#btcsuffix">.btc Display Alias</a></li>
         </ol>
       </li>
       <li><a href="#usecases">Use Cases</a></li>
@@ -321,7 +320,8 @@
 <span class="k">{</span><br />
 &nbsp;&nbsp;<span class="k">"protocol"</span>: <span class="v">"opennum"</span>,<br />
 &nbsp;&nbsp;<span class="k">"version"</span>: <span class="v">"1.0"</span>,<br />
-&nbsp;&nbsp;<span class="k">"inscription_id"</span>: <span class="v">"[inscription number as integer]"</span>,<br />
+&nbsp;&nbsp;<span class="k">"inscription_number"</span>: <span class="v">2025</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// human-readable number</span><br />
+&nbsp;&nbsp;<span class="k">"inscription_txid"</span>: <span class="v">"[bitcoin inscription txid]"</span>,&nbsp;<span class="c">// consensus anchor (see §3.5)</span><br />
 &nbsp;&nbsp;<span class="k">"wallet"</span>: <span class="v">"[bitcoin taproot address]"</span>,<br />
 &nbsp;&nbsp;<span class="k">"timestamp"</span>: <span class="v">"[unix timestamp]"</span>,<br />
 &nbsp;&nbsp;<span class="k">"signature"</span>: <span class="v">"[secp256k1 signature over the above fields]"</span><br />
@@ -378,26 +378,19 @@
   </div>
 
   <h3 id="statemachine">3.6 Identity State Machine</h3>
-  <p>Every OpenNum number exists in exactly one of four states at any moment:</p>
+  <p>Every OpenNum number resolves to one of the following states. Ownership is re-checked against the Ordinals indexer on every lookup, so the state always reflects current on-chain reality:</p>
   <table>
     <thead>
       <tr><th>State</th><th>Flag</th><th>Meaning</th><th>API Response</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Active</strong></td><td>🟢</td><td>Registered and valid; current holder has signed</td><td>Returns wallet address</td></tr>
-      <tr><td><strong>Dormant</strong></td><td>⚫</td><td>Inscription transferred; old registration void, new holder not yet registered</td><td>Returns dormant status</td></tr>
-      <tr><td><strong>Cooling</strong></td><td>🟠 + countdown</td><td>Transfer occurred within last 30 days; prompts new holder to activate</td><td>Returns days remaining</td></tr>
-      <tr><td><strong>Flagged</strong></td><td>🔵</td><td>Previous holder published a formal transfer declaration</td><td>Returns declaration content</td></tr>
+      <tr><td><strong>Active</strong></td><td>🟢</td><td>Registered and valid; the wallet that signed still holds the inscription</td><td>Returns the current wallet address</td></tr>
+      <tr><td><strong>For sale</strong></td><td>🟠</td><td>An active number whose holder has marked it open to offers</td><td>Returns wallet address + sale flag and note</td></tr>
+      <tr><td><strong>Dormant</strong></td><td>⚫</td><td>The inscription moved on-chain; the prior registration is void and the new holder has not claimed it yet</td><td>Returns dormant status; payments and messages are paused until the new holder claims</td></tr>
     </tbody>
   </table>
   <div class="callout">
-    The 30-day cooling window gives wallets, integrations, and new holders sufficient buffer to handle ownership transitions. A number in cooling shows a visible orange indicator rather than silently going dormant, reducing cases where new holders miss payments because they haven't yet re-registered.
-  </div>
-
-  <h3 id="btcsuffix">3.7 .btc Display Alias</h3>
-  <p>Many inscriptions contain domain name registrations in SNS (Satoshi Name Service) JSON format: <code>{"p":"sns","op":"reg","name":"satoshi.btc"}</code>. The OpenNum indexer <strong>automatically reads</strong> such inscriptions and surfaces the domain as a <strong>display alias</strong> on the profile — without affecting the canonical inscription number. If the inscription's number is #2025, both <code>#2025</code> and <code>satoshi.btc</code> are visible on the profile. btcmap, unisat domains, and other SNS-compatible systems are also supported.</p>
-  <div class="callout">
-    If the number is your street address, the .btc name is the nameplate on your door. Both coexist. OpenNum doesn't monopolize naming — it aggregates all on-chain identity signals.
+    Dormancy is detected automatically: because ownership is verified on every lookup, a number goes dormant the moment its inscription changes hands, and returns to active the moment the new holder signs a claim. No manual step, no stale mappings — the identity always tracks the inscription.
   </div>
 
   <!-- 4. USE CASES -->
@@ -423,6 +416,19 @@
 
   <h3>4.7 Wallet Onboarding</h3>
   <p>Bitcoin wallet providers can inscribe batches of low-cost text inscriptions and gift one to each new user upon account creation. From the moment of onboarding, the user possesses a permanent, unique inscription number — their Bitcoin identity number. This eliminates the "empty wallet" problem that discourages new users and gives them an immediate reason to engage with the Bitcoin ecosystem.</p>
+
+  <h3>4.8 The Live Social Layer</h3>
+  <p>The use cases above are not aspirational — the reference application at opennum.org already ships a working social layer around every identity. All write actions are proven by a wallet signature; nothing is custodial and nothing touches the Bitcoin protocol.</p>
+  <ul>
+    <li><strong>Signed public messages.</strong> Anyone with an active OpenNum can leave a message on another number's profile. Each message is signed, attributed to the author's number, and threaded with replies — a guestbook that cannot be impersonated.</li>
+    <li><strong>Follow and followers.</strong> Numbers can follow each other, building a public social graph anchored to inscriptions rather than usernames.</li>
+    <li><strong>Private offers.</strong> A buyer can send a private, signed offer straight to a holder's inbox — price, note, and an optional Satflow link. OpenNum never holds funds; the trade settles non-custodially off-site.</li>
+    <li><strong>Watchlist and activity inbox.</strong> Holders can privately watch numbers they care about and receive an inbox feed of relevant events — new followers, messages, offers, and on-chain transfers of watched numbers.</li>
+    <li><strong>One signature, many actions.</strong> A short-lived session token lets a signed-in holder perform low-risk actions (follow, watch, post) without re-signing every click, while high-value actions (offers, registration, profile edits) always require a fresh signature.</li>
+  </ul>
+  <div class="callout">
+    Identity is only half the point. The other half is that identities can now find each other, message each other, and trade with each other — natively on Bitcoin, with a signature as the only credential.
+  </div>
 
   <!-- 5. COMPARISON -->
   <h2 id="comparison">5. Competitive Landscape</h2>
@@ -604,18 +610,18 @@
       </tr>
       <tr>
         <td>3 — Social</td>
-        <td>Q3 2026</td>
-        <td>Messaging · Inscription gifting · Social account binding · Community access</td>
+        <td>Q2–Q3 2026 · <strong>largely shipped</strong></td>
+        <td>Signed public messaging · Follow graph · Private offers &amp; inbox · Watchlist · Automatic collection detection, member circles &amp; number-tier circles · One-signature session</td>
       </tr>
       <tr>
-        <td>4 — SDK</td>
+        <td>4 — SDK &amp; Integrations</td>
         <td>Q4 2026</td>
-        <td>Open-source wallet SDK · Third-party wallet integrations · Merchant tools</td>
+        <td>Open-source wallet SDK · Third-party wallet integrations · Merchant tools · Social account binding</td>
       </tr>
       <tr>
-        <td>5 — Scale</td>
+        <td>5 — Protocol Extensions</td>
         <td>2027+</td>
-        <td>Mobile application · Multi-language · Global expansion</td>
+        <td>.btc / SNS display aliases · Richer transfer states (cooling, transfer declarations) · P2P gossip between indexers · Mobile app · Multi-language</td>
       </tr>
     </tbody>
   </table>
@@ -744,8 +750,9 @@
     <li><strong>Intra-community payments.</strong> ORDI holders can send Bitcoin to each other by OpenNum number, building an internal economy within the token community.</li>
     <li><strong>Revived utility.</strong> A BRC-20 token that has lost speculative value as a currency retains permanent value as a community membership credential and identity anchor — a fundamentally different and more durable form of utility.</li>
   </ul>
+  <p>This collection layer is <strong>live today</strong>, and it is not limited to BRC-20 tickers. When any number is viewed, OpenNum automatically detects which collection the underlying inscription belongs to and shows a verified collection badge on the profile. It then surfaces a <strong>"&lt;Collection&gt; on OpenNum"</strong> strip — the other members of that same collection who have registered — turning a shared collection into a discoverable social circle. Numbers also belong to <strong>tier circles</strong> derived directly from the number itself (Sub 100, Sub 1K, Sub 10K, Sub 100K), so an early low number is grouped with its peers even when it belongs to no named collection. Holders of the same NodeMonkes set, the same Ordinal Punks, or simply the same sub-10K tier now find each other automatically.</p>
   <div class="callout">
-    A BRC-20 token that is worth zero satoshis as a currency is still worth something as a permanent, on-chain identity number. OpenNum is the bridge between worthless tokens and useful identities.
+    A BRC-20 token that is worth zero satoshis as a currency is still worth something as a permanent, on-chain identity number. OpenNum is the bridge between worthless tokens and useful identities — and between holders of the same collection who could never easily find each other before.
   </div>
 
   <h3>10.3 One Flagship Identity Per Wallet</h3>
