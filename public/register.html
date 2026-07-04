@@ -113,6 +113,7 @@
     .insc-num { font-size: 20px; font-weight: 800; color: var(--orange); letter-spacing: -0.5px; }
     .insc-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .insc-already { position: absolute; top: 8px; left: 10px; font-size: 10px; font-weight: 700; background: rgba(34,197,94,0.15); color: var(--green); padding: 2px 6px; border-radius: 3px; }
+    .insc-claim { position: absolute; top: 8px; left: 10px; right: 10px; font-size: 10px; font-weight: 700; background: rgba(201,135,47,0.14); color: var(--orange); padding: 2px 6px; border-radius: 3px; z-index: 1; }
 
     .load-more { display: block; text-align: center; padding: 12px; margin-top: 16px; font-size: 13px; color: var(--orange); cursor: pointer; border: 1px dashed var(--border); border-radius: 8px; }
     .load-more:hover { border-color: var(--orange); background: rgba(247,147,26,0.04); }
@@ -544,20 +545,24 @@
       return;
     }
 
-    // Check which are already registered
-    const registeredNums = new Set();
+    // Check registration state per number:
+    // 'active'    -> live registration elsewhere, blocked
+    // 'claimable' -> dormant/unbound record; the on-chain holder can claim it
+    const numStates = new Map();
     await Promise.all(list.map(async (ins) => {
       const num = ins.inscriptionNumber;
       if (num == null) return;
       try {
         const r = await fetch(`/api/resolve?num=${num}`);
-        if (r.status === 200) registeredNums.add(num);
+        if (r.status !== 200) return;
+        const d = await r.json();
+        numStates.set(num, (d.status === 'active' && !d.claim_required) ? 'active' : 'claimable');
       } catch (_) {}
     }));
 
     inscriptions = inscriptions.concat(list);
     inscriptionOffset += list.length;
-    renderInscriptions(list, registeredNums);
+    renderInscriptions(list, numStates);
 
     const hasMore = total > inscriptionOffset;
     document.getElementById('loadMoreWrap').style.display = hasMore ? 'block' : 'none';
@@ -570,11 +575,13 @@
     if (lm) lm.textContent = 'Load more inscriptions…';
   }
 
-  function renderInscriptions(list, registeredNums) {
+  function renderInscriptions(list, numStates) {
     const grid = document.getElementById('inscriptionGrid');
     list.forEach(ins => {
       const num = ins.inscriptionNumber;
-      const alreadyRegistered = registeredNums.has(num);
+      const state = numStates.get(num);
+      const alreadyRegistered = state === 'active';
+      const claimable = state === 'claimable';
       const card = document.createElement('div');
       card.className = 'insc-card';
       card.dataset.id = ins.inscriptionId;
@@ -591,6 +598,7 @@
 
       card.innerHTML = `
         ${alreadyRegistered ? '<div class="insc-already">✓ Registered</div>' : ''}
+        ${claimable ? '<div class="insc-claim">↻ Claim — you hold it now</div>' : ''}
         ${previewHTML}
         <div class="insc-num">#${num != null ? num : '?'}</div>
         <div class="insc-meta">${contentType ? contentType.split('/')[1] || contentType : 'inscription'}</div>
