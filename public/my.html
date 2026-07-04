@@ -298,7 +298,7 @@
         box.innerHTML = offers.map((o) => `
           <div class="offer-row">
             <div class="offer-head">
-              <span>To <a class="watch-num" href="/n/${o.target_num}">#${o.target_num}</a></span>
+              <span>To <a class="watch-num" href="/n/${o.target_num}">${o.target_num}</a></span>
               ${o.price_text ? `<span class="offer-price">${escapeHtml(o.price_text)}</span>` : ''}
               ${offerStatusLabel(o.status)}
             </div>
@@ -315,16 +315,16 @@
     }
 
     function inboxLine(ev) {
-      const actor = ev.actor_num != null ? `#${ev.actor_num}` : 'Someone';
-      const tnum = ev.payload && ev.payload.target_num != null ? `#${ev.payload.target_num}` : 'a number';
+      const actor = ev.actor_num != null ? `${ev.actor_num}` : 'Someone';
+      const tnum = ev.payload && ev.payload.target_num != null ? `${ev.payload.target_num}` : 'a number';
       switch (ev.event_type) {
         case 'followed': return `<a class="watch-num" href="/n/${ev.actor_num}">${actor}</a> followed you`;
         case 'public_message_received': return `<a class="watch-num" href="/n/${ev.actor_num}">${actor}</a> left you a message`;
         case 'offer_received': return `<a class="watch-num" href="/n/${ev.actor_num}">${actor}</a> sent you a private offer`;
         case 'offer_rejected': return `Your offer to ${tnum} was declined`;
         case 'offer_archived': return `Your offer to ${tnum} was archived`;
-        case 'ownership_transferred': return `<a class="watch-num" href="/n/${ev.subject_num}">#${ev.subject_num}</a> (watched) changed hands`;
-        case 'marked_for_sale': return `<a class="watch-num" href="/n/${ev.subject_num}">#${ev.subject_num}</a> (watched) is now open to offers`;
+        case 'ownership_transferred': return `<a class="watch-num" href="/n/${ev.subject_num}">${ev.subject_num}</a> (watched) changed hands`;
+        case 'marked_for_sale': return `<a class="watch-num" href="/n/${ev.subject_num}">${ev.subject_num}</a> (watched) is now open to offers`;
         default: return '';
       }
     }
@@ -372,7 +372,7 @@
         }
         box.innerHTML = items.map((it) => `
           <div class="watch-row">
-            <a class="watch-num" href="/n/${it.target_num}">#${it.target_num}</a>
+            <a class="watch-num" href="/n/${it.target_num}">${it.target_num}</a>
             ${it.note ? `<span class="watch-note">${escapeHtml(it.note)}</span>` : '<span class="watch-note"></span>'}
             <button class="reply-btn msg-danger" onclick="removeWatch(${it.target_num})">Remove</button>
           </div>
@@ -407,7 +407,7 @@
         box.innerHTML = offers.map((offer) => `
           <div class="offer-row">
             <div class="offer-head">
-              <a class="watch-num" href="/n/${offer.buyer_num}">#${offer.buyer_num}</a>
+              <a class="watch-num" href="/n/${offer.buyer_num}">${offer.buyer_num}</a>
               ${offer.price_text ? `<span class="offer-price">${escapeHtml(offer.price_text)}</span>` : ''}
             </div>
             ${offer.note ? `<div class="offer-note">${escapeHtml(offer.note)}</div>` : ''}
@@ -475,15 +475,15 @@
         renderSentGate();
         renderInboxGate();
         const inscId = reg.inscription_id || (reg.inscription_txid ? `${reg.inscription_txid}i0` : '');
-        document.getElementById('myNum').textContent = `#${num}`;
+        document.getElementById('myNum').textContent = `${num}`;
         document.getElementById('myStatus').textContent = reg.status === 'dormant' ? 'Dormant' : (reg.for_sale ? 'For sale' : 'Active');
 
         if (reg.display_name) {
           document.getElementById('myName').textContent = reg.display_name;
           document.getElementById('myName').style.display = 'block';
-          document.title = `${reg.display_name} (#${num}) — My OpenNum`;
+          document.title = `${reg.display_name} (${num}) — My OpenNum`;
         } else {
-          document.title = `#${num} — My OpenNum`;
+          document.title = `${num} — My OpenNum`;
         }
         if (reg.bio) {
           document.getElementById('myBio').textContent = reg.bio;
@@ -496,7 +496,7 @@
           img.onload = () => { document.getElementById('myAvatar').innerHTML = `<img src="${img.src}" style="width:100%;height:100%;object-fit:cover" />`; };
           img.src = `https://ordinals.com/content/${inscId}`;
         }
-        document.getElementById('myAvatar').textContent = document.getElementById('myAvatar').innerHTML ? '' : `#${num}`;
+        document.getElementById('myAvatar').textContent = document.getElementById('myAvatar').innerHTML ? '' : `${num}`;
 
         const profileUrl = `/n/${num}`;
         const satflowUrl = reg.satflow_url || (inscId ? `https://www.satflow.com/ordinal/${inscId}` : 'https://www.satflow.com');

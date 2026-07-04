@@ -49,7 +49,7 @@
         </div>
 
         <form class="search-card" onsubmit="searchOrOpen(event)">
-          <input id="searchInput" class="search-input" placeholder="Search #99, #7777, wallet, or display name..." oninput="renderMarket()" />
+          <input id="searchInput" class="search-input" placeholder="Search 99, 7777, wallet, or display name..." oninput="renderMarket()" />
           <button class="btn btn-primary" type="submit">Search</button>
           <a class="btn" href="/market?sell=1">Sell yours</a>
         </form>
@@ -155,14 +155,14 @@
       const contentUrl = inscriptionId ? `https://ordinals.com/content/${inscriptionId}` : '';
       const tradeUrl = r.satflow_url || (inscriptionId ? `https://www.satflow.com/ordinal/${inscriptionId}` : 'https://www.satflow.com');
       const thumbHtml = contentUrl
-        ? `<img src="${contentUrl}" loading="lazy" alt="#${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
+        ? `<img src="${contentUrl}" loading="lazy" alt="${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
         : '#';
       return `<article class="market-card">
         <div class="card-top">
           <div class="insc-thumb">${thumbHtml}</div>
           <div class="card-meta">
             <div class="status ${r.for_sale ? 'sale' : ''}">${r.for_sale ? 'Open to offers' : (r.status || 'Active')}</div>
-            <div class="number">#${r.inscription_num}</div>
+            <div class="number">${r.inscription_num}</div>
             ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
             <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
           </div>

@@ -448,7 +448,7 @@
     box.style.display = 'block';
     box.innerHTML = `
       <div style="font-size:13px;color:var(--dim)">This wallet already has an active OpenNum ID.</div>
-      <div class="bound-num">#${registration.inscription_num}</div>
+      <div class="bound-num">${registration.inscription_num}</div>
       <div style="font-size:13px;color:var(--dim)">One wallet can only bind one OpenNum ID at a time. Unbind this ID before registering another inscription.</div>
       <div class="bound-actions">
         <a class="btn btn-primary" href="/n/${registration.inscription_num}">View profile</a>
@@ -486,7 +486,7 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Unbind failed.');
-      ok.textContent = `#${num} has been unbound. You can now register another inscription.`;
+      ok.textContent = `${num} has been unbound. You can now register another inscription.`;
       ok.className = 'alert alert-success visible';
       activeWalletRegistration = null;
       document.getElementById('boundStatus').style.display = 'none';
@@ -590,7 +590,7 @@
       const contentType = ins.contentType || '';
       let previewHTML = '';
       if (contentType.startsWith('image/')) {
-        previewHTML = `<div class="insc-preview"><img src="https://ordinals.com/content/${ins.inscriptionId}" alt="#${num}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=insc-type>${contentType}</div>'" /></div>`;
+        previewHTML = `<div class="insc-preview"><img src="https://ordinals.com/content/${ins.inscriptionId}" alt="${num}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=insc-type>${contentType}</div>'" /></div>`;
       } else {
         const label = contentType.split('/')[1] || contentType || 'unknown';
         previewHTML = `<div class="insc-preview"><div class="insc-type">${label}</div></div>`;
@@ -600,7 +600,7 @@
         ${alreadyRegistered ? '<div class="insc-already">✓ Registered</div>' : ''}
         ${claimable ? '<div class="insc-claim">↻ Claim — you hold it now</div>' : ''}
         ${previewHTML}
-        <div class="insc-num">#${num != null ? num : '?'}</div>
+        <div class="insc-num">${num != null ? num : '?'}</div>
         <div class="insc-meta">${contentType ? contentType.split('/')[1] || contentType : 'inscription'}</div>
       `;
 
@@ -631,7 +631,7 @@
     document.getElementById('selectionActions').style.display = 'block';
     document.getElementById('selectedInfo').style.display = 'block';
     document.getElementById('selectedInfo').innerHTML = `
-      <div style="font-size:13px;color:var(--dim)">Selected: <span style="color:var(--orange);font-weight:700">#${ins.inscriptionNumber}</span></div>
+      <div style="font-size:13px;color:var(--dim)">Selected: <span style="color:var(--orange);font-weight:700">${ins.inscriptionNumber}</span></div>
     `;
     document.getElementById('nextToSign').style.display = 'inline-flex';
     document.getElementById('nextToSign').disabled = false;
@@ -642,13 +642,13 @@
     const num = selectedInscription.inscriptionNumber;
     const txid = selectedInscription.txid;
 
-    document.getElementById('signNum').textContent = `#${num}`;
-    document.getElementById('prevNum').textContent = `#${num}`;
+    document.getElementById('signNum').textContent = `${num}`;
+    document.getElementById('prevNum').textContent = `${num}`;
     const heroArt = document.getElementById('signHeroArt');
     if ((selectedInscription.contentType || '').startsWith('image/')) {
-      heroArt.innerHTML = `<img src="https://ordinals.com/content/${selectedInscription.inscriptionId}" alt="#${num}" onerror="this.parentElement.textContent='#'" />`;
+      heroArt.innerHTML = `<img src="https://ordinals.com/content/${selectedInscription.inscriptionId}" alt="${num}" onerror="this.parentElement.textContent='#'" />`;
     } else {
-      heroArt.textContent = `#${num}`;
+      heroArt.textContent = `${num}`;
     }
     document.getElementById('prevInscriptionId').textContent = selectedInscription.inscriptionId;
     document.getElementById('prevTxid').textContent = txid;
@@ -726,7 +726,7 @@
         return;
       }
       // Success
-      document.getElementById('successNum').textContent = '#' + num;
+      document.getElementById('successNum').textContent = String(num);
       document.getElementById('profileLink').href = '/n/' + num;
       if (data.transferred) {
         document.getElementById('successIcon').textContent = '🔄';

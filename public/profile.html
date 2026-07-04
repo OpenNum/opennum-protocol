@@ -279,7 +279,7 @@
       if (!match) return showNotFound('?');
       const num = parseInt(match[1], 10);
       currentNumber = num;
-      document.title = `#${num} — OpenNum`;
+      document.title = `${num} — OpenNum`;
       try {
         const viewer = await getViewer();
         const viewerParam = viewer ? `&viewer=${viewer.num}` : '';
@@ -305,7 +305,7 @@
     async function showNotFound(num) {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('notFound').style.display = 'block';
-      document.getElementById('nfNum').textContent = `#${num}`;
+      document.getElementById('nfNum').textContent = `${num}`;
       try {
         const res = await fetch(`/api/inscription?num=${num}`);
         if (!res.ok) return;
@@ -314,10 +314,10 @@
         const box = document.getElementById('nfInscription');
         if (data.content_type?.startsWith('image/') && data.content_url) {
           box.style.display = 'block';
-          box.innerHTML = `<img src="${data.content_url}" alt="#${num}" style="width:100%;height:100%;object-fit:contain" />`;
+          box.innerHTML = `<img src="${data.content_url}" alt="${num}" style="width:100%;height:100%;object-fit:contain" />`;
         } else if (data.inscription_id) {
           box.style.display = 'block';
-          box.innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${data.inscription_id}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
+          box.innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${data.inscription_id}" title="Inscription ${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
         }
         document.getElementById('nfActions').innerHTML = `
           <a class="btn btn-primary" href="/register">Register / Claim</a>
@@ -335,10 +335,10 @@
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('profile').style.display = 'block';
-      document.getElementById('profileNum').textContent = `#${num}`;
-      document.getElementById('composerMark').textContent = `#${num}`;
-      document.getElementById('guestbookMessage').placeholder = `Write to #${num}…`;
-      document.getElementById('dNum').textContent = `#${num}`;
+      document.getElementById('profileNum').textContent = `${num}`;
+      document.getElementById('composerMark').textContent = `${num}`;
+      document.getElementById('guestbookMessage').placeholder = `Write to ${num}…`;
+      document.getElementById('dNum').textContent = `${num}`;
       document.getElementById('dWallet').textContent = data.wallet || 'Not active until claimed';
       document.getElementById('dCurrentOwner').textContent = data.current_owner || 'Not verified';
       document.getElementById('sendWallet').textContent = data.wallet || 'Unavailable';
@@ -355,7 +355,7 @@
       if (data.display_name) {
         document.getElementById('profileName').textContent = data.display_name;
         document.getElementById('profileName').style.display = 'block';
-        document.title = `${data.display_name} (#${num}) — OpenNum`;
+        document.title = `${data.display_name} (${num}) — OpenNum`;
       }
       if (data.bio) {
         document.getElementById('profileBio').textContent = data.bio;
@@ -363,8 +363,8 @@
       }
 
       // Dynamic OG / Twitter meta for social sharing
-      const ogTitle = data.display_name ? `${data.display_name} (#${num}) — OpenNum` : `OpenNum #${num}`;
-      const ogDesc = data.bio ? data.bio : `Bitcoin Ordinals identity #${num} on OpenNum. Search, pay, and connect.`;
+      const ogTitle = data.display_name ? `${data.display_name} (${num}) — OpenNum` : `OpenNum ${num}`;
+      const ogDesc = data.bio ? data.bio : `Bitcoin Ordinals identity ${num} on OpenNum. Search, pay, and connect.`;
       const m0 = data.metadata;
       const ogImage = (m0?.content_type?.startsWith('image/') && m0.content_url)
         ? m0.content_url
@@ -400,9 +400,9 @@
 
       const m = data.metadata;
       if (m?.content_type?.startsWith('image/') && m.content_url) {
-        document.getElementById('avatarWrap').innerHTML = `<img src="${m.content_url}" alt="#${num}" onerror="this.parentElement.textContent='#${num}'" />`;
+        document.getElementById('avatarWrap').innerHTML = `<img src="${m.content_url}" alt="${num}" onerror="this.parentElement.textContent='${num}'" />`;
       } else {
-        document.getElementById('avatarWrap').innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${inscriptionId}" title="Inscription #${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
+        document.getElementById('avatarWrap').innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${inscriptionId}" title="Inscription ${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
       }
 
       renderSocialLinks(data.links || {});
@@ -484,7 +484,7 @@
       // a. nav shows your number and points to your profile
       const nav = document.getElementById('myOpenNumNav');
       if (nav) {
-        nav.textContent = `My OpenNum #${viewer.num}`;
+        nav.textContent = `My OpenNum ${viewer.num}`;
         nav.setAttribute('href', '/my');
       }
 
@@ -536,7 +536,7 @@
       if (!viewer || !viewer.num) return;
       const nav = document.getElementById('myOpenNumNav');
       if (nav) {
-        nav.textContent = `My OpenNum #${viewer.num}`;
+        nav.textContent = `My OpenNum ${viewer.num}`;
         nav.setAttribute('href', '/my');
       }
     }
@@ -743,7 +743,7 @@
           return;
         }
         box.innerHTML = `<div class="follow-list-title">${title}</div>` + items.map((it) =>
-          `<a class="follow-list-row" href="/n/${it.num}"><strong>#${it.num}</strong>${it.display_name ? ` <span>${escapeHtml(it.display_name)}</span>` : ''}</a>`
+          `<a class="follow-list-row" href="/n/${it.num}"><strong>${it.num}</strong>${it.display_name ? ` <span>${escapeHtml(it.display_name)}</span>` : ''}</a>`
         ).join('');
       } catch (_) {
         box.innerHTML = '<div class="empty">Could not load list.</div>';
@@ -774,7 +774,7 @@
       document.getElementById('collectionCircleRows').innerHTML = members.map((m) => `
         <a class="cc-row" href="/n/${m.num}">
           <span class="cc-avatar"><img src="https://ordinals.com/content/${escapeHtml(m.inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" /></span>
-          <strong>#${m.num}</strong>${m.display_name ? `<span>${escapeHtml(m.display_name)}</span>` : ''}
+          <strong>${m.num}</strong>${m.display_name ? `<span>${escapeHtml(m.display_name)}</span>` : ''}
         </a>
       `).join('');
       box.style.display = 'block';
@@ -1019,7 +1019,7 @@
     }
 
     function feedLine(ev) {
-      const actor = ev.actor_num != null ? `#${ev.actor_num}` : 'Someone';
+      const actor = ev.actor_num != null ? `${ev.actor_num}` : 'Someone';
       switch (ev.event_type) {
         case 'followed': return `<a href="/n/${ev.actor_num}">${actor}</a> followed this number`;
         case 'public_message_received': return `<a href="/n/${ev.actor_num}">${actor}</a> left a public message`;
@@ -1095,11 +1095,11 @@
           <div class="message-content"><div class="message-body" style="color:var(--soft-ink);font-style:italic">${label}</div></div>
         </article>`;
       }
-      const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
+      const author = m.author_number ? `${m.author_number}` : shortWallet(m.author_wallet);
       const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       const avatar = m.author_inscription_id
         ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
-        : (m.author_number ? `#${m.author_number}` : '#');
+        : (m.author_number ? `${m.author_number}` : '#');
       // Action buttons: Reply (roots), Withdraw (author), or Hide (current profile owner, current period)
       let actions = '';
       if (!readOnly) {
