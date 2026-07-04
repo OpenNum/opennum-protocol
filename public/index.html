@@ -73,7 +73,7 @@
 
         <aside class="number-preview" aria-label="Early inscription carousel">
           <div class="carousel-bar">
-            <span>Early inscriptions · #0–#100</span>
+            <span>Early inscriptions · 0–100</span>
             <div class="carousel-controls">
               <button type="button" class="carousel-button" aria-label="Previous inscription" onclick="stepCarousel(-1)">←</button>
               <button type="button" class="carousel-button" id="carouselToggle" aria-label="Pause carousel" onclick="toggleCarousel()">Ⅱ</button>
@@ -81,10 +81,10 @@
             </div>
           </div>
           <div class="preview-body">
-            <div id="resultAvatar" class="avatar avatar-large"><span class="avatar-number">#0</span></div>
+            <div id="resultAvatar" class="avatar avatar-large"><span class="avatar-number">0</span></div>
             <div class="preview-identity">
               <span id="resultStatus" class="status">Ready</span>
-              <span id="resultNum" class="console-number">#0</span>
+              <span id="resultNum" class="console-number">0</span>
               <div id="resultName" class="profile-name" style="display:none"></div>
               <div id="resultWallet" class="wallet-line" style="display:none"></div>
             </div>
@@ -144,7 +144,7 @@
 
     function setPreviewNumber(num) {
       const number = document.getElementById('resultNum');
-      number.textContent = `#${num}`;
+      number.textContent = `${num}`;
       number.classList.remove('is-long', 'is-very-long', 'is-ultra-long');
       const lengthClass = numberLengthClass(num);
       if (lengthClass) number.classList.add(lengthClass);
@@ -160,7 +160,7 @@
 
     function numberFallbackMarkup(num) {
       const lengthClass = numberLengthClass(num);
-      return `<span class="avatar-number${lengthClass ? ` ${lengthClass}` : ''}">#${num}</span>`;
+      return `<span class="avatar-number${lengthClass ? ` ${lengthClass}` : ''}">${num}</span>`;
     }
 
     function shortWallet(wallet) {
@@ -227,7 +227,7 @@
 
         const dormant = data.status === 'dormant' || data.claim_required;
         status.textContent = dormant ? 'Dormant' : (data.for_sale ? 'For sale' : 'Active');
-        setPreviewCopy(data.display_name || `OpenNum #${num}`, dormant
+        setPreviewCopy(data.display_name || `OpenNum ${num}`, dormant
           ? `Moved on-chain. Current holder must claim it again.`
           : `${shortWallet(data.wallet)} is the active owner`);
         const media = await prepareInscriptionMedia({
@@ -265,7 +265,7 @@
         setPreviewCopy('', '', false);
         document.getElementById('resultAvatar').innerHTML = media;
         document.getElementById('resultActions').innerHTML = `
-          <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View #${num}</a>
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View ${num}</a>
           <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
         `;
         return true;
@@ -276,7 +276,7 @@
         setPreviewCopy('', '', false);
         document.getElementById('resultAvatar').innerHTML = numberFallbackMarkup(num);
         document.getElementById('resultActions').innerHTML = `
-          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View ${num}</a>
           <a class="btn" href="/register">Claim a number</a>
         `;
         return false;
@@ -329,7 +329,7 @@
         document.getElementById('homeRecentRows').innerHTML = regs.map((r) => `
           <a class="cc-row" href="/n/${r.inscription_num}">
             <span class="cc-avatar"><img src="https://ordinals.com/content/${r.inscription_id}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" /></span>
-            <strong>#${r.inscription_num}</strong>${r.display_name ? `<span>${String(r.display_name).replace(/[&<>"']/g, '')}</span>` : ''}
+            <strong>${r.inscription_num}</strong>${r.display_name ? `<span>${String(r.display_name).replace(/[&<>"']/g, '')}</span>` : ''}
           </a>
         `).join('');
         document.getElementById('homeRecent').style.display = 'block';
@@ -384,7 +384,7 @@
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options = {}) {
       status.textContent = options.carousel ? 'Early inscription' : 'Unregistered';
       setPreviewCopy(
-        options.carousel ? '' : `#${num} has no OpenNum ID yet`,
+        options.carousel ? '' : `${num} has no OpenNum ID yet`,
         options.carousel ? '' : 'If you own the inscription, register or claim it.',
         !options.carousel
       );
@@ -397,7 +397,7 @@
           if (options.requestId && options.requestId !== carouselRequest) return false;
           avatar.innerHTML = media;
           actions.innerHTML = `
-            <a class="btn btn-primary" href="/n/${num}">View #${num}</a>
+            <a class="btn btn-primary" href="/n/${num}">View ${num}</a>
             <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
           `;
           return true;
@@ -405,7 +405,7 @@
       } catch (_) {}
       if (options.carousel) {
         actions.innerHTML = `
-          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View ${num}</a>
           <a class="btn" href="/register">Claim a number</a>
         `;
         return true;
