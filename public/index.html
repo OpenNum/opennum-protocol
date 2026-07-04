@@ -227,7 +227,7 @@
 
         const dormant = data.status === 'dormant' || data.claim_required;
         status.textContent = dormant ? 'Dormant' : (data.for_sale ? 'For sale' : 'Active');
-        setPreviewCopy(data.display_name || `OpenNum ${num}`, dormant
+        setPreviewCopy(data.display_name || `OpenNum #${num}`, dormant
           ? `Moved on-chain. Current holder must claim it again.`
           : `${shortWallet(data.wallet)} is the active owner`);
         const media = await prepareInscriptionMedia({
@@ -265,7 +265,7 @@
         setPreviewCopy('', '', false);
         document.getElementById('resultAvatar').innerHTML = media;
         document.getElementById('resultActions').innerHTML = `
-          <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View ${num}</a>
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${data.inscription_id}" target="_blank" rel="noopener noreferrer">View #${num}</a>
           <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
         `;
         return true;
@@ -276,7 +276,7 @@
         setPreviewCopy('', '', false);
         document.getElementById('resultAvatar').innerHTML = numberFallbackMarkup(num);
         document.getElementById('resultActions').innerHTML = `
-          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View ${num}</a>
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
           <a class="btn" href="/register">Claim a number</a>
         `;
         return false;
@@ -384,7 +384,7 @@
     async function previewUnregistered(num, status, nameEl, walletEl, avatar, actions, options = {}) {
       status.textContent = options.carousel ? 'Early inscription' : 'Unregistered';
       setPreviewCopy(
-        options.carousel ? '' : `${num} has no OpenNum ID yet`,
+        options.carousel ? '' : `#${num} has no OpenNum ID yet`,
         options.carousel ? '' : 'If you own the inscription, register or claim it.',
         !options.carousel
       );
@@ -397,7 +397,7 @@
           if (options.requestId && options.requestId !== carouselRequest) return false;
           avatar.innerHTML = media;
           actions.innerHTML = `
-            <a class="btn btn-primary" href="/n/${num}">View ${num}</a>
+            <a class="btn btn-primary" href="/n/${num}">View #${num}</a>
             <a class="btn" href="https://www.satflow.com/ordinal/${data.inscription_id}" target="_blank" rel="noopener noreferrer">Make offer</a>
           `;
           return true;
@@ -405,7 +405,7 @@
       } catch (_) {}
       if (options.carousel) {
         actions.innerHTML = `
-          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View ${num}</a>
+          <a class="btn btn-primary" href="https://ordinals.com/inscription/${num}" target="_blank" rel="noopener noreferrer">View #${num}</a>
           <a class="btn" href="/register">Claim a number</a>
         `;
         return true;

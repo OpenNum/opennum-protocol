@@ -486,7 +486,7 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Unbind failed.');
-      ok.textContent = `${num} has been unbound. You can now register another inscription.`;
+      ok.textContent = `#${num} has been unbound. You can now register another inscription.`;
       ok.className = 'alert alert-success visible';
       activeWalletRegistration = null;
       document.getElementById('boundStatus').style.display = 'none';
@@ -631,7 +631,7 @@
     document.getElementById('selectionActions').style.display = 'block';
     document.getElementById('selectedInfo').style.display = 'block';
     document.getElementById('selectedInfo').innerHTML = `
-      <div style="font-size:13px;color:var(--dim)">Selected: <span style="color:var(--orange);font-weight:700">${ins.inscriptionNumber}</span></div>
+      <div style="font-size:13px;color:var(--dim)">Selected: <span style="color:var(--orange);font-weight:700">#${ins.inscriptionNumber}</span></div>
     `;
     document.getElementById('nextToSign').style.display = 'inline-flex';
     document.getElementById('nextToSign').disabled = false;
@@ -642,7 +642,7 @@
     const num = selectedInscription.inscriptionNumber;
     const txid = selectedInscription.txid;
 
-    document.getElementById('signNum').textContent = `${num}`;
+    document.getElementById('signNum').textContent = `#${num}`;
     document.getElementById('prevNum').textContent = `${num}`;
     const heroArt = document.getElementById('signHeroArt');
     if ((selectedInscription.contentType || '').startsWith('image/')) {

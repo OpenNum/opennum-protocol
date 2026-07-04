@@ -279,7 +279,7 @@
       if (!match) return showNotFound('?');
       const num = parseInt(match[1], 10);
       currentNumber = num;
-      document.title = `${num} — OpenNum`;
+      document.title = `#${num} — OpenNum`;
       try {
         const viewer = await getViewer();
         const viewerParam = viewer ? `&viewer=${viewer.num}` : '';
@@ -337,7 +337,7 @@
       document.getElementById('profile').style.display = 'block';
       document.getElementById('profileNum').textContent = `${num}`;
       document.getElementById('composerMark').textContent = `${num}`;
-      document.getElementById('guestbookMessage').placeholder = `Write to ${num}…`;
+      document.getElementById('guestbookMessage').placeholder = `Write to #${num}…`;
       document.getElementById('dNum').textContent = `${num}`;
       document.getElementById('dWallet').textContent = data.wallet || 'Not active until claimed';
       document.getElementById('dCurrentOwner').textContent = data.current_owner || 'Not verified';
@@ -355,7 +355,7 @@
       if (data.display_name) {
         document.getElementById('profileName').textContent = data.display_name;
         document.getElementById('profileName').style.display = 'block';
-        document.title = `${data.display_name} (${num}) — OpenNum`;
+        document.title = `${data.display_name} (#${num}) — OpenNum`;
       }
       if (data.bio) {
         document.getElementById('profileBio').textContent = data.bio;
@@ -363,8 +363,8 @@
       }
 
       // Dynamic OG / Twitter meta for social sharing
-      const ogTitle = data.display_name ? `${data.display_name} (${num}) — OpenNum` : `OpenNum ${num}`;
-      const ogDesc = data.bio ? data.bio : `Bitcoin Ordinals identity ${num} on OpenNum. Search, pay, and connect.`;
+      const ogTitle = data.display_name ? `${data.display_name} (#${num}) — OpenNum` : `OpenNum #${num}`;
+      const ogDesc = data.bio ? data.bio : `Bitcoin Ordinals identity #${num} on OpenNum. Search, pay, and connect.`;
       const m0 = data.metadata;
       const ogImage = (m0?.content_type?.startsWith('image/') && m0.content_url)
         ? m0.content_url
@@ -484,7 +484,7 @@
       // a. nav shows your number and points to your profile
       const nav = document.getElementById('myOpenNumNav');
       if (nav) {
-        nav.textContent = `My OpenNum ${viewer.num}`;
+        nav.textContent = `My OpenNum #${viewer.num}`;
         nav.setAttribute('href', '/my');
       }
 
@@ -536,7 +536,7 @@
       if (!viewer || !viewer.num) return;
       const nav = document.getElementById('myOpenNumNav');
       if (nav) {
-        nav.textContent = `My OpenNum ${viewer.num}`;
+        nav.textContent = `My OpenNum #${viewer.num}`;
         nav.setAttribute('href', '/my');
       }
     }
@@ -1019,7 +1019,7 @@
     }
 
     function feedLine(ev) {
-      const actor = ev.actor_num != null ? `${ev.actor_num}` : 'Someone';
+      const actor = ev.actor_num != null ? `#${ev.actor_num}` : 'Someone';
       switch (ev.event_type) {
         case 'followed': return `<a href="/n/${ev.actor_num}">${actor}</a> followed this number`;
         case 'public_message_received': return `<a href="/n/${ev.actor_num}">${actor}</a> left a public message`;
@@ -1095,7 +1095,7 @@
           <div class="message-content"><div class="message-body" style="color:var(--soft-ink);font-style:italic">${label}</div></div>
         </article>`;
       }
-      const author = m.author_number ? `${m.author_number}` : shortWallet(m.author_wallet);
+      const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
       const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       const avatar = m.author_inscription_id
         ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
