@@ -208,7 +208,7 @@ img { max-width: 100%; }
 .console-number.is-very-long { font-size: 30px; }
 .console-number.is-ultra-long { font-size: 24px; }
 .preview-body, .console-main { display: grid; grid-template-columns: 168px 1fr; gap: 22px; align-items: center; }
-.preview-identity { min-width: 0; }
+.preview-identity { min-width: 0; text-align: center; }
 .avatar {
   width: 86px;
   height: 86px;
