@@ -213,7 +213,7 @@
         <div class="conversation-head">
           <div>
             <h2>Recent activity</h2>
-            <p>Public events on this OpenNum.</p>
+            <p>Events on your number — only shown to you.</p>
           </div>
         </div>
         <div id="activityFeed"></div>
@@ -271,7 +271,6 @@
         if (res.status === 404 || !res.ok) return showNotFound(num);
         await renderProfile(num, data);
         loadGuestbook();
-        loadPublicFeed(num);
         const hash = window.location.hash;
         if (hash === '#send') {
           setTimeout(() => { toggleSendPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
@@ -458,6 +457,10 @@
       // b. own profile: hide actions that make no sense on yourself
       if (currentProfile) {
         isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
+        if (isProfileOwner && !window.__feedLoaded) {
+          window.__feedLoaded = true;   // activity is owner-only UI; applyViewerContext runs repeatedly
+          loadPublicFeed(currentNumber);
+        }
         if (isProfileOwner) {
           ['sendButton', 'messageJumpBtn', 'followBtn', 'watchBtn', 'makeOfferBtn'].forEach((id) => {
             const el = document.getElementById(id);
