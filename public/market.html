@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenNum Market — Buy and Sell Bitcoin Identity Numbers</title>
-  <meta name="description" content="Discover OpenNum identity numbers, inspect their inscription anchors, and trade through Satflow." />
+  <title>OpenNum Market — Numbers With Stories</title>
+  <meta name="description" content="Bitcoin identity numbers listed by their holders — birthday numbers, repeating digits, sequences and palindromes, each with its own story. Offers settle non-custodially." />
   <link rel="canonical" href="https://opennum.org/market" />
   <meta name="robots" content="index,follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="OpenNum" />
-  <meta property="og:title" content="OpenNum Market — Bitcoin Identity Numbers" />
-  <meta property="og:description" content="Find OpenNum profiles and trade inscription-backed identity numbers through Satflow." />
+  <meta property="og:title" content="OpenNum Market — Numbers With Stories" />
+  <meta property="og:description" content="Bitcoin identity numbers listed by their holders, each with its own meaning. Browse birthday numbers, repeating digits, sequences and palindromes." />
   <meta property="og:url" content="https://opennum.org/market" />
   <meta property="og:image" content="https://opennum.org/img/opennum-mark-final.svg" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -42,23 +42,30 @@
       <div class="shell">
         <div class="section-head">
           <div>
-            <h2>Find a number. Make the offer on Satflow.</h2>
-            <p class="section-copy" style="margin-top:18px">OpenNum is the identity and discovery layer. The inscription trade stays non-custodial through Satflow or the owner’s chosen market link.</p>
+            <h2>Every number has a story.</h2>
+            <p class="section-copy" style="margin-top:18px">Holders list their numbers here — a birthday, a palindrome, a piece of early Bitcoin history — with the meaning in their own words. Make a private offer; the trade settles non-custodially on Satflow or Magic Eden.</p>
           </div>
-          <a class="btn btn-primary" href="/register">Register / Claim</a>
+          <a class="btn btn-primary" id="listYoursBtn" href="/my">List yours</a>
         </div>
 
         <form class="search-card" onsubmit="searchOrOpen(event)">
           <input id="searchInput" class="search-input" placeholder="Search 99, 7777, wallet, or display name..." oninput="renderMarket()" />
           <button class="btn btn-primary" type="submit">Search</button>
-          <a class="btn" href="/market?sell=1">Sell yours</a>
         </form>
 
         <div class="market-toolbar">
           <div class="toggle-group" aria-label="Market filter">
             <button id="filterAll" class="active" type="button" onclick="setFilter('all')">All active</button>
-            <button id="filterSale" type="button" onclick="setFilter('sale')">Open to offers</button>
+            <button id="filterSale" type="button" onclick="setFilter('sale')">For sale</button>
           </div>
+          <select class="trait-select" id="traitFilter" onchange="renderMarket()" aria-label="Filter by number pattern">
+            <option value="">All patterns</option>
+            <option value="year">Birthday year</option>
+            <option value="repdigit">Repeating digits</option>
+            <option value="sequence">Sequence</option>
+            <option value="palindrome">Palindrome</option>
+            <option value="sub10k">Sub 10K</option>
+          </select>
           <div class="small" id="marketSummary">Loading live OpenNum records...</div>
         </div>
 
@@ -71,7 +78,7 @@
 
   <footer class="footer">
     <div class="shell">
-      <div>Buying an OpenNum means buying or receiving the underlying Ordinals inscription.</div>
+      <div>Buying an OpenNum means buying or receiving the underlying Ordinals inscription. Want a number that isn't listed here? Find its current holder on ordinals.com and make the offer on Satflow or Magic Eden.</div>
       <div class="footer-links">
         <a href="/whitepaper-en">Whitepaper</a>
         <a href="/faq">FAQ</a>
@@ -100,6 +107,37 @@
       renderMarket();
     }
 
+    // Number pattern traits, computed from the number itself (mirrors api/profile.js).
+    function numberTraits(num) {
+      const d = String(num);
+      const reversed = d.split('').reverse().join('');
+      const asc = '0123456789';
+      const isSeq = d.length >= 3 && (asc.includes(d) || asc.split('').reverse().join('').includes(d));
+      return {
+        sub10k: num < 10000,
+        palindrome: d.length >= 2 && d === reversed,
+        repdigit: d.length >= 2 && /^(.)\1*$/.test(d),
+        year: num >= 1900 && num <= 2100,
+        sequence: isSeq
+      };
+    }
+
+    const TRAIT_LABELS = { sub10k: 'Sub 10K', palindrome: 'Palindrome', repdigit: 'Repeating', year: 'Year', sequence: 'Sequence' };
+
+    function traitPills(num) {
+      const t = numberTraits(num);
+      const shown = [];
+      if (num < 100) shown.push('Sub 100');
+      else if (num < 1000) shown.push('Sub 1K');
+      else if (t.sub10k) shown.push('Sub 10K');
+      if (t.palindrome) shown.push(TRAIT_LABELS.palindrome);
+      if (t.repdigit) shown.push(TRAIT_LABELS.repdigit);
+      if (t.sequence) shown.push(TRAIT_LABELS.sequence);
+      if (t.year) shown.push(TRAIT_LABELS.year);
+      if (!shown.length) return '';
+      return `<div class="trait-badges" style="margin-top:8px">${shown.map(s => `<span class="trait-pill">${s}</span>`).join('')}</div>`;
+    }
+
     function searchOrOpen(event) {
       event.preventDefault();
       const raw = document.getElementById('searchInput').value.trim().replace(/^#/, '');
@@ -126,24 +164,39 @@
       }
     }
 
+    function matchesTrait(num, key) {
+      if (!key) return true;
+      return !!numberTraits(num)[key];
+    }
+
+    // Listings with a headline first, then any for-sale, then by number ascending.
+    function listingRank(r) {
+      if (r.for_sale && (r.ask_headline || r.ask_note)) return 0;
+      if (r.for_sale) return 1;
+      return 2;
+    }
+
     function renderMarket() {
       const q = (document.getElementById('searchInput')?.value || '').trim().replace(/^#/, '').toLowerCase();
+      const traitKey = document.getElementById('traitFilter')?.value || '';
       const filtered = registrations.filter((r) => {
         if (filter === 'sale' && !r.for_sale) return false;
+        if (!matchesTrait(r.inscription_num, traitKey)) return false;
         if (!q) return true;
         return String(r.inscription_num).includes(q) ||
           String(r.inscription_id || '').toLowerCase().includes(q) ||
           String(r.wallet || '').toLowerCase().includes(q) ||
-          String(r.display_name || '').toLowerCase().includes(q);
-      });
+          String(r.display_name || '').toLowerCase().includes(q) ||
+          String(r.ask_headline || '').toLowerCase().includes(q);
+      }).sort((a, b) => listingRank(a) - listingRank(b) || a.inscription_num - b.inscription_num);
       const saleCount = registrations.filter(r => r.for_sale).length;
-      document.getElementById('marketSummary').textContent = `${registrations.length} active IDs · ${saleCount} open to offers`;
+      document.getElementById('marketSummary').textContent = `${saleCount} listed for sale · ${registrations.length} active identities`;
       const grid = document.getElementById('marketGrid');
       if (!filtered.length) {
         grid.innerHTML = `<div class="market-card">
           <div class="number">No match</div>
-          <div class="small">Search a number directly, or register one you already own.</div>
-          <div class="card-actions"><a class="btn btn-primary" href="/register">Register</a><a class="btn" href="/">Search</a></div>
+          <div class="small">No listings match this filter yet. Own a number that fits? List it from your profile.</div>
+          <div class="card-actions"><a class="btn btn-primary" href="/my">List yours</a><a class="btn" href="/">Search</a></div>
         </div>`;
         return;
       }
@@ -153,25 +206,39 @@
     function renderCard(r) {
       const inscriptionId = r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : '');
       const contentUrl = inscriptionId ? `https://ordinals.com/content/${inscriptionId}` : '';
-      const tradeUrl = r.satflow_url || (inscriptionId ? `https://www.satflow.com/ordinal/${inscriptionId}` : 'https://www.satflow.com');
       const thumbHtml = contentUrl
         ? `<img src="${contentUrl}" loading="lazy" alt="${r.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
         : '#';
-      return `<article class="market-card">
+      const headline = r.for_sale && r.ask_headline
+        ? `<div class="listing-headline">${escapeHtml(r.ask_headline)}</div>`
+        : '';
+      const story = r.for_sale && r.ask_note
+        ? `<div class="listing-story">${escapeHtml(r.ask_note)}</div>`
+        : '';
+      const price = r.for_sale
+        ? `<span class="listing-price">${r.ask_price ? escapeHtml(r.ask_price) : 'Offers'}</span>`
+        : '';
+      const offerBtn = r.for_sale
+        ? `<a class="btn btn-primary" href="/n/${r.inscription_num}">Make offer</a>`
+        : `<a class="btn btn-primary" href="/n/${r.inscription_num}">Profile</a>`;
+      return `<article class="market-card${r.for_sale ? ' listing-card' : ''}">
         <div class="card-top">
           <div class="insc-thumb">${thumbHtml}</div>
           <div class="card-meta">
-            <div class="status ${r.for_sale ? 'sale' : ''}">${r.for_sale ? 'Open to offers' : (r.status || 'Active')}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div class="status ${r.for_sale ? 'sale' : ''}">${r.for_sale ? 'For sale' : (r.status || 'Active')}</div>
+              ${price}
+            </div>
             <div class="number">${r.inscription_num}</div>
             ${r.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(r.display_name)}</div>` : ''}
-            <div class="small mono" style="margin-top:4px">${shortWallet(r.wallet)}</div>
+            ${traitPills(r.inscription_num)}
           </div>
         </div>
-        ${r.ask_note ? `<div class="sale-note" style="margin-top:0">${escapeHtml(r.ask_note)}</div>` : ''}
+        ${headline}
+        ${story}
         <div class="card-actions">
-          <a class="btn" href="/n/${r.inscription_num}">Profile</a>
+          ${offerBtn}
           <a class="btn" href="/n/${r.inscription_num}#messages">Message</a>
-          <a class="btn btn-primary" href="${tradeUrl}" target="_blank" rel="noopener noreferrer">Satflow</a>
         </div>
       </article>`;
     }

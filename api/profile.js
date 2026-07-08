@@ -181,6 +181,8 @@ module.exports = async (req, res) => {
     links: data.links || {},
     for_sale: !!data.for_sale,
     ask_note: data.ask_note || null,
+    ask_headline: data.ask_headline || null,
+    ask_price: data.ask_price || null,
     satflow_url: data.satflow_url || null,
     collections,
     collection_members: members,

@@ -160,8 +160,16 @@
                   <span>This number is open to offers</span>
                 </label>
                 <div>
-                  <label class="data-key" style="display:block;margin-bottom:4px">Selling note</label>
-                  <textarea class="textarea" id="editAskNote" maxlength="240" rows="2" placeholder="e.g. Open to serious offers for this birthday number."></textarea>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Listing headline</label>
+                  <input class="input" id="editAskHeadline" type="text" maxlength="80" placeholder="e.g. Born in 1999? This is your number" />
+                </div>
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">Asking price</label>
+                  <input class="input" id="editAskPrice" type="text" maxlength="40" placeholder="e.g. 0.05 BTC — leave empty for open offers" />
+                </div>
+                <div>
+                  <label class="data-key" style="display:block;margin-bottom:4px">The story</label>
+                  <textarea class="textarea" id="editAskNote" maxlength="240" rows="2" placeholder="Why this number matters — its meaning, its history, who it's perfect for."></textarea>
                 </div>
                 <div>
                   <label class="data-key" style="display:block;margin-bottom:4px">Satflow URL</label>
@@ -394,8 +402,21 @@
       }
 
       if (!dormant && data.for_sale) {
+        const priceLine = data.ask_price
+          ? `<div class="sale-price">${escapeHtml(data.ask_price)}</div>`
+          : `<div class="sale-price sale-price-open">Open to offers</div>`;
+        const headline = data.ask_headline
+          ? `<div class="sale-headline">${escapeHtml(data.ask_headline)}</div>`
+          : '';
+        const story = data.ask_note
+          ? `<p class="sale-story">${escapeHtml(data.ask_note)}</p>`
+          : (headline ? '' : '<p class="sale-story">This owner has marked the number open to offers.</p>');
+        const buyLink = data.satflow_url
+          ? `<a class="sale-buy-link" href="${escapeHtml(data.satflow_url)}" target="_blank" rel="noopener noreferrer">Buy on Satflow ↗</a>`
+          : '';
         document.getElementById('saleNote').style.display = 'block';
-        document.getElementById('saleNote').innerHTML = `<span class="sale-note-label">For sale</span>${escapeHtml(data.ask_note || 'This owner has marked the number open to offers.')}`;
+        document.getElementById('saleNote').innerHTML =
+          `<span class="sale-note-label">For sale</span>${headline}${priceLine}${story}${buyLink}`;
       }
 
       const m = data.metadata;
@@ -928,13 +949,15 @@
           document.getElementById('editTelegram').value = links.telegram || '';
           document.getElementById('editWebsite').value = links.website || '';
           document.getElementById('editForSale').checked = !!currentProfile.for_sale;
+          document.getElementById('editAskHeadline').value = currentProfile.ask_headline || '';
+          document.getElementById('editAskPrice').value = currentProfile.ask_price || '';
           document.getElementById('editAskNote').value = currentProfile.ask_note || '';
           document.getElementById('editSatflowUrl').value = currentProfile.satflow_url || '';
           // Open the folded groups when they already hold values, so nothing looks lost.
           if (links.instagram || links.telegram || links.website) {
             document.querySelector('.edit-group').open = true;
           }
-          if (currentProfile.for_sale || currentProfile.ask_note || currentProfile.satflow_url) {
+          if (currentProfile.for_sale || currentProfile.ask_note || currentProfile.ask_headline || currentProfile.satflow_url) {
             document.getElementById('sellingGroup').open = true;
           }
         }
@@ -978,6 +1001,8 @@
             links,
             for_sale: document.getElementById('editForSale').checked,
             ask_note: document.getElementById('editAskNote').value.trim() || null,
+            ask_headline: document.getElementById('editAskHeadline').value.trim() || null,
+            ask_price: document.getElementById('editAskPrice').value.trim() || null,
             satflow_url: document.getElementById('editSatflowUrl').value.trim() || null
           })
         });

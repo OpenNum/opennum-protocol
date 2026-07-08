@@ -50,6 +50,8 @@ module.exports = async (req, res) => {
       links: r.links || {},
       for_sale: !!r.for_sale,
       ask_note: r.ask_note || null,
+      ask_headline: r.ask_headline || null,
+      ask_price: r.ask_price || null,
       satflow_url: r.satflow_url || null,
       registered_at: r.registered_at
     }))
