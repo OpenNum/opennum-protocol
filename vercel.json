@@ -51,6 +51,7 @@
     { "src": "/privacy",      "dest": "/public/privacy.html" },
     { "src": "/faq",          "dest": "/public/faq.html" },
     { "src": "/n/(.*)",       "dest": "/public/profile.html" },
+    { "src": "/c/(.*)",       "dest": "/public/collection.html" },
     { "src": "/whitepaper/(.*)", "dest": "/public/whitepaper/$1" },
     { "src": "/(.*)",         "dest": "/public/$1" }
   ]

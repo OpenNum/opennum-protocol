@@ -329,6 +329,8 @@ img { max-width: 100%; }
 .count-link { border: 0; background: transparent; padding: 0; cursor: pointer; color: var(--muted); font-size: 14px; }
 .count-link:hover { color: var(--ink); }
 .count-link strong { color: var(--ink); font-weight: 820; }
+.collection-link { display: inline-flex; align-items: center; padding: 3px 12px; border: 1px solid #ead4b2; border-radius: 20px; background: #fffaf0; color: var(--gold-deep) !important; font-size: 13px; font-weight: 780; text-decoration: none; }
+.collection-link:hover { border-color: var(--copper); color: var(--copper) !important; }
 .follow-list { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--wash); max-width: 360px; }
 .follow-list-title { font-size: 12px; font-weight: 820; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px 8px; }
 .follow-list-row { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 7px; color: var(--ink); font-size: 14px; text-decoration: none; }

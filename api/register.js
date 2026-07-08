@@ -3,6 +3,7 @@ const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { closeCurrentHolderPeriod, ensureHolderPeriodAndProfileVersion } = require('../lib/_ownership');
 const { emitEvent } = require('../lib/_activity');
+const { resolveCollections } = require('../lib/_collections');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -228,6 +229,9 @@ module.exports = async (req, res) => {
       }
     });
 
+    // Warm the collection cache so the number joins its circle immediately.
+    try { await resolveCollections(updatePayload.inscription_id || `${inscription_txid}i0`, inscription_num); } catch (_) {}
+
     return res.status(200).json({
       success: true,
       transferred: existing.status === 'active',
@@ -309,6 +313,9 @@ module.exports = async (req, res) => {
       wallet
     }
   });
+
+  // Warm the collection cache so the number joins its circle immediately.
+  try { await resolveCollections(insertPayload.inscription_id || `${inscription_txid}i0`, inscription_num); } catch (_) {}
 
   return res.status(200).json({
     success: true,

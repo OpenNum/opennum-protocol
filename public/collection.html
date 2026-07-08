@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collection — OpenNum</title>
+  <meta name="description" content="Registered OpenNum members of this collection — Bitcoin identity numbers with the same on-chain heritage." />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenNum" />
+  <meta property="og:title" content="Collection — OpenNum" />
+  <meta property="og:description" content="Registered OpenNum members of this collection." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@OpenNumBTC" />
+  <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav shell" aria-label="Primary">
+      <a class="brand" href="/">
+        <span class="brand-mark"><img src="/img/opennum-mark-final.svg" alt="" /></span>
+        <span>OpenNum</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="/">Search</a>
+        <a href="/register">Register</a>
+        <a href="/market">Market</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="market-hero">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <h2 id="circleTitle">Loading…</h2>
+            <p class="section-copy" id="circleSub" style="margin-top:18px"></p>
+          </div>
+          <a class="btn btn-primary" href="/register">Register yours</a>
+        </div>
+        <div class="grid" id="memberGrid" style="margin-top:12px">
+          <div class="market-card"><div class="number">…</div><div class="small">Loading members</div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <div>Membership is on-chain: hold an inscription from this collection and register it as your OpenNum.</div>
+      <div class="footer-links">
+        <a href="/whitepaper-en">Whitepaper</a>
+        <a href="/market">Market</a>
+        <a href="/faq">FAQ</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNav(btn) {
+      const links = document.getElementById('navLinks');
+      const open = links.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function memberCard(m) {
+      const thumb = m.inscription_id
+        ? `<img src="https://ordinals.com/content/${m.inscription_id}" loading="lazy" alt="${m.inscription_num}" onerror="this.parentElement.innerHTML='#'">`
+        : '#';
+      const price = m.for_sale
+        ? `<span class="listing-price">${m.ask_price ? escapeHtml(m.ask_price) : 'Offers'}</span>`
+        : '';
+      const headline = m.for_sale && m.ask_headline ? `<div class="listing-headline">${escapeHtml(m.ask_headline)}</div>` : '';
+      return `<article class="market-card${m.for_sale ? ' listing-card' : ''}">
+        <div class="card-top">
+          <div class="insc-thumb">${thumb}</div>
+          <div class="card-meta">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div class="status ${m.for_sale ? 'sale' : ''}">${m.for_sale ? 'For sale' : 'Active'}</div>
+              ${price}
+            </div>
+            <div class="number">${m.inscription_num}</div>
+            ${m.display_name ? `<div style="font-weight:780;margin-top:2px">${escapeHtml(m.display_name)}</div>` : ''}
+          </div>
+        </div>
+        ${headline}
+        <div class="card-actions">
+          <a class="btn btn-primary" href="/n/${m.inscription_num}">Profile</a>
+        </div>
+      </article>`;
+    }
+
+    (async function init() {
+      const slug = (window.location.pathname.match(/\/c\/([a-z0-9-]+)/i) || [])[1];
+      const title = document.getElementById('circleTitle');
+      const sub = document.getElementById('circleSub');
+      const grid = document.getElementById('memberGrid');
+      if (!slug) { title.textContent = 'Collection not found'; grid.innerHTML = ''; return; }
+      try {
+        const res = await fetch(`/api/list?collection=${encodeURIComponent(slug)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          title.textContent = 'No members yet';
+          sub.textContent = 'No one from this collection has registered an OpenNum yet. Hold one? Be the first.';
+          grid.innerHTML = '<div class="market-card"><div class="number">0</div><div class="small">Registered members will appear here.</div><div class="card-actions"><a class="btn btn-primary" href="/register">Register</a></div></div>';
+          return;
+        }
+        const name = data.collection?.name || slug;
+        title.textContent = `${name} on OpenNum`;
+        document.title = `${name} on OpenNum`;
+        sub.textContent = `${data.total} registered ${data.total === 1 ? 'identity' : 'identities'} in this circle. Every membership is on-chain — hold one, register it, and you're in.`;
+        grid.innerHTML = (data.members || []).map(memberCard).join('') ||
+          '<div class="market-card"><div class="number">0</div><div class="small">Registered members will appear here.</div></div>';
+      } catch (_) {
+        title.textContent = 'Temporarily unavailable';
+        sub.textContent = 'Could not load this collection. Please retry.';
+        grid.innerHTML = '';
+      }
+    })();
+  </script>
+</body>
+</html>

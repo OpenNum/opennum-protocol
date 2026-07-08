@@ -72,6 +72,7 @@
           <div class="profile-counts" id="profileCounts" style="display:none">
             <button type="button" class="count-link" onclick="showFollowList('followers')"><strong id="followersCount">0</strong> followers</button>
             <button type="button" class="count-link" onclick="showFollowList('following')"><strong id="followingCount">0</strong> following</button>
+            <a class="count-link collection-link" id="collectionBadge" style="display:none"></a>
           </div>
           <div class="follow-list" id="followList" style="display:none"></div>
           <h1 class="profile-display-name" id="profileName" style="display:none"></h1>
@@ -82,10 +83,6 @@
           <div class="claim-note" id="claimNote" style="display:none"></div>
           <div class="sale-note" id="saleNote" style="display:none"></div>
 
-          <div id="collectionCircle" class="collection-circle" style="display:none">
-            <div class="collection-circle-title" id="collectionCircleTitle"></div>
-            <div class="collection-circle-rows" id="collectionCircleRows"></div>
-          </div>
 
           <div class="primary-actions" id="send">
             <button class="btn btn-primary" id="sendButton" onclick="toggleSendPanel()">Send BTC</button>
@@ -399,7 +396,7 @@
       }
 
       renderXLink(data.links || {});
-      renderCollectionCircle(data.collections || [], data.collection_members || []);
+      renderCollectionBadge(data.collections || []);
       renderCounts(data.followers, data.following);
       if (!dormant) {
         checkOwnership(data.wallet);
@@ -697,21 +694,15 @@
       }
     }
 
-    // The single collection mention on the profile: circle title + fellow members.
-    function renderCollectionCircle(collections, members) {
-      const box = document.getElementById('collectionCircle');
-      if (!collections.length) { box.style.display = 'none'; return; }
-      const name = collections[0].collection_name || collections[0].collection_slug;
-      document.getElementById('collectionCircleTitle').textContent = `${name} on OpenNum`;
-      document.getElementById('collectionCircleRows').innerHTML = members.length
-        ? members.map((m) => `
-        <a class="cc-row" href="/n/${m.num}">
-          <span class="cc-avatar"><img src="https://ordinals.com/content/${escapeHtml(m.inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" /></span>
-          <strong>${m.num}</strong>${m.display_name ? `<span>${escapeHtml(m.display_name)}</span>` : ''}
-        </a>
-      `).join('')
-        : '<span class="cc-empty">No other members here yet.</span>';
-      box.style.display = 'block';
+    // The single collection mention on the profile: one badge linking to the circle page.
+    function renderCollectionBadge(collections) {
+      const badge = document.getElementById('collectionBadge');
+      if (!collections.length) { badge.style.display = 'none'; return; }
+      const c = collections[0];
+      badge.href = `/c/${encodeURIComponent(c.collection_slug)}`;
+      badge.textContent = c.collection_name || c.collection_slug;
+      badge.style.display = '';
+      document.getElementById('profileCounts').style.display = 'flex';
     }
 
     const X_ICON = `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
