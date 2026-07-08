@@ -61,7 +61,7 @@
         </div>
       </div>
       <div id="watchlistSection" style="max-width:520px;margin:28px auto 0">
-        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Watchlist</div>
+        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Watching</div>
         <div id="watchlistBox">
           <button class="btn" onclick="viewWatchlist()">View my watchlist</button>
         </div>
@@ -367,7 +367,7 @@
         const data = await signedSocial('watchlist_list', '', actorNum, wallet);
         const items = data.items || [];
         if (!items.length) {
-          box.innerHTML = '<div class="empty" style="padding:12px 0">No saved numbers yet. Open any profile and tap “Save to watchlist”.</div>';
+          box.innerHTML = '<div class="empty" style="padding:12px 0">Not watching any numbers yet. Open any profile and tap “Watch”.</div>';
           return;
         }
         box.innerHTML = items.map((it) => `
@@ -387,6 +387,9 @@
       const box = document.getElementById('watchlistBox');
       try {
         await signedSocial('watchlist_remove', String(targetNum), currentActorNum, currentWallet, { target_num: targetNum });
+        try {
+          await signedSocial('unwatch', String(targetNum), currentActorNum, currentWallet, { target_num: targetNum });
+        } catch (_) { /* event unsubscribe is secondary; the list removal succeeded */ }
         await loadWatchlist(currentWallet, currentActorNum);
       } catch (_) {
         if (box) box.insertAdjacentHTML('afterbegin', '<div class="alert alert-error visible" style="margin-bottom:10px">Could not remove this number.</div>');

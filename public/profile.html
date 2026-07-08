@@ -69,7 +69,6 @@
             <button class="quiet-button" id="editProfileBtn" style="display:none" onclick="toggleEditPanel()">Edit profile</button>
             <button class="quiet-button follow-btn" id="followBtn" style="display:none" onclick="toggleFollow()">Follow</button>
             <button class="quiet-button" id="watchBtn" style="display:none" onclick="toggleWatch()">Watch</button>
-            <button class="quiet-button" id="watchlistBtn" style="display:none" onclick="toggleWatchlist()">Save to watchlist</button>
           </div>
           <div class="number" id="profileNum"></div>
           <div class="profile-counts" id="profileCounts" style="display:none">
@@ -79,15 +78,12 @@
           <div class="follow-list" id="followList" style="display:none"></div>
           <div class="trait-badges" id="traitBadges" style="display:none"></div>
           <h1 class="profile-display-name" id="profileName" style="display:none"></h1>
+          <a class="x-inline" id="xInline" style="display:none" target="_blank" rel="noopener noreferrer"></a>
           <p class="profile-bio" id="profileBio" style="display:none"></p>
           <div class="alert alert-error" id="followError" style="margin-top:10px"></div>
 
           <div class="claim-note" id="claimNote" style="display:none"></div>
           <div class="sale-note" id="saleNote" style="display:none"></div>
-
-          <div id="socialLinks" style="display:none">
-            <div id="socialGrid" class="social-grid"></div>
-          </div>
 
           <div id="collectionCircle" class="collection-circle" style="display:none">
             <div class="collection-circle-title" id="collectionCircleTitle"></div>
@@ -135,23 +131,6 @@
               <label class="data-key" style="display:block;margin-bottom:4px">X / Twitter</label>
               <input class="input" id="editX" type="text" placeholder="@yourhandle" />
             </div>
-            <details class="edit-group">
-              <summary>More links <span>Instagram · Telegram · Website</span></summary>
-              <div style="display:grid;gap:12px;padding-top:12px">
-                <div>
-                  <label class="data-key" style="display:block;margin-bottom:4px">Instagram</label>
-                  <input class="input" id="editInstagram" type="text" placeholder="@yourhandle" />
-                </div>
-                <div>
-                  <label class="data-key" style="display:block;margin-bottom:4px">Telegram</label>
-                  <input class="input" id="editTelegram" type="text" placeholder="@yourhandle" />
-                </div>
-                <div>
-                  <label class="data-key" style="display:block;margin-bottom:4px">Website</label>
-                  <input class="input" id="editWebsite" type="url" placeholder="https://yoursite.com" />
-                </div>
-              </div>
-            </details>
             <details class="edit-group" id="sellingGroup">
               <summary>Selling <span>open to offers · note · Satflow link</span></summary>
               <div style="display:grid;gap:12px;padding-top:12px">
@@ -279,7 +258,6 @@
     let viewerWallet = null;
     let isFollowing = false;
     let isWatching = false;
-    let isWatchlisted = false;
     let isProfileOwner = false;
 
     (async () => {
@@ -426,7 +404,7 @@
         document.getElementById('avatarWrap').innerHTML = `<iframe class="inscription-frame" src="https://ordinals.com/preview/${inscriptionId}" title="Inscription ${num}" sandbox="allow-scripts allow-same-origin" loading="eager"></iframe>`;
       }
 
-      renderSocialLinks(data.links || {});
+      renderXLink(data.links || {});
       renderCollections(data.collections || []);
       renderCollectionCircle(data.collections || [], data.collection_members || []);
       renderTraits(data.traits || {});
@@ -435,7 +413,6 @@
         checkOwnership(data.wallet);
         isFollowing = !!data.viewer_follows;   // initial value (valid when IIFE passed a viewer param)
         isWatching = !!data.viewer_watches;
-        isWatchlisted = false;                  // private state is only confirmed from /my; add is idempotent
         // Show Follow/Watch as a call-to-action for everyone (even before connecting a wallet).
         // applyViewerContext() then corrects the state and hides them on your own profile.
         const fb = document.getElementById('followBtn');
@@ -513,7 +490,7 @@
       if (currentProfile) {
         isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
         if (isProfileOwner) {
-          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn', 'watchBtn', 'watchlistBtn', 'makeOfferBtn'].forEach((id) => {
+          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn', 'watchBtn', 'makeOfferBtn'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
@@ -541,11 +518,6 @@
         if (watchEl) {
           watchEl.style.display = '';
           watchEl.textContent = isWatching ? 'Watching' : 'Watch';
-        }
-        const wb = document.getElementById('watchlistBtn');
-        if (wb) {
-          wb.style.display = '';
-          wb.textContent = isWatchlisted ? '✓ Saved' : 'Save to watchlist';
         }
       }
       return true;
@@ -697,6 +669,7 @@
       }
     }
 
+    // One Watch = event subscription + private watchlist entry (merged concepts).
     async function toggleWatch() {
       setAlert('followError', '');
       const btn = document.getElementById('watchBtn');
@@ -704,6 +677,9 @@
       btn.disabled = true;
       try {
         await signedSocialAction(goingToWatch ? 'watch' : 'unwatch', currentNumber, { target_num: currentNumber });
+        try {
+          await signedSocialAction(goingToWatch ? 'watchlist_add' : 'watchlist_remove', currentNumber, { target_num: currentNumber });
+        } catch (_) { /* watchlist is secondary; the watch itself succeeded */ }
         isWatching = goingToWatch;
         btn.textContent = isWatching ? 'Watching' : 'Watch';
         await updateNavNumber();
@@ -720,28 +696,6 @@
         const data = await res.json();
         renderCounts(data.followers, data.following);
       } catch (_) {}
-    }
-
-    async function toggleWatchlist() {
-      setAlert('followError', '');
-      const btn = document.getElementById('watchlistBtn');
-      if (!btn) return;
-      btn.disabled = true;
-      try {
-        if (!isWatchlisted) {
-          await signedSocialAction('watchlist_add', currentNumber, { target_num: currentNumber });
-          isWatchlisted = true;
-        } else {
-          await signedSocialAction('watchlist_remove', currentNumber, { target_num: currentNumber });
-          isWatchlisted = false;
-        }
-        btn.textContent = isWatchlisted ? '✓ Saved' : 'Save to watchlist';
-        await updateNavNumber();
-      } catch (e) {
-        setAlert('followError', e?.message || 'Could not update watchlist.');
-      } finally {
-        btn.disabled = false;
-      }
     }
 
     async function showFollowList(type) {
@@ -801,71 +755,31 @@
       box.style.display = 'block';
     }
 
-    const SOCIAL_DEFS = [
-      {
-        key: 'x',
-        label: 'X',
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
-        bg: '#000', color: '#fff'
-      },
-      {
-        key: 'instagram',
-        label: 'Instagram',
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>`,
-        bg: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', color: '#fff'
-      },
-      {
-        key: 'telegram',
-        label: 'Telegram',
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>`,
-        bg: '#2AABEE', color: '#fff'
-      },
-      {
-        key: 'website',
-        label: 'Website',
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
-        bg: 'var(--wash)', color: 'var(--ink)'
-      }
-    ];
+    const X_ICON = `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`;
 
-    function parseHandle(url, key) {
+    function parseHandle(url) {
       try {
         const u = new URL(url);
         const parts = u.pathname.split('/').filter(Boolean);
-        if (key === 'website') return u.hostname.replace(/^www\./, '');
         return parts.length ? '@' + parts[0] : u.hostname;
-      } catch (_) { return url.slice(0, 28); }
+      } catch (_) { return String(url).slice(0, 28); }
     }
 
-    function normalizeSocialInput(value, key) {
+    function normalizeSocialInput(value) {
       const raw = String(value || '').trim();
       if (!raw) return '';
       if (/^https?:\/\//i.test(raw)) return raw;
-      const handle = raw.replace(/^@+/, '');
-      if (key === 'x') return `https://x.com/${handle}`;
-      if (key === 'instagram') return `https://instagram.com/${handle}`;
-      if (key === 'telegram') return `https://t.me/${handle}`;
-      return `https://${raw}`;
+      return `https://x.com/${raw.replace(/^@+/, '')}`;
     }
 
-    function renderSocialLinks(links) {
-      const rows = SOCIAL_DEFS
-        .map(d => ({ ...d, url: d.key === 'x' ? (links.x || links.twitter) : links[d.key] }))
-        .filter(d => d.url)
-        .map(d => {
-          const handle = parseHandle(d.url, d.key);
-          const iconBg = d.bg.startsWith('linear') ? `background:${d.bg}` : `background:${d.bg}`;
-          return `<a class="social-row" href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer">
-            <span class="social-icon-wrap" style="${iconBg};color:${d.color}">${d.icon}</span>
-            <span class="social-platform">${d.label}</span>
-            <span class="social-handle">${escapeHtml(handle)}</span>
-            <span class="social-arrow">↗</span>
-          </a>`;
-        }).join('');
-      if (rows) {
-        document.getElementById('socialLinks').style.display = 'block';
-        document.getElementById('socialGrid').innerHTML = rows;
-      }
+    // Minimal external anchor: one small X handle line, nothing else.
+    function renderXLink(links) {
+      const url = links.x || links.twitter;
+      const el = document.getElementById('xInline');
+      if (!url) { el.style.display = 'none'; return; }
+      el.href = url;
+      el.innerHTML = `${X_ICON}<span>${escapeHtml(parseHandle(url))}</span>`;
+      el.style.display = 'inline-flex';
     }
 
     function toggleNav(btn) {
@@ -945,18 +859,12 @@
           document.getElementById('editBio').value = currentProfile.bio || '';
           const links = currentProfile.links || {};
           document.getElementById('editX').value = links.x || links.twitter || '';
-          document.getElementById('editInstagram').value = links.instagram || '';
-          document.getElementById('editTelegram').value = links.telegram || '';
-          document.getElementById('editWebsite').value = links.website || '';
           document.getElementById('editForSale').checked = !!currentProfile.for_sale;
           document.getElementById('editAskHeadline').value = currentProfile.ask_headline || '';
           document.getElementById('editAskPrice').value = currentProfile.ask_price || '';
           document.getElementById('editAskNote').value = currentProfile.ask_note || '';
           document.getElementById('editSatflowUrl').value = currentProfile.satflow_url || '';
-          // Open the folded groups when they already hold values, so nothing looks lost.
-          if (links.instagram || links.telegram || links.website) {
-            document.querySelector('.edit-group').open = true;
-          }
+          // Open the Selling group when it already holds values, so nothing looks lost.
           if (currentProfile.for_sale || currentProfile.ask_note || currentProfile.ask_headline || currentProfile.satflow_url) {
             document.getElementById('sellingGroup').open = true;
           }
@@ -980,13 +888,7 @@
 
         const links = {};
         const x = document.getElementById('editX').value.trim();
-        const ig = document.getElementById('editInstagram').value.trim();
-        const tg = document.getElementById('editTelegram').value.trim();
-        const ws = document.getElementById('editWebsite').value.trim();
-        if (x) links.x = normalizeSocialInput(x, 'x');
-        if (ig) links.instagram = normalizeSocialInput(ig, 'instagram');
-        if (tg) links.telegram = normalizeSocialInput(tg, 'telegram');
-        if (ws) links.website = normalizeSocialInput(ws, 'website');
+        if (x) links.x = normalizeSocialInput(x);
 
         const res = await fetch('/api/update', {
           method: 'PATCH',
