@@ -56,10 +56,8 @@
       <div class="profile-stage">
         <div class="profile-art-column">
           <div class="profile-art" id="avatarWrap"><span id="avatarFallback">#</span></div>
-          <div id="collectionBadges" class="collection-list" style="display:none"></div>
           <div class="art-links">
             <a id="ordLink" href="#" target="_blank" rel="noopener noreferrer">View inscription <span aria-hidden="true">↗</span></a>
-            <a id="satflowLink" href="#" target="_blank" rel="noopener noreferrer">Make offer <span aria-hidden="true">↗</span></a>
           </div>
         </div>
 
@@ -76,7 +74,6 @@
             <button type="button" class="count-link" onclick="showFollowList('following')"><strong id="followingCount">0</strong> following</button>
           </div>
           <div class="follow-list" id="followList" style="display:none"></div>
-          <div class="trait-badges" id="traitBadges" style="display:none"></div>
           <h1 class="profile-display-name" id="profileName" style="display:none"></h1>
           <a class="x-inline" id="xInline" style="display:none" target="_blank" rel="noopener noreferrer"></a>
           <p class="profile-bio" id="profileBio" style="display:none"></p>
@@ -317,7 +314,6 @@
       currentProfile = data;
       const dormant = data.status === 'dormant' || data.claim_required;
       const inscriptionId = data.inscription_id || `${data.inscription_txid}i0`;
-      const tradeUrl = data.satflow_url || `https://www.satflow.com/ordinal/${inscriptionId}`;
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('profile').style.display = 'block';
@@ -336,7 +332,6 @@
       document.getElementById('profileStatus').classList.toggle('dormant', dormant);
       document.getElementById('profileStatus').classList.toggle('sale', !dormant && !!data.for_sale);
       document.getElementById('ordLink').href = `https://ordinals.com/inscription/${inscriptionId}`;
-      document.getElementById('satflowLink').href = tradeUrl;
 
       if (data.display_name) {
         document.getElementById('profileName').textContent = data.display_name;
@@ -405,9 +400,7 @@
       }
 
       renderXLink(data.links || {});
-      renderCollections(data.collections || []);
       renderCollectionCircle(data.collections || [], data.collection_members || []);
-      renderTraits(data.traits || {});
       renderCounts(data.followers, data.following);
       if (!dormant) {
         checkOwnership(data.wallet);
@@ -423,30 +416,6 @@
         wEl.textContent = isWatching ? 'Watching' : 'Watch';
         await applyViewerContext();             // authoritative: nav number + own-profile hide + real follow state
       }
-    }
-
-    const TRAIT_DEFS = [
-      { key: 'is_sub_100', label: 'Sub 100' },
-      { key: 'is_sub_1k', label: 'Sub 1K' },
-      { key: 'is_sub_10k', label: 'Sub 10K' },
-      { key: 'is_palindrome', label: 'Palindrome' },
-      { key: 'is_repdigit', label: 'Repeating digits' },
-      { key: 'is_year', label: 'Year number' }
-    ];
-
-    function renderTraits(traits) {
-      // Show the most specific sub-tier only (sub_100 > sub_1k > sub_10k)
-      const shown = [];
-      if (traits.is_sub_100) shown.push('Sub 100');
-      else if (traits.is_sub_1k) shown.push('Sub 1K');
-      else if (traits.is_sub_10k) shown.push('Sub 10K');
-      if (traits.is_palindrome) shown.push('Palindrome');
-      if (traits.is_repdigit) shown.push('Repeating digits');
-      if (traits.is_year) shown.push('Year number');
-      const box = document.getElementById('traitBadges');
-      if (!shown.length) { box.style.display = 'none'; return; }
-      box.style.display = 'flex';
-      box.innerHTML = shown.map((t) => `<span class="trait-pill">${t}</span>`).join('');
     }
 
     function renderCounts(followers, following) {
@@ -490,7 +459,7 @@
       if (currentProfile) {
         isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
         if (isProfileOwner) {
-          ['satflowLink', 'sendButton', 'messageJumpBtn', 'followBtn', 'watchBtn', 'makeOfferBtn'].forEach((id) => {
+          ['sendButton', 'messageJumpBtn', 'followBtn', 'watchBtn', 'makeOfferBtn'].forEach((id) => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
@@ -725,33 +694,20 @@
       }
     }
 
-    function renderCollections(collections) {
-      const box = document.getElementById('collectionBadges');
-      if (!collections.length) {
-        box.style.display = 'none';
-        box.innerHTML = '';
-        return;
-      }
-      box.style.display = 'flex';
-      box.innerHTML = collections.map((c) => `
-        <a class="collection-item" href="https://ordinalswallet.com/collection/${encodeURIComponent(c.collection_slug)}" target="_blank" rel="noopener noreferrer" title="View collection">
-          <span aria-hidden="true">✓</span> ${escapeHtml(c.collection_name || c.collection_slug)}
-        </a>
-      `).join('');
-    }
-
-    // Fellow collection holders who registered an OpenNum — the collection social layer.
+    // The single collection mention on the profile: circle title + fellow members.
     function renderCollectionCircle(collections, members) {
       const box = document.getElementById('collectionCircle');
-      if (!collections.length || !members.length) { box.style.display = 'none'; return; }
+      if (!collections.length) { box.style.display = 'none'; return; }
       const name = collections[0].collection_name || collections[0].collection_slug;
       document.getElementById('collectionCircleTitle').textContent = `${name} on OpenNum`;
-      document.getElementById('collectionCircleRows').innerHTML = members.map((m) => `
+      document.getElementById('collectionCircleRows').innerHTML = members.length
+        ? members.map((m) => `
         <a class="cc-row" href="/n/${m.num}">
           <span class="cc-avatar"><img src="https://ordinals.com/content/${escapeHtml(m.inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" /></span>
           <strong>${m.num}</strong>${m.display_name ? `<span>${escapeHtml(m.display_name)}</span>` : ''}
         </a>
-      `).join('');
+      `).join('')
+        : '<span class="cc-empty">No other members here yet.</span>';
       box.style.display = 'block';
     }
 

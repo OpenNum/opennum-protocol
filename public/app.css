@@ -300,6 +300,7 @@ img { max-width: 100%; }
 .cc-row span:not(.cc-avatar) { color: var(--muted); font-size: 13px; }
 .cc-avatar { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--wash); border: 1px solid var(--line); color: var(--deep); font-size: 11px; font-weight: 850; flex-shrink: 0; }
 .cc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cc-empty { color: var(--muted); font-size: 13px; }
 .art-links { display: flex; justify-content: space-between; gap: 20px; padding: 16px 2px 0; color: var(--soft-ink); font-size: 13px; font-weight: 720; }
 .art-links a:hover { color: var(--copper); }
 .profile-identity {
