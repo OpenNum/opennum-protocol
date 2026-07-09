@@ -215,16 +215,6 @@
         </div>
       </section>
 
-      <section class="conversation" id="activitySection" style="display:none">
-        <div class="conversation-head">
-          <div>
-            <h2>Recent activity</h2>
-            <p>Events on your number — only shown to you.</p>
-          </div>
-        </div>
-        <div id="activityFeed"></div>
-      </section>
-
       <details class="ownership-details">
         <summary>Ownership &amp; inscription details</summary>
         <div class="data-list">
@@ -462,10 +452,6 @@
       // b. own profile: hide actions that make no sense on yourself
       if (currentProfile) {
         isProfileOwner = !!(viewer.wallet && viewer.wallet === currentProfile.wallet);
-        if (isProfileOwner && !window.__feedLoaded) {
-          window.__feedLoaded = true;   // activity is owner-only UI; applyViewerContext runs repeatedly
-          loadPublicFeed(currentNumber);
-        }
         if (isProfileOwner) {
           ['sendButton', 'messageJumpBtn', 'followBtn', 'watchBtn', 'makeOfferBtn'].forEach((id) => {
             const el = document.getElementById(id);
@@ -908,34 +894,6 @@
       } catch (e) {
         setAlert('sendError', e?.message || 'Wallet rejected or failed to submit the transaction.');
       }
-    }
-
-    function feedLine(ev) {
-      const actor = ev.actor_num != null ? `#${ev.actor_num}` : 'Someone';
-      switch (ev.event_type) {
-        case 'followed': return `<a href="/n/${ev.actor_num}">${actor}</a> followed this number`;
-        case 'public_message_received': return `<a href="/n/${ev.actor_num}">${actor}</a> left a public message`;
-        case 'marked_for_sale': return 'Marked open to offers';
-        case 'number_claimed': return 'Registered as an OpenNum';
-        case 'new_holder_claimed': return 'Claimed by a new holder';
-        case 'ownership_transferred': return 'Changed hands on-chain';
-        default: return '';
-      }
-    }
-
-    // Public activity feed for this number (no auth). Section stays hidden when there's nothing public.
-    async function loadPublicFeed(num) {
-      try {
-        const res = await fetch(`/api/social?view=feed&num=${num}`);
-        const data = await res.json();
-        const events = (data.events || []).map((ev) => ({ ev, line: feedLine(ev) })).filter((x) => x.line);
-        if (!events.length) return;
-        document.getElementById('activityFeed').innerHTML = events.map(({ ev, line }) => {
-          const date = ev.created_at ? new Date(ev.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }) : '';
-          return `<div class="inbox-row"><span class="inbox-text">${line}</span><span class="inbox-date">${date}</span></div>`;
-        }).join('');
-        document.getElementById('activitySection').style.display = 'block';
-      } catch (_) { /* feed is best-effort */ }
     }
 
     // Owner's showcase: up to 5 numbers they chose to display publicly.
