@@ -125,6 +125,10 @@
               <label class="data-key" style="display:block;margin-bottom:4px">X / Twitter</label>
               <input class="input" id="editX" type="text" placeholder="@yourhandle" />
             </div>
+            <div>
+              <label class="data-key" style="display:block;margin-bottom:4px">Showcase numbers <span style="text-transform:none;letter-spacing:0;font-weight:400">(up to 5, shown on your page)</span></label>
+              <input class="input" id="editShowcase" type="text" placeholder="e.g. 989, 1999, 7777" />
+            </div>
             <details class="edit-group" id="sellingGroup">
               <summary>Selling <span>open to offers · note · Satflow link</span></summary>
               <div style="display:grid;gap:12px;padding-top:12px">
@@ -177,33 +181,38 @@
         </div>
       </div>
 
+      <section class="conversation" id="showcaseSection" style="display:none">
+        <div class="conversation-head">
+          <div>
+            <h2>Showcase</h2>
+            <p>Numbers picked by the holder.</p>
+          </div>
+        </div>
+        <div class="showcase-rows" id="showcaseRows"></div>
+      </section>
+
       <section class="conversation" id="messages">
         <div class="conversation-head">
           <div>
-            <h2>Messages</h2>
-            <p id="messageHelp">Signed by active OpenNum identities.</p>
+            <h2>Message the holder</h2>
+            <p id="messageHelp">Private — only the holder of this number can read it.</p>
           </div>
-          <button class="quiet-button" onclick="loadGuestbook()">Refresh</button>
         </div>
 
         <div class="message-composer">
           <div class="composer-mark" id="composerMark">#</div>
           <div class="composer-body">
-            <div id="replyContext" class="reply-context" style="display:none"></div>
             <textarea class="textarea" id="guestbookMessage" maxlength="280" placeholder="Write to this OpenNum…"></textarea>
             <div class="composer-actions">
-              <span>280 characters · public and permanent</span>
+              <span>280 characters · signed by your number · private</span>
               <div>
-                <button class="quiet-button" id="cancelReplyBtn" style="display:none" onclick="clearReply()">Cancel reply</button>
-                <button class="btn btn-primary btn-small" id="messagePostBtn" onclick="signGuestbookMessage()">Sign &amp; Post</button>
+                <button class="btn btn-primary btn-small" id="messagePostBtn" onclick="signGuestbookMessage()">Sign &amp; Send</button>
               </div>
             </div>
             <div class="alert alert-error" id="guestbookError"></div>
             <div class="alert alert-success" id="guestbookSuccess"></div>
           </div>
         </div>
-
-        <div class="thread" id="guestbookList"><div class="empty">Loading messages...</div></div>
       </section>
 
       <section class="conversation" id="activitySection" style="display:none">
@@ -247,7 +256,6 @@
   <script>
     let currentProfile = null;
     let currentNumber = null;
-    let replyParentId = null;
     let viewerNum = null;
     let viewerWallet = null;
     let isFollowing = false;
@@ -267,7 +275,6 @@
         const data = await res.json();
         if (res.status === 404 || !res.ok) return showNotFound(num);
         await renderProfile(num, data);
-        loadGuestbook();
         const hash = window.location.hash;
         if (hash === '#send') {
           setTimeout(() => { toggleSendPanel(); document.getElementById('send').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
@@ -397,6 +404,7 @@
 
       renderXLink(data.links || {});
       renderCollectionBadge(data.collections || []);
+      renderShowcase(data.showcase_nums || []);
       renderCounts(data.followers, data.following);
       if (!dormant) {
         checkOwnership(data.wallet);
@@ -509,7 +517,6 @@
         await window.unisat.requestAccounts();   // triggers the authorization popup
         viewerNum = null; viewerWallet = null;   // clear cache so getViewer re-reads
         await applyViewerContext();
-        loadGuestbook();   // re-render so withdraw/hide buttons reflect the now-known viewer
       } catch (_) { /* user cancelled */ }
     }
 
@@ -809,6 +816,7 @@
           document.getElementById('editBio').value = currentProfile.bio || '';
           const links = currentProfile.links || {};
           document.getElementById('editX').value = links.x || links.twitter || '';
+          document.getElementById('editShowcase').value = (currentProfile.showcase_nums || []).join(', ');
           document.getElementById('editForSale').checked = !!currentProfile.for_sale;
           document.getElementById('editAskHeadline').value = currentProfile.ask_headline || '';
           document.getElementById('editAskPrice').value = currentProfile.ask_price || '';
@@ -840,6 +848,12 @@
         const x = document.getElementById('editX').value.trim();
         if (x) links.x = normalizeSocialInput(x);
 
+        const showcase = document.getElementById('editShowcase').value
+          .split(/[,\s#]+/)
+          .map((s) => parseInt(s, 10))
+          .filter((n) => Number.isInteger(n) && n >= 0 && n !== currentNumber);
+        const showcaseNums = [...new Set(showcase)].slice(0, 5);
+
         const res = await fetch('/api/update', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -851,6 +865,7 @@
             display_name: document.getElementById('editName').value.trim() || null,
             bio: document.getElementById('editBio').value.trim() || null,
             links,
+            showcase_nums: showcaseNums,
             for_sale: document.getElementById('editForSale').checked,
             ask_note: document.getElementById('editAskNote').value.trim() || null,
             ask_headline: document.getElementById('editAskHeadline').value.trim() || null,
@@ -923,128 +938,34 @@
       } catch (_) { /* feed is best-effort */ }
     }
 
-    async function loadGuestbook(fresh) {
-      const list = document.getElementById('guestbookList');
-      list.innerHTML = '<div class="empty">Loading messages...</div>';
-      try {
-        // After a write (withdraw/hide/post), bypass the CDN cache (s-maxage=20) so the change shows immediately.
-        const bust = fresh ? `&_=${Date.now()}` : '';
-        const res = await fetch(`/api/guestbook?num=${currentNumber}${bust}`, fresh ? { cache: 'no-store' } : {});
-        const data = await res.json();
-        const current = data.current || data.messages || [];
-        const archived = data.archived || [];
-        if (!current.length && !archived.length) {
-          list.innerHTML = '<div class="empty">No public messages yet.</div>';
-          return;
-        }
-        let html = current.length ? renderMessages(current, false) : '<div class="empty">No messages for the current holder yet.</div>';
-        if (archived.length) {
-          html += `<details class="archived-thread">
-            <summary>Messages from previous holders (${archived.length})</summary>
-            <p class="archived-note">Left while a previous holder owned this number. Archived and read-only.</p>
-            ${renderMessages(archived, true)}
-          </details>`;
-        }
-        list.innerHTML = html;
-      } catch (_) {
-        list.innerHTML = '<div class="empty">Guestbook is temporarily unavailable.</div>';
-      }
-    }
-
-    function renderMessages(messages, readOnly) {
-      const byParent = new Map();
-      messages.forEach((m) => {
-        const key = m.parent_id || 'root';
-        if (!byParent.has(key)) byParent.set(key, []);
-        byParent.get(key).push(m);
-      });
-      return (byParent.get('root') || []).map((m) => renderMessage(m, false, readOnly) + (byParent.get(m.id) || []).map((r) => renderMessage(r, true, readOnly)).join('')).join('');
-    }
-
-    function renderMessage(m, isReply, readOnly) {
-      const status = m.status || 'active';
-      if (status !== 'active') {
-        const label = status === 'withdrawn_by_author' ? 'Message withdrawn by author'
-          : status === 'hidden_by_profile_owner' ? 'Message hidden by profile owner'
-          : 'Message removed';
-        return `<article class="message ${isReply ? 'reply' : ''} message-removed">
-          <span class="message-avatar" aria-hidden="true"></span>
-          <div class="message-content"><div class="message-body" style="color:var(--soft-ink);font-style:italic">${label}</div></div>
-        </article>`;
-      }
-      const author = m.author_number ? `#${m.author_number}` : shortWallet(m.author_wallet);
-      const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-      const avatar = m.author_inscription_id
-        ? `<img src="https://ordinals.com/content/${escapeHtml(m.author_inscription_id)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
-        : (m.author_number ? `${m.author_number}` : '#');
-      // Action buttons: Reply (roots), Withdraw (author), or Hide (current profile owner, current period)
-      let actions = '';
-      if (!readOnly) {
-        const isAuthor = m.author_number && viewerNum && Number(m.author_number) === Number(viewerNum);
-        const parts = [];
-        if (!isReply) parts.push(`<button class="reply-btn" onclick="setReply('${m.id}', '${escapeAttr(author)}')">Reply</button>`);
-        if (isAuthor) parts.push(`<button class="reply-btn msg-danger" onclick="withdrawMessage('${m.id}')">Withdraw</button>`);
-        else if (isProfileOwner && m.is_current_period) parts.push(`<button class="reply-btn msg-danger" onclick="hideMessage('${m.id}')">Hide</button>`);
-        if (parts.length) actions = `<div class="msg-actions">${parts.join('')}</div>`;
-      }
-      return `<article class="message ${isReply ? 'reply' : ''}">
-        <a class="message-avatar" ${m.author_number ? `href="/n/${m.author_number}"` : ''}>${avatar}</a>
-        <div class="message-content">
-          <div class="message-meta">
-            ${m.author_number ? `<a href="/n/${m.author_number}">${author}</a>` : `<span>${author}</span>`}
-            <span>${date}</span>
-          </div>
-          <div class="message-body">${escapeHtml(m.message)}</div>
-          ${actions}
-        </div>
-      </article>`;
-    }
-
-    async function withdrawMessage(id) {
-      if (!window.confirm('Withdraw this message? It will no longer be visible to anyone.')) return;
-      setAlert('guestbookError', '');
-      setAlert('guestbookSuccess', '');
-      try {
-        await signedSocialAction('message_withdraw', id, { message_id: id });
-        await loadGuestbook(true);
-        flashGuestbookSuccess('Message withdrawn.');
-      } catch (e) {
-        setAlert('guestbookError', e?.message || 'Could not withdraw the message.');
-      }
+    // Owner's showcase: up to 5 numbers they chose to display publicly.
+    async function renderShowcase(nums) {
+      const section = document.getElementById('showcaseSection');
+      const rows = document.getElementById('showcaseRows');
+      const list = (nums || []).slice(0, 5);
+      if (!list.length) { section.style.display = 'none'; return; }
+      const cards = await Promise.all(list.map(async (n) => {
+        let inscId = null, name = null;
+        try {
+          const r = await fetch(`/api/resolve?num=${n}`);
+          if (r.ok) { const d = await r.json(); inscId = d.inscription_id; name = d.display_name; }
+        } catch (_) {}
+        const avatar = inscId
+          ? `<img src="https://ordinals.com/content/${escapeHtml(inscId)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
+          : '#';
+        return `<a class="cc-row" href="/n/${n}">
+          <span class="cc-avatar">${avatar}</span>
+          <strong>${n}</strong>${name ? `<span>${escapeHtml(name)}</span>` : ''}
+        </a>`;
+      }));
+      rows.innerHTML = cards.join('');
+      section.style.display = 'block';
     }
 
     function flashGuestbookSuccess(msg) {
       setAlert('guestbookSuccess', msg);
       clearTimeout(window.__gbSuccessTimer);
       window.__gbSuccessTimer = setTimeout(() => setAlert('guestbookSuccess', ''), 3500);
-    }
-
-    async function hideMessage(id) {
-      if (!window.confirm('Hide this message from your profile? It will be shown as hidden.')) return;
-      setAlert('guestbookError', '');
-      setAlert('guestbookSuccess', '');
-      try {
-        await signedSocialAction('message_hide', id, { message_id: id, owner_num: currentNumber });
-        await loadGuestbook(true);
-        flashGuestbookSuccess('Message hidden.');
-      } catch (e) {
-        setAlert('guestbookError', e?.message || 'Could not hide the message.');
-      }
-    }
-
-    function setReply(id, author) {
-      replyParentId = id;
-      const box = document.getElementById('replyContext');
-      box.textContent = `Replying to ${author}`;
-      box.style.display = 'block';
-      document.getElementById('cancelReplyBtn').style.display = '';
-      document.getElementById('guestbookMessage').focus();
-    }
-
-    function clearReply() {
-      replyParentId = null;
-      document.getElementById('replyContext').style.display = 'none';
-      document.getElementById('cancelReplyBtn').style.display = 'none';
     }
 
     async function signGuestbookMessage() {
@@ -1074,7 +995,7 @@
           if (token) {
             res = await fetch('/api/guestbook', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ inscription_num: currentNumber, parent_id: replyParentId, author_wallet: authorWallet, author_number: actorNum, actor_num: actorNum, message: text, session_token: token })
+              body: JSON.stringify({ inscription_num: currentNumber, author_wallet: authorWallet, author_number: actorNum, actor_num: actorNum, message: text, session_token: token })
             });
             if (res.status === 401) { clearSession(); res = null; } // token stale -> sign
           }
@@ -1087,16 +1008,14 @@
           const signature = await window.unisat.signMessage(signedMessage, 'ecdsa');
           res = await fetch('/api/guestbook', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ inscription_num: currentNumber, parent_id: replyParentId, author_wallet: authorWallet, message: text, signature, timestamp })
+            body: JSON.stringify({ inscription_num: currentNumber, author_wallet: authorWallet, message: text, signature, timestamp })
           });
         }
 
         const data = await res.json();
         if (!res.ok) return setAlert('guestbookError', data.error || 'Message could not be posted.');
         document.getElementById('guestbookMessage').value = '';
-        clearReply();
-        await loadGuestbook(true);
-        flashGuestbookSuccess('Message posted.');
+        flashGuestbookSuccess('Message sent — only the holder can read it.');
       } catch (e) {
         setAlert('guestbookError', e?.message || 'Signing failed.');
       }
@@ -1117,9 +1036,6 @@
       }[char]));
     }
 
-    function escapeAttr(value) {
-      return String(value || '').replace(/['\\]/g, '');
-    }
-  </script>
+</script>
 </body>
 </html>

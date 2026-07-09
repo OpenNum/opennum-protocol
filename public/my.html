@@ -66,6 +66,12 @@
           <button class="btn" onclick="viewWatchlist()">View my watchlist</button>
         </div>
       </div>
+      <div id="messagesSection" style="max-width:520px;margin:28px auto 0">
+        <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Messages</div>
+        <div id="messagesBox">
+          <button class="btn" onclick="viewMessages()">View messages</button>
+        </div>
+      </div>
       <div id="offersSection" style="max-width:520px;margin:28px auto 0">
         <div style="font-weight:780;color:var(--ink);margin-bottom:10px">Offers received</div>
         <div id="offersBox">
@@ -153,7 +159,7 @@
     }
 
     // ---- Session token: sign once, then private reads + low-risk writes skip per-action signatures ----
-    const SESSION_ELIGIBLE = new Set(['watchlist_list', 'offer_list', 'offer_sent', 'inbox', 'watchlist_remove', 'follow', 'unfollow', 'watch', 'unwatch', 'watchlist_add']);
+    const SESSION_ELIGIBLE = new Set(['watchlist_list', 'offer_list', 'offer_sent', 'inbox', 'watchlist_remove', 'follow', 'unfollow', 'watch', 'unwatch', 'watchlist_add', 'message_hide']);
 
     let _session = null;          // in-memory token cache (survives a flaky sessionStorage within a page view)
     let _sessionInflight = null;  // single in-flight establish, so concurrent calls never double-sign
@@ -244,9 +250,59 @@
         return; // declined or failed -> keep gate buttons
       }
       loadWatchlist(wallet, actorNum);
+      loadMessages(wallet, actorNum);
       loadOffers(wallet, actorNum);
       loadSent(wallet, actorNum);
       loadInbox(wallet, actorNum);
+    }
+
+    function viewMessages() {
+      if (!currentWallet || currentActorNum === null) return;
+      loadMessages(currentWallet, currentActorNum);
+    }
+
+    // Private inbox: messages sent to your number (guestbook GET is holder-gated).
+    async function loadMessages(wallet, actorNum) {
+      const box = document.getElementById('messagesBox');
+      if (!box) return;
+      box.innerHTML = '<div class="empty" style="padding:12px 0">Loading…</div>';
+      try {
+        const token = await ensureSession(wallet, actorNum);
+        const res = await fetch(`/api/guestbook?num=${actorNum}&wallet=${encodeURIComponent(wallet)}&session_token=${encodeURIComponent(token)}&_=${Date.now()}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not load messages.');
+        const msgs = (data.current || data.messages || []).filter((m) => (m.status || 'active') === 'active');
+        if (!msgs.length) {
+          box.innerHTML = '<div class="empty" style="padding:12px 0">No messages yet. People can write to you from your profile page.</div>';
+          return;
+        }
+        box.innerHTML = msgs.map((m) => `
+          <div class="offer-row">
+            <div class="offer-head">
+              <a class="watch-num" href="/n/${m.author_number}">#${m.author_number}</a>
+              <span class="inbox-date">${m.created_at ? new Date(m.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }) : ''}</span>
+            </div>
+            <div class="offer-note">${escapeHtml(m.message)}</div>
+            <div class="offer-actions">
+              <button class="reply-btn" onclick="location.href='/n/${m.author_number}'">Reply on their page</button>
+              <button class="reply-btn msg-danger" onclick="hideMyMessage('${m.id}')">Hide</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        box.innerHTML = `<div class="empty" style="padding:12px 0">${escapeHtml(e?.message || 'Could not load messages.')} <button class="reply-btn" onclick="viewMessages()">Retry</button></div>`;
+      }
+    }
+
+    async function hideMyMessage(id) {
+      if (!currentWallet || currentActorNum === null) return;
+      try {
+        await signedSocial('message_hide', id, currentActorNum, currentWallet, { message_id: id, owner_num: currentActorNum });
+        await loadMessages(currentWallet, currentActorNum);
+      } catch (_) {
+        const box = document.getElementById('messagesBox');
+        if (box) box.insertAdjacentHTML('afterbegin', '<div class="alert alert-error visible" style="margin-bottom:10px">Could not hide this message.</div>');
+      }
     }
 
     function renderWatchlistGate() {

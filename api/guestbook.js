@@ -101,9 +101,20 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method === 'GET') {
-    res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=60');
+    // Messages are private: only the current holder may read their inbox.
+    res.setHeader('Cache-Control', 'no-store');
     const num = normalizeNumber(req.query.num || req.query.number);
     if (num === null) return res.status(400).json({ error: 'Missing or invalid ?num= parameter' });
+
+    const readerWallet = String(req.query.wallet || '');
+    const readerToken = String(req.query.session_token || '');
+    if (!readerWallet || !readerToken) {
+      return res.status(401).json({ error: 'Messages are private. Sign in as the holder to read them.' });
+    }
+    const session = await verifySession({ wallet: readerWallet, actor_num: num, token: readerToken });
+    if (!session.ok) {
+      return res.status(401).json({ error: 'Messages are private. Sign in as the holder to read them.' });
+    }
 
     const currentHolderPeriodId = await currentHolderPeriodFor(num);
 
@@ -283,7 +294,7 @@ module.exports = async (req, res) => {
     }
   }
   if (!authorNumber) {
-    return res.status(403).json({ error: 'You need an active OpenNum ID before you can leave public messages.' });
+    return res.status(403).json({ error: 'You need an active OpenNum ID before you can send messages.' });
   }
   if (await isRegistrationDormant(author)) {
     return res.status(403).json({ error: 'Your OpenNum ID is dormant after an on-chain transfer. Claim an active ID before posting.' });

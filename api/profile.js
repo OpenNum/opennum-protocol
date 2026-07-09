@@ -183,6 +183,7 @@ module.exports = async (req, res) => {
     ask_note: data.ask_note || null,
     ask_headline: data.ask_headline || null,
     ask_price: data.ask_price || null,
+    showcase_nums: Array.isArray(data.showcase_nums) ? data.showcase_nums.slice(0, 5) : [],
     satflow_url: data.satflow_url || null,
     collections,
     collection_members: members,

@@ -24,11 +24,21 @@ function stripMarketFields(payload) {
   delete payload.ask_price;
 }
 
-// Listing columns (ask_headline / ask_price) may not exist yet — strip just
-// those and retry before falling back to stripping all market fields.
+// Newer columns (ask_headline / ask_price / showcase_nums) may not exist yet —
+// strip just those and retry before falling back to stripping all market fields.
 function stripListingFields(payload) {
   delete payload.ask_headline;
   delete payload.ask_price;
+  delete payload.showcase_nums;
+}
+
+// Owner-curated showcase: up to 5 other numbers displayed on the profile.
+function sanitizeShowcase(input, selfNum) {
+  if (!Array.isArray(input)) return undefined;
+  const nums = input
+    .map((n) => parseInt(n, 10))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n !== selfNum);
+  return [...new Set(nums)].slice(0, 5);
 }
 
 async function currentOwnerFor(inscriptionId) {
@@ -57,7 +67,7 @@ module.exports = async (req, res) => {
   const rate = checkRateLimit(req, 'update', 30, 60 * 60 * 1000);
   if (rate.limited) return sendRateLimit(res, rate.retryAfter);
 
-  const { inscription_num, wallet, signature, timestamp, display_name, bio, links, for_sale, ask_note, ask_headline, ask_price, satflow_url } = req.body || {};
+  const { inscription_num, wallet, signature, timestamp, display_name, bio, links, for_sale, ask_note, ask_headline, ask_price, satflow_url, showcase_nums } = req.body || {};
 
   if ((!inscription_num && inscription_num !== 0) || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, wallet, signature, timestamp' });
@@ -122,13 +132,15 @@ module.exports = async (req, res) => {
   };
   // links requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}'
   if (links !== undefined) updatePayload.links = sanitizeLinks(links);
+  const showcase = sanitizeShowcase(showcase_nums, inscription_num);
+  if (showcase !== undefined) updatePayload.showcase_nums = showcase;
 
   let { error: updateError } = await supabase
     .from('registrations')
     .update(updatePayload)
     .eq('id', existing.id);
 
-  if (updateError && /(ask_headline|ask_price)/i.test(updateError.message || '')) {
+  if (updateError && /(ask_headline|ask_price|showcase_nums)/i.test(updateError.message || '')) {
     stripListingFields(updatePayload);
     ({ error: updateError } = await supabase
       .from('registrations')
