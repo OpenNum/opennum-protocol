@@ -41,6 +41,25 @@ function sanitizeShowcase(input, selfNum) {
   return [...new Set(nums)].slice(0, 5);
 }
 
+// Showcased inscriptions must be held by this profile's wallet on-chain.
+// Fail closed: a number we can't verify doesn't get displayed.
+async function showcaseNotOwned(nums, wallet) {
+  const checks = await Promise.all(nums.map(async (n) => {
+    try {
+      const r = await fetch(`${ORDINALS_API}/inscription/${n}`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)' },
+        signal: AbortSignal.timeout(4000)
+      });
+      if (!r.ok) return { n, ok: false };
+      const d = await r.json();
+      return { n, ok: !!d.address && d.address === wallet };
+    } catch (_) {
+      return { n, ok: false };
+    }
+  }));
+  return checks.filter((c) => !c.ok).map((c) => c.n);
+}
+
 async function currentOwnerFor(inscriptionId) {
   try {
     const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
@@ -133,7 +152,17 @@ module.exports = async (req, res) => {
   // links requires DB migration: ALTER TABLE registrations ADD COLUMN links JSONB DEFAULT '{}'
   if (links !== undefined) updatePayload.links = sanitizeLinks(links);
   const showcase = sanitizeShowcase(showcase_nums, inscription_num);
-  if (showcase !== undefined) updatePayload.showcase_nums = showcase;
+  if (showcase !== undefined) {
+    if (showcase.length) {
+      const notOwned = await showcaseNotOwned(showcase, wallet);
+      if (notOwned.length) {
+        return res.status(400).json({
+          error: `Showcase numbers must be inscriptions held in this wallet. Not verified in this wallet: ${notOwned.join(', ')}`
+        });
+      }
+    }
+    updatePayload.showcase_nums = showcase;
+  }
 
   let { error: updateError } = await supabase
     .from('registrations')
