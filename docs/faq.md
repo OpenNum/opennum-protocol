@@ -28,12 +28,12 @@ A: Numbers are computed by the ord indexer based on inscription confirmation ord
 ---
 
 **Q: Are cursed inscriptions (negative numbers) supported?**
-A: Yes. OpenNum treats ~472,000 cursed inscriptions as first-class citizens, displaying them in `#c-1234` format. They have identical registration rights to positive-numbered inscriptions.
+A: The protocol defines first-class `#c-1234` identifiers for cursed inscriptions. The hosted `opennum.org` web flow and API currently accept non-negative inscription numbers only; cursed-inscription registration remains pending.
 
 ---
 
 **Q: Can AI agents register on OpenNum?**
-A: Yes. v1.1 allows a human operator to register agent wallets under their inscription number, creating a cryptographically verifiable chain of accountability. This is the Bitcoin-native equivalent of Ethereum's ERC-8004.
+A: Protocol v1.1 defines operator-signed agent-wallet delegation. The hosted registration flow does not expose those fields yet, so this is a specified extension rather than a currently available product feature.
 
 ---
 

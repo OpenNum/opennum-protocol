@@ -24,8 +24,8 @@ This phase establishes the protocol specification, public documentation, and the
 - [x] Four-State Identity Machine defined — **Active 🟢 / Dormant ⚫ / Cooling 🟠 / Flagged 🔵**
 - [x] Registration message format v1.0 (Personal Identity) — secp256k1 signature over canonical message
 - [x] Registration message format v1.1 (AI Agent Identity) — `agent_wallet` + `agent_role` + `agent_label` fields, operator-signed
-- [x] Cursed Inscription support — `#c-1234` format for the ~472,043 pre-block-824,544 inscriptions, treated as first-class citizens
-- [x] `.btc` display alias — SNS domain inscriptions automatically read as human-readable aliases
+- [x] Cursed Inscription rules specified — `#c-1234` format is defined; hosted web/API support is still pending
+- [x] `.btc` display alias rules specified — hosted indexer detection is still pending
 - [x] Whitepaper published (EN / CN / KR)
 - [x] GitHub repository open at `github.com/OpenNum/opennum-protocol`
 
@@ -130,7 +130,7 @@ This phase takes OpenNum from a Bitcoin-native protocol to a broader identity pr
 
 | Phase | Timeline | Key Deliverables | Status |
 |-------|----------|-----------------|--------|
-| **Phase 1 — Foundation** | 2026 Q1 | Protocol spec · Dual-Anchor · State Machine · AI Agent v1.1 · Cursed Inscriptions · Website · Identity Pages · Explorer | ✅ Largely complete |
+| **Phase 1 — Foundation** | 2026 Q1 | Protocol spec · Dual-Anchor · State Machine · AI Agent v1.1 · Cursed Inscriptions (spec) · Website · Identity Pages · Explorer | ✅ Largely complete |
 | **Phase 2 — Resolver & Registration** | 2026 Q2 | Resolver API · Registration page · Live indexer | 🔲 In progress |
 | **Phase 3 — Ecosystem Integration** | 2026 Q3 | Wallet / Explorer / Marketplace integration · SDK | 🔲 Planned |
 | **Phase 4 — Identity Expansion** | 2026 Q4 | Full Profile · AI Agent ecosystem · Decentralized indexer network | 🔲 Planned |
@@ -146,8 +146,8 @@ This phase takes OpenNum from a Bitcoin-native protocol to a broader identity pr
 | Smart contracts required | ❌ None | ✅ Ethereum smart contract | Varies |
 | Bitcoin-native | ✅ | ❌ | ✅ |
 | Dispute-immune | ✅ Dual-anchor design | N/A | ❌ |
-| AI Agent delegation | ✅ v1.1 | ❌ | ❌ |
-| Cursed inscription support | ✅ First-class | N/A | Varies |
+| AI Agent delegation | Spec-defined; app pending | ❌ | ❌ |
+| Cursed inscription support | Spec-defined; app pending | N/A | Varies |
 
 ---
 
