@@ -91,12 +91,13 @@ module.exports = async (req, res) => {
   if ((!inscription_num && inscription_num !== 0) || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, wallet, signature, timestamp' });
   }
-  if (!Number.isInteger(inscription_num)) {
-    return res.status(400).json({ error: 'inscription_num must be an integer' });
+  if (!Number.isSafeInteger(inscription_num) || inscription_num < 0) {
+    return res.status(400).json({ error: 'inscription_num must be a non-negative integer' });
   }
 
   const now = Date.now();
-  if (Math.abs(now - timestamp * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber) || Math.abs(now - timestampNumber * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
@@ -132,6 +133,11 @@ module.exports = async (req, res) => {
   }
   const inscriptionId = existing.inscription_id || (existing.inscription_txid ? `${existing.inscription_txid}i0` : null);
   const ownership = inscriptionId ? await currentOwnerFor(inscriptionId) : { owner: null, verified: false };
+  if (!ownership.verified || !ownership.owner) {
+    return res.status(503).json({
+      error: 'On-chain ownership could not be verified. Please try again.'
+    });
+  }
   if (ownership.verified && ownership.owner && ownership.owner !== wallet) {
     return res.status(409).json({
       error: 'This inscription has moved on-chain. The current holder must claim it before editing this OpenNum.'

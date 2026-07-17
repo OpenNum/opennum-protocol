@@ -1,9 +1,8 @@
 const ORDINALS_API = 'https://ordinals.com';
-const { setCors } = require('../lib/_security');
+const { setCors, parseInscriptionNumber } = require('../lib/_security');
 
 function normalizeNumber(raw) {
-  const num = parseInt(String(raw || '').replace(/^#/, ''), 10);
-  return Number.isInteger(num) && num >= 0 ? num : null;
+  return parseInscriptionNumber(raw);
 }
 
 function parseHtmlInscription(html, num) {

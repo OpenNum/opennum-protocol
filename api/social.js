@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { setCors, sanitizeText, sanitizeUrl, checkRateLimit, sendRateLimit } = require('../lib/_security');
+const { setCors, sanitizeText, sanitizeUrl, parseInscriptionNumber, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { verifyAction, verifySession } = require('../lib/_auth');
 const { emitEvent, isMissingActivityTable } = require('../lib/_activity');
 
@@ -40,8 +40,7 @@ function cleanAction(value) {
 }
 
 function normalizeNumber(raw) {
-  const num = parseInt(String(raw || '').replace(/^#/, ''), 10);
-  return Number.isInteger(num) && num >= 0 ? num : null;
+  return parseInscriptionNumber(raw);
 }
 
 function tableMissing(error) {
@@ -118,7 +117,7 @@ async function verifySocialAction({ body, action, actorNum, target }) {
     nonce,
     signature,
     requireActiveId: true,
-    requireOwnership: false
+    requireOwnership: true
   });
   if (!auth.ok) {
     return { error: { status: auth.status || 401, message: auth.error || 'Authentication failed' } };

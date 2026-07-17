@@ -111,7 +111,7 @@ img { max-width: 100%; }
 .home-hero {
   position: relative;
   padding: 92px 0 78px;
-  min-height: calc(100vh - 132px);
+  min-height: min(780px, calc(100vh - 132px));
   display: grid;
   align-items: center;
   overflow: hidden;
@@ -154,6 +154,8 @@ img { max-width: 100%; }
 .desk-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .search-prefix { padding-left: 12px; color: var(--copper); font-size: 24px; font-weight: 820; }
 .search-input {
+  min-width: 0;
+  width: 100%;
   min-height: 56px;
   border: 0;
   outline: 0;

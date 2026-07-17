@@ -139,8 +139,9 @@
 
     function normalizeNumber(value) {
       const q = String(value ?? '').trim().replace(/^#/, '');
-      const num = parseInt(q, 10);
-      return Number.isInteger(num) && num >= 0 ? num : null;
+      if (!/^\d+$/.test(q)) return null;
+      const num = Number(q);
+      return Number.isSafeInteger(num) && num >= 0 ? num : null;
     }
 
     function setPreviewNumber(num) {

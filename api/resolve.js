@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { setCors } = require('../lib/_security');
+const { setCors, parseInscriptionNumber } = require('../lib/_security');
 const { resolveOwnershipState } = require('../lib/_ownership');
 
 const supabase = createClient(
@@ -15,8 +15,8 @@ module.exports = async (req, res) => {
   const raw = req.query.num || req.query.number;
   if (!raw) return res.status(400).json({ error: 'Missing ?num= parameter' });
 
-  const num = parseInt(raw.replace(/^#/, ''), 10);
-  if (isNaN(num)) return res.status(400).json({ error: 'Invalid inscription number' });
+  const num = parseInscriptionNumber(raw);
+  if (num === null) return res.status(400).json({ error: 'Invalid inscription number' });
 
   const { data, error } = await supabase
     .from('registrations')

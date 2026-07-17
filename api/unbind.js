@@ -12,6 +12,22 @@ const supabase = createClient(
 );
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
+const ORDINALS_API = 'https://ordinals.com';
+
+async function currentOwnerFor(inscriptionId) {
+  if (!inscriptionId) return { owner: null, verified: false };
+  try {
+    const response = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)' },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!response.ok) return { owner: null, verified: false };
+    const data = await response.json();
+    return { owner: data.address || null, verified: !!data.address };
+  } catch (_) {
+    return { owner: null, verified: false };
+  }
+}
 
 module.exports = async (req, res) => {
   setCors(req, res, 'POST, OPTIONS');
@@ -25,10 +41,11 @@ module.exports = async (req, res) => {
   if ((!inscription_num && inscription_num !== 0) || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, wallet, signature, timestamp' });
   }
-  if (!Number.isInteger(inscription_num)) {
-    return res.status(400).json({ error: 'inscription_num must be an integer' });
+  if (!Number.isSafeInteger(inscription_num) || inscription_num < 0) {
+    return res.status(400).json({ error: 'inscription_num must be a non-negative integer' });
   }
-  if (Math.abs(Date.now() - Number(timestamp) * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber) || Math.abs(Date.now() - timestampNumber * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
@@ -43,7 +60,7 @@ module.exports = async (req, res) => {
 
   const { data: existing, error: selectError } = await supabase
     .from('registrations')
-    .select('id, inscription_num, wallet_address, status')
+    .select('id, inscription_num, inscription_id, inscription_txid, wallet_address, status')
     .eq('inscription_num', inscription_num)
     .eq('status', 'active')
     .maybeSingle();
@@ -55,6 +72,15 @@ module.exports = async (req, res) => {
   if (!existing) return res.status(404).json({ error: `OpenNum #${inscription_num} is not active.` });
   if (existing.wallet_address !== wallet) {
     return res.status(403).json({ error: 'Connected wallet does not own this active OpenNum ID.' });
+  }
+
+  const inscriptionId = existing.inscription_id || (existing.inscription_txid ? `${existing.inscription_txid}i0` : null);
+  const ownership = await currentOwnerFor(inscriptionId);
+  if (!ownership.verified || !ownership.owner) {
+    return res.status(503).json({ error: 'On-chain ownership could not be verified. Please try again.' });
+  }
+  if (ownership.owner !== wallet) {
+    return res.status(409).json({ error: 'This inscription has moved on-chain. Only the current holder can unbind it.' });
   }
 
   const { error: updateError } = await supabase

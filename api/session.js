@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
     nonce,
     signature,
     requireActiveId: true,
-    requireOwnership: false
+    requireOwnership: true
   });
   if (!auth.ok) return res.status(auth.status || 401).json({ error: auth.error || 'Authentication failed' });
 

@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { setCors } = require('../lib/_security');
+const { setCors, parseInscriptionNumber } = require('../lib/_security');
 const { resolveOwnershipState } = require('../lib/_ownership');
 const { resolveCollections, collectionMembers } = require('../lib/_collections');
 
@@ -106,11 +106,11 @@ module.exports = async (req, res) => {
   const raw = req.query.num || req.query.number;
   if (!raw) return res.status(400).json({ error: 'Missing ?num= parameter' });
 
-  const num = parseInt(raw.replace(/^#/, ''), 10);
-  if (isNaN(num)) return res.status(400).json({ error: 'Invalid inscription number' });
+  const num = parseInscriptionNumber(raw);
+  if (num === null) return res.status(400).json({ error: 'Invalid inscription number' });
   const traits = computeNumberTraits(num);
   const socialCounts = await loadSocialCounts(num);
-  const viewerNum = parseInt(String(req.query.viewer || '').replace(/^#/, ''), 10);
+  const viewerNum = parseInscriptionNumber(req.query.viewer);
   const viewerFollowsTarget = Number.isInteger(viewerNum) ? await viewerFollows(viewerNum, num) : false;
   const viewerWatchesTarget = Number.isInteger(viewerNum) ? await viewerWatches(viewerNum, num) : false;
 

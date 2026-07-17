@@ -82,8 +82,16 @@ module.exports = async (req, res) => {
     return handleCollection(res, collectionSlug);
   }
 
-  const limit = Math.min(parseInt(req.query.limit || '50', 10), 100);
-  const offset = parseInt(req.query.offset || '0', 10);
+  const rawLimit = req.query.limit === undefined ? '50' : String(req.query.limit);
+  const rawOffset = req.query.offset === undefined ? '0' : String(req.query.offset);
+  if (!/^\d+$/.test(rawLimit) || !/^\d+$/.test(rawOffset)) {
+    return res.status(400).json({ error: 'limit and offset must be non-negative integers' });
+  }
+  const limit = Number(rawLimit);
+  const offset = Number(rawOffset);
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset)) {
+    return res.status(400).json({ error: 'limit must be 1-100 and offset must be a non-negative integer' });
+  }
   const sort = req.query.sort === 'number' ? 'inscription_num' : 'registered_at';
   const order = req.query.order === 'asc';
   const market = req.query.market === '1' || req.query.market === 'true';

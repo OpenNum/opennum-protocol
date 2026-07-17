@@ -51,8 +51,8 @@ module.exports = async (req, res) => {
   if (!inscription_num && inscription_num !== 0 || !inscription_txid || !wallet || !signature || !timestamp) {
     return res.status(400).json({ error: 'Missing required fields: inscription_num, inscription_txid, wallet, signature, timestamp' });
   }
-  if (!Number.isInteger(inscription_num)) {
-    return res.status(400).json({ error: 'inscription_num must be an integer' });
+  if (!Number.isSafeInteger(inscription_num) || inscription_num < 0) {
+    return res.status(400).json({ error: 'inscription_num must be a non-negative integer' });
   }
   if (!/^[0-9a-f]{64}$/i.test(inscription_txid)) {
     return res.status(400).json({ error: 'inscription_txid must be a 64-character hex string' });
@@ -65,12 +65,13 @@ module.exports = async (req, res) => {
   }
 
   const now = Date.now();
-  if (Math.abs(now - timestamp * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber) || Math.abs(now - timestampNumber * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
-  // Verify inscription ownership via ordinals.com (JSON API)
-  // If indexer is unreachable, fall through — signature is the primary proof.
+  // Verify inscription ownership via ordinals.com (JSON API).
+  // A wallet signature proves wallet control, not inscription ownership, so this check fails closed.
   let ownershipVerified = false;
   try {
     const inscriptionId = inscription_id || `${inscription_txid}i0`;
@@ -83,24 +84,31 @@ module.exports = async (req, res) => {
     });
     if (ordRes.ok) {
       const data = await ordRes.json();
-      if (data.address && data.address !== wallet) {
+      if (!data.address || data.number === undefined || data.number === null) {
+        console.warn(`ordinals.com returned incomplete ownership data for ${inscriptionId}`);
+      } else if (data.address !== wallet) {
         return res.status(403).json({
           error: `Wallet does not own this inscription. Current owner: ${data.address.slice(0, 12)}...`
         });
-      }
-      if (data.number !== undefined && data.number !== inscription_num) {
+      } else if (Number(data.number) !== inscription_num) {
         return res.status(400).json({
           error: `Inscription number mismatch. Txid belongs to #${data.number}, not #${inscription_num}.`
         });
+      } else {
+        ownershipVerified = true;
       }
-      ownershipVerified = true;
     } else {
-      // Indexer returned error — log and continue; signature is sufficient for MVP
-      console.warn(`ordinals.com returned ${ordRes.status} for ${inscriptionId} — skipping ownership check`);
+      console.warn(`ordinals.com returned ${ordRes.status} for ${inscriptionId} — ownership not verified`);
     }
   } catch (e) {
-    // Indexer timeout or network error — log and continue
+    // Indexer timeout or network error — reject below rather than accepting an unverified claim.
     console.warn('ordinals.com unreachable:', e.message);
+  }
+
+  if (!ownershipVerified) {
+    return res.status(503).json({
+      error: 'On-chain inscription ownership could not be verified. Please try again.'
+    });
   }
 
   // Verify secp256k1 signature (BIP322: Legacy, SegWit, Taproot)

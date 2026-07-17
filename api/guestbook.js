@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
-const { setCors, sanitizeText, checkRateLimit, sendRateLimit } = require('../lib/_security');
+const { setCors, sanitizeText, parseInscriptionNumber, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { verifyAction, verifySession } = require('../lib/_auth');
 const { emitEvent } = require('../lib/_activity');
 
@@ -18,8 +18,7 @@ const MAX_MESSAGE_LENGTH = 280;
 const ORDINALS_API = 'https://ordinals.com';
 
 function normalizeNumber(raw) {
-  const num = parseInt(String(raw || '').replace(/^#/, ''), 10);
-  return Number.isInteger(num) && num >= 0 ? num : null;
+  return parseInscriptionNumber(raw);
 }
 
 function tableMissing(error) {
@@ -89,11 +88,14 @@ async function currentOwnerFor(inscriptionId) {
   }
 }
 
-async function isRegistrationDormant(registration) {
+async function registrationOwnership(registration) {
   const inscriptionId = registration.inscription_id || (registration.inscription_txid ? `${registration.inscription_txid}i0` : null);
-  if (!inscriptionId) return false;
+  if (!inscriptionId) return { owner: null, verified: false, dormant: false };
   const ownership = await currentOwnerFor(inscriptionId);
-  return !!(ownership.verified && ownership.owner && ownership.owner !== registration.wallet_address);
+  return {
+    ...ownership,
+    dormant: !!(ownership.verified && ownership.owner && ownership.owner !== registration.wallet_address)
+  };
 }
 
 module.exports = async (req, res) => {
@@ -224,7 +226,8 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields: signature, timestamp' });
   }
 
-  if (!sessionVerified && Math.abs(Date.now() - Number(timestamp) * 1000) > MAX_TIMESTAMP_DRIFT_MS) {
+  const timestampNumber = Number(timestamp);
+  if (!sessionVerified && (!Number.isFinite(timestampNumber) || Math.abs(Date.now() - timestampNumber * 1000) > MAX_TIMESTAMP_DRIFT_MS)) {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
@@ -243,7 +246,7 @@ module.exports = async (req, res) => {
       nonce,
       signature,
       requireActiveId: true,
-      requireOwnership: false
+      requireOwnership: true
     });
     if (!auth.ok) return res.status(auth.status || 401).json({ error: auth.error || 'Authentication failed' });
 
@@ -272,7 +275,11 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Database error' });
   }
   if (!target) return res.status(404).json({ error: 'This OpenNum identity is not registered yet' });
-  if (await isRegistrationDormant(target)) {
+  const targetOwnership = await registrationOwnership(target);
+  if (!targetOwnership.verified || !targetOwnership.owner) {
+    return res.status(503).json({ error: 'The holder could not be verified on-chain. Please try again.' });
+  }
+  if (targetOwnership.dormant) {
     return res.status(409).json({ error: 'This OpenNum is dormant after an on-chain transfer and must be claimed before messages can be posted.' });
   }
 
@@ -293,10 +300,14 @@ module.exports = async (req, res) => {
       authorNumber = null;
     }
   }
-  if (!authorNumber) {
+  if (authorNumber === null) {
     return res.status(403).json({ error: 'You need an active OpenNum ID before you can send messages.' });
   }
-  if (await isRegistrationDormant(author)) {
+  const authorOwnership = await registrationOwnership(author);
+  if (!authorOwnership.verified || !authorOwnership.owner) {
+    return res.status(503).json({ error: 'Your OpenNum ownership could not be verified on-chain. Please try again.' });
+  }
+  if (authorOwnership.dormant) {
     return res.status(403).json({ error: 'Your OpenNum ID is dormant after an on-chain transfer. Claim an active ID before posting.' });
   }
   if (await isBlockedByProfile(num, Number(authorNumber))) {
