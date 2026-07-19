@@ -3,6 +3,7 @@ const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { syncCurrentProfileVersion } = require('../lib/_ownership');
 const { currentHolderPeriodId, emitEvent } = require('../lib/_activity');
+const { fetchOrdinalsOwner } = require('../lib/_ordinals');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -14,7 +15,6 @@ const supabase = createClient(
 );
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
-const ORDINALS_API = 'https://ordinals.com';
 
 function stripMarketFields(payload) {
   delete payload.for_sale;
@@ -45,36 +45,10 @@ function sanitizeShowcase(input, selfNum) {
 // Fail closed: a number we can't verify doesn't get displayed.
 async function showcaseNotOwned(nums, wallet) {
   const checks = await Promise.all(nums.map(async (n) => {
-    try {
-      const r = await fetch(`${ORDINALS_API}/inscription/${n}`, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)' },
-        signal: AbortSignal.timeout(4000)
-      });
-      if (!r.ok) return { n, ok: false };
-      const d = await r.json();
-      return { n, ok: !!d.address && d.address === wallet };
-    } catch (_) {
-      return { n, ok: false };
-    }
+    const ownership = await fetchOrdinalsOwner(n, { timeoutMs: 4000 });
+    return { n, ok: ownership.verified && ownership.owner === wallet };
   }));
   return checks.filter((c) => !c.ok).map((c) => c.n);
-}
-
-async function currentOwnerFor(inscriptionId) {
-  try {
-    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
-      },
-      signal: AbortSignal.timeout(5000)
-    });
-    if (!ordRes.ok) return { owner: null, verified: false };
-    const raw = await ordRes.json();
-    return { owner: raw.address || null, verified: !!raw.address };
-  } catch (_) {
-    return { owner: null, verified: false };
-  }
 }
 
 module.exports = async (req, res) => {
@@ -132,7 +106,7 @@ module.exports = async (req, res) => {
     return res.status(403).json({ error: 'This wallet does not own this OpenNum.' });
   }
   const inscriptionId = existing.inscription_id || (existing.inscription_txid ? `${existing.inscription_txid}i0` : null);
-  const ownership = inscriptionId ? await currentOwnerFor(inscriptionId) : { owner: null, verified: false };
+  const ownership = inscriptionId ? await fetchOrdinalsOwner(inscriptionId) : { owner: null, verified: false };
   if (!ownership.verified || !ownership.owner) {
     return res.status(503).json({
       error: 'On-chain ownership could not be verified. Please try again.'

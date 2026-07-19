@@ -2,13 +2,12 @@ const { createClient } = require('@supabase/supabase-js');
 const { setCors, parseInscriptionNumber } = require('../lib/_security');
 const { resolveOwnershipState } = require('../lib/_ownership');
 const { resolveCollections, collectionMembers } = require('../lib/_collections');
+const { ORDINALS_ORIGIN, fetchOrdinalsInscription } = require('../lib/_ordinals');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
-
-const ORDINALS_API = 'https://ordinals.com';
 
 function computeNumberTraits(num) {
   const digits = String(num);
@@ -86,18 +85,6 @@ async function viewerWatches(viewerNum, targetNum) {
   return !!(data && data.length);
 }
 
-async function fetchInscription(inscriptionId) {
-  const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
-    },
-    signal: AbortSignal.timeout(5000)
-  });
-  if (!ordRes.ok) return null;
-  return ordRes.json();
-}
-
 module.exports = async (req, res) => {
   setCors(req, res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -142,11 +129,11 @@ module.exports = async (req, res) => {
   // Enrich with Ordinals metadata and current owner (best-effort).
   let metadata = null;
   try {
-    const raw = await fetchInscription(inscriptionId);
+    const raw = await fetchOrdinalsInscription(inscriptionId);
     if (raw) {
       metadata = {
         content_type: raw.content_type,
-        content_url: `${ORDINALS_API}/content/${inscriptionId}`,
+        content_url: `${ORDINALS_ORIGIN}/content/${inscriptionId}`,
         sat_ordinal: raw.sat,
         genesis_block_height: raw.height,
         genesis_timestamp: raw.timestamp,

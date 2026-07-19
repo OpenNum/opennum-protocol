@@ -4,6 +4,7 @@ const { setCors, sanitizeText, sanitizeUrl, sanitizeLinks, checkRateLimit, sendR
 const { closeCurrentHolderPeriod, ensureHolderPeriodAndProfileVersion } = require('../lib/_ownership');
 const { emitEvent } = require('../lib/_activity');
 const { resolveCollections } = require('../lib/_collections');
+const { fetchOrdinalsOwner } = require('../lib/_ordinals');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -14,7 +15,6 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ORDINALS_API = 'https://ordinals.com';
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
 
 function stripMarketFields(payload) {
@@ -70,35 +70,29 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Timestamp expired. Please re-sign and try again.' });
   }
 
-  // Verify inscription ownership via ordinals.com (JSON API).
+  // Verify inscription ownership via ordinals.com. The endpoint currently returns
+  // HTML, so the shared adapter supports both HTML and legacy JSON responses.
   // A wallet signature proves wallet control, not inscription ownership, so this check fails closed.
   let ownershipVerified = false;
   try {
     const inscriptionId = inscription_id || `${inscription_txid}i0`;
-    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'OpenNum-Indexer/1.0 (opennum.org)'
-      },
-      signal: AbortSignal.timeout(8000)
+    const ownership = await fetchOrdinalsOwner(inscriptionId, {
+      timeoutMs: 8000,
+      userAgent: 'OpenNum-Indexer/1.0 (opennum.org)'
     });
-    if (ordRes.ok) {
-      const data = await ordRes.json();
-      if (!data.address || data.number === undefined || data.number === null) {
-        console.warn(`ordinals.com returned incomplete ownership data for ${inscriptionId}`);
-      } else if (data.address !== wallet) {
-        return res.status(403).json({
-          error: `Wallet does not own this inscription. Current owner: ${data.address.slice(0, 12)}...`
-        });
-      } else if (Number(data.number) !== inscription_num) {
-        return res.status(400).json({
-          error: `Inscription number mismatch. Txid belongs to #${data.number}, not #${inscription_num}.`
-        });
-      } else {
-        ownershipVerified = true;
-      }
+    const data = ownership.inscription;
+    if (!ownership.verified || !data || data.number === null) {
+      console.warn(`ordinals.com returned incomplete ownership data for ${inscriptionId}: ${ownership.error || 'missing fields'}`);
+    } else if (ownership.owner !== wallet) {
+      return res.status(403).json({
+        error: `Wallet does not own this inscription. Current owner: ${ownership.owner.slice(0, 12)}...`
+      });
+    } else if (Number(data.number) !== inscription_num) {
+      return res.status(400).json({
+        error: `Inscription number mismatch. Txid belongs to #${data.number}, not #${inscription_num}.`
+      });
     } else {
-      console.warn(`ordinals.com returned ${ordRes.status} for ${inscriptionId} — ownership not verified`);
+      ownershipVerified = true;
     }
   } catch (e) {
     // Indexer timeout or network error — reject below rather than accepting an unverified claim.

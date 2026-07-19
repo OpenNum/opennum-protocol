@@ -3,6 +3,7 @@ const { Verifier } = require('bip322-js');
 const { setCors, sanitizeText, parseInscriptionNumber, checkRateLimit, sendRateLimit } = require('../lib/_security');
 const { verifyAction, verifySession } = require('../lib/_auth');
 const { emitEvent } = require('../lib/_activity');
+const { fetchOrdinalsOwner } = require('../lib/_ordinals');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -15,7 +16,6 @@ const supabase = createClient(
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
 const MAX_MESSAGE_LENGTH = 280;
-const ORDINALS_API = 'https://ordinals.com';
 
 function normalizeNumber(raw) {
   return parseInscriptionNumber(raw);
@@ -71,27 +71,10 @@ async function isBlockedByProfile(profileNum, authorNum) {
   return !!(data && data.length);
 }
 
-async function currentOwnerFor(inscriptionId) {
-  try {
-    const ordRes = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)'
-      },
-      signal: AbortSignal.timeout(5000)
-    });
-    if (!ordRes.ok) return { owner: null, verified: false };
-    const raw = await ordRes.json();
-    return { owner: raw.address || null, verified: !!raw.address };
-  } catch (_) {
-    return { owner: null, verified: false };
-  }
-}
-
 async function registrationOwnership(registration) {
   const inscriptionId = registration.inscription_id || (registration.inscription_txid ? `${registration.inscription_txid}i0` : null);
   if (!inscriptionId) return { owner: null, verified: false, dormant: false };
-  const ownership = await currentOwnerFor(inscriptionId);
+  const ownership = await fetchOrdinalsOwner(inscriptionId);
   return {
     ...ownership,
     dormant: !!(ownership.verified && ownership.owner && ownership.owner !== registration.wallet_address)

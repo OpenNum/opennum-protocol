@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Verifier } = require('bip322-js');
 const { setCors, checkRateLimit, sendRateLimit } = require('../lib/_security');
+const { fetchOrdinalsOwner } = require('../lib/_ordinals');
 
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!process.env.SUPABASE_URL) throw new Error('SUPABASE_URL missing');
@@ -12,22 +13,6 @@ const supabase = createClient(
 );
 
 const MAX_TIMESTAMP_DRIFT_MS = 10 * 60 * 1000;
-const ORDINALS_API = 'https://ordinals.com';
-
-async function currentOwnerFor(inscriptionId) {
-  if (!inscriptionId) return { owner: null, verified: false };
-  try {
-    const response = await fetch(`${ORDINALS_API}/inscription/${inscriptionId}`, {
-      headers: { 'Accept': 'application/json', 'User-Agent': 'OpenNum-Resolver/1.0 (opennum.org)' },
-      signal: AbortSignal.timeout(5000)
-    });
-    if (!response.ok) return { owner: null, verified: false };
-    const data = await response.json();
-    return { owner: data.address || null, verified: !!data.address };
-  } catch (_) {
-    return { owner: null, verified: false };
-  }
-}
 
 module.exports = async (req, res) => {
   setCors(req, res, 'POST, OPTIONS');
@@ -75,7 +60,7 @@ module.exports = async (req, res) => {
   }
 
   const inscriptionId = existing.inscription_id || (existing.inscription_txid ? `${existing.inscription_txid}i0` : null);
-  const ownership = await currentOwnerFor(inscriptionId);
+  const ownership = await fetchOrdinalsOwner(inscriptionId);
   if (!ownership.verified || !ownership.owner) {
     return res.status(503).json({ error: 'On-chain ownership could not be verified. Please try again.' });
   }
