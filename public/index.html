@@ -97,6 +97,29 @@
       </div>
     </section>
 
+    <section class="home-sales" id="homeSales" aria-labelledby="homeSalesTitle">
+      <div class="shell">
+        <div class="home-sales-head">
+          <div>
+            <div class="eyebrow">THE EARLY NUMBER TAPE</div>
+            <h2 id="homeSalesTitle">Numbers moving today.</h2>
+            <p>Confirmed Sub 100, Sub 1K, Sub 10K and Sub 100K inscription sales from the last 24 hours.</p>
+          </div>
+          <div class="sales-source">
+            <span id="salesFeedStatus">Loading live sales…</span>
+            <a href="https://ord.net/sales" target="_blank" rel="noopener noreferrer">Source: ORD.NET ↗</a>
+          </div>
+        </div>
+        <div class="sales-tier-grid" id="salesTierGrid" aria-live="polite">
+          <div class="sales-tier-card sales-tier-loading">Loading Sub 100…</div>
+          <div class="sales-tier-card sales-tier-loading">Loading Sub 1K…</div>
+          <div class="sales-tier-card sales-tier-loading">Loading Sub 10K…</div>
+          <div class="sales-tier-card sales-tier-loading">Loading Sub 100K…</div>
+        </div>
+        <div class="sales-footnote">Each sale appears once, in its most specific tier. Market data is informational, not investment advice.</div>
+      </div>
+    </section>
+
     <section class="home-recent" id="homeRecent" style="display:none">
       <div class="shell">
         <div class="home-recent-title">Recently claimed numbers</div>
@@ -336,6 +359,76 @@
         `).join('');
         document.getElementById('homeRecent').style.display = 'block';
       } catch (_) { /* strip is best-effort */ }
+    })();
+
+    const SALES_TIERS = [
+      { key: 'sub100', href: 'sub100', range: '#0–99' },
+      { key: 'sub1k', href: 'sub1k', range: '#100–999' },
+      { key: 'sub10k', href: 'sub10k', range: '#1,000–9,999' },
+      { key: 'sub100k', href: 'sub100k', range: '#10,000–99,999' }
+    ];
+
+    function escapeSalesHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function salePrice(sale) {
+      return sale.price_unit === 'BTC'
+        ? `${escapeSalesHtml(sale.price)} BTC`
+        : `${escapeSalesHtml(sale.price)} sats`;
+    }
+
+    function renderSale(sale) {
+      const thumb = sale.thumbnail_url
+        ? `<img src="${escapeSalesHtml(sale.thumbnail_url)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
+        : '#';
+      return `<a class="sale-tape-row" href="${escapeSalesHtml(sale.source_url)}" target="_blank" rel="noopener noreferrer">
+        <span class="sale-tape-thumb">${thumb}</span>
+        <span class="sale-tape-copy">
+          <strong>#${Number(sale.inscription_num).toLocaleString('en-US')}</strong>
+          <span>${escapeSalesHtml(sale.collection || sale.name || 'Inscription')}</span>
+        </span>
+        <span class="sale-tape-price">
+          <strong>${salePrice(sale)}</strong>
+          <span>${escapeSalesHtml(sale.age)} ago${sale.price_usd ? ` · $${Number(sale.price_usd).toLocaleString('en-US')}` : ''}</span>
+        </span>
+      </a>`;
+    }
+
+    function renderSalesTier(definition, tier) {
+      const sales = tier?.sales || [];
+      return `<article class="sales-tier-card">
+        <div class="sales-tier-head">
+          <div><strong>${escapeSalesHtml(tier?.label || definition.key)}</strong><span>${definition.range}</span></div>
+          <span class="sales-count">${sales.length}</span>
+        </div>
+        <div class="sales-tier-rows">
+          ${sales.length ? sales.map(renderSale).join('') : '<div class="sales-empty"><strong>No confirmed sales</strong><span>Nothing moved in this tier in the last 24 hours.</span></div>'}
+        </div>
+        <a class="sales-tier-link" href="https://ord.net/collection/${definition.href}" target="_blank" rel="noopener noreferrer">View tier on ORD.NET →</a>
+      </article>`;
+    }
+
+    (async function loadSalesTape() {
+      const grid = document.getElementById('salesTierGrid');
+      const status = document.getElementById('salesFeedStatus');
+      try {
+        const res = await fetch('/api/sales', { signal: AbortSignal.timeout(15000) });
+        if (!res.ok) throw new Error('Sales feed unavailable');
+        const data = await res.json();
+        grid.innerHTML = SALES_TIERS.map((definition) => renderSalesTier(definition, data.tiers?.[definition.key])).join('');
+        const count = SALES_TIERS.reduce((sum, definition) => sum + (data.tiers?.[definition.key]?.sales?.length || 0), 0);
+        status.textContent = `${count} confirmed sale${count === 1 ? '' : 's'} · Last 24h${data.partial ? ' · Partial feed' : ''}`;
+      } catch (_) {
+        status.textContent = 'Live feed temporarily unavailable';
+        grid.innerHTML = `<div class="sales-feed-error">
+          <strong>The number tape is temporarily offline.</strong>
+          <span>OpenNum profiles and registration are unaffected.</span>
+          <a href="https://ord.net/sales" target="_blank" rel="noopener noreferrer">Check ORD.NET sales ↗</a>
+        </div>`;
+      }
     })();
 
     function startCarousel() {

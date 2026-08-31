@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { setCors } = require('../lib/_security');
+const { fetchOrdNetSales } = require('../lib/_sales');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -73,6 +74,19 @@ module.exports = async (req, res) => {
   setCors(req, res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+
+  if (req.query.feed === 'sales') {
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=900');
+    try {
+      return res.status(200).json(await fetchOrdNetSales());
+    } catch (error) {
+      console.error('Sales feed error:', error?.message || error);
+      return res.status(502).json({
+        error: 'Sales feed temporarily unavailable',
+        source: { name: 'ORD.NET', url: 'https://ord.net/sales' }
+      });
+    }
+  }
 
   const collectionSlug = String(req.query.collection || '').trim().toLowerCase();
   if (collectionSlug) {

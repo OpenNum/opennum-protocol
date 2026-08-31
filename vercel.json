@@ -34,6 +34,7 @@
     { "src": "/api/resolve",  "dest": "/api/resolve.js" },
     { "src": "/api/profile",  "dest": "/api/profile.js" },
     { "src": "/api/inscription","dest": "/api/inscription.js" },
+    { "src": "/api/sales",    "dest": "/api/list.js?feed=sales" },
     { "src": "/api/list",     "dest": "/api/list.js" },
     { "src": "/api/guestbook","dest": "/api/guestbook.js" },
     { "src": "/api/update",   "dest": "/api/update.js" },
