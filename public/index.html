@@ -384,7 +384,7 @@
       const thumb = sale.thumbnail_url
         ? `<img src="${escapeSalesHtml(sale.thumbnail_url)}" alt="" loading="lazy" onerror="this.parentElement.textContent='#'" />`
         : '#';
-      return `<a class="sale-tape-row" href="${escapeSalesHtml(sale.source_url)}" target="_blank" rel="noopener noreferrer">
+      return `<a class="sale-tape-row" href="/n/${Number(sale.inscription_num)}">
         <span class="sale-tape-thumb">${thumb}</span>
         <span class="sale-tape-copy">
           <strong>#${Number(sale.inscription_num).toLocaleString('en-US')}</strong>
