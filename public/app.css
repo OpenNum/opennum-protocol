@@ -261,7 +261,7 @@ img { max-width: 100%; }
 .sales-source { display: grid; justify-items: end; gap: 4px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .sales-source a { color: var(--deep); font-weight: 780; }
 .sales-source a:hover { color: var(--copper); }
-.sales-tier-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.sales-tier-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
 .sales-tier-card { min-width: 0; overflow: hidden; border: 1px solid #d9e5e8; border-radius: 9px; background: rgba(255,255,255,0.95); box-shadow: 0 14px 38px rgba(14,45,57,0.055); }
 .sales-tier-loading { min-height: 230px; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
 .sales-tier-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border-bottom: 1px solid var(--line); }
