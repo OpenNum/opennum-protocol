@@ -103,7 +103,7 @@
           <div>
             <div class="eyebrow">THE EARLY NUMBER TAPE</div>
             <h2 id="homeSalesTitle">Numbers moving today.</h2>
-            <p>Confirmed Sub 100, Sub 1K and Sub 10K inscription sales from the last 24 hours.</p>
+            <p>Confirmed Sub 100, Sub 1K, Sub 10K and Sub 100K inscription sales from the last 24 hours.</p>
           </div>
           <div class="sales-source">
             <span id="salesFeedStatus">Loading live sales…</span>
@@ -111,9 +111,10 @@
           </div>
         </div>
         <div class="sales-tier-grid" id="salesTierGrid" aria-live="polite">
-          <div class="sales-tier-card sales-tier-loading">Loading Sub 100…</div>
-          <div class="sales-tier-card sales-tier-loading">Loading Sub 1K…</div>
-          <div class="sales-tier-card sales-tier-loading">Loading Sub 10K…</div>
+          <div class="sales-tier-card sales-tier-loading sales-tier-sub100">Loading Sub 100…</div>
+          <div class="sales-tier-card sales-tier-loading sales-tier-sub1k">Loading Sub 1K…</div>
+          <div class="sales-tier-card sales-tier-loading sales-tier-sub10k">Loading Sub 10K…</div>
+          <div class="sales-tier-card sales-tier-loading sales-tier-sub100k">Loading Sub 100K…</div>
         </div>
         <div class="sales-footnote">Each sale appears once, in its most specific tier. Market data is informational, not investment advice.</div>
       </div>
@@ -363,7 +364,8 @@
     const SALES_TIERS = [
       { key: 'sub100', href: 'sub100', range: '#0–99' },
       { key: 'sub1k', href: 'sub1k', range: '#100–999' },
-      { key: 'sub10k', href: 'sub10k', range: '#1,000–9,999' }
+      { key: 'sub10k', href: 'sub10k', range: '#1,000–9,999' },
+      { key: 'sub100k', href: 'sub100k', range: '#10,000–99,999' }
     ];
 
     function escapeSalesHtml(value) {
@@ -397,7 +399,7 @@
 
     function renderSalesTier(definition, tier) {
       const sales = tier?.sales || [];
-      return `<article class="sales-tier-card">
+      return `<article class="sales-tier-card sales-tier-${definition.key}">
         <div class="sales-tier-head">
           <div><strong>${escapeSalesHtml(tier?.label || definition.key)}</strong><span>${definition.range}</span></div>
           <span class="sales-count">${sales.length}</span>

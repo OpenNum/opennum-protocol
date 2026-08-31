@@ -41,7 +41,7 @@
     'Recently claimed numbers': '最近认领的号码',
     'THE EARLY NUMBER TAPE': '早期编号成交带',
     'Numbers moving today.': '今天有哪些早期编号成交。',
-    'Confirmed Sub 100, Sub 1K and Sub 10K inscription sales from the last 24 hours.': '过去 24 小时已确认的 Sub 100、Sub 1K 与 Sub 10K 铭文成交。',
+    'Confirmed Sub 100, Sub 1K, Sub 10K and Sub 100K inscription sales from the last 24 hours.': '过去 24 小时已确认的 Sub 100、Sub 1K、Sub 10K 与 Sub 100K 铭文成交。',
     'Loading live sales…': '正在加载实时成交…',
     'Source: ORD.NET ↗': '数据源：ORD.NET ↗',
     'No confirmed sales': '暂无确认成交',

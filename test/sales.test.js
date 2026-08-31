@@ -24,7 +24,8 @@ test('uses mutually exclusive number tiers', () => {
   assert.equal(saleTier(99).key, 'sub100');
   assert.equal(saleTier(100).key, 'sub1k');
   assert.equal(saleTier(9999).key, 'sub10k');
-  assert.equal(saleTier(10000), null);
+  assert.equal(saleTier(99999).key, 'sub100k');
+  assert.equal(saleTier(100000), null);
 });
 
 test('parses relative ages', () => {
@@ -35,12 +36,12 @@ test('parses relative ages', () => {
 });
 
 test('parses an ORD.NET desktop sale row and pagination', () => {
-  const html = `<div class="grid grid-cols-[4.5rem_minmax(0,1.5fr)"><ul>${row(9164)}</ul></div>
+  const html = `<div class="grid grid-cols-[4.5rem_minmax(0,1.5fr)"><ul>${row(85500)}</ul></div>
     <a href="/sales?cursor=abc&amp;dir=next">Next</a>`;
   const parsed = parseOrdNetSalesPage(html);
   assert.equal(parsed.sales.length, 1);
-  assert.equal(parsed.sales[0].inscription_num, 9164);
-  assert.equal(parsed.sales[0].tier, 'sub10k');
+  assert.equal(parsed.sales[0].inscription_num, 85500);
+  assert.equal(parsed.sales[0].tier, 'sub100k');
   assert.equal(parsed.sales[0].price, '0.028');
   assert.equal(parsed.sales[0].price_unit, 'BTC');
   assert.equal(parsed.sales[0].price_usd, 2187);
@@ -49,9 +50,9 @@ test('parses an ORD.NET desktop sale row and pagination', () => {
   assert.equal(parsed.next_url, 'https://ord.net/sales?cursor=abc&dir=next');
 });
 
-test('drops rows outside the last 24 hours and above Sub 10K', () => {
+test('drops rows outside the last 24 hours and above Sub 100K', () => {
   const html = `<div class="grid grid-cols-[4.5rem_minmax(0,1.5fr)"><ul>
-    ${row(42, '1d')}${row(10000, '3m')}
+    ${row(42, '1d')}${row(100001, '3m')}
   </ul></div>`;
   const parsed = parseOrdNetSalesPage(html);
   assert.deepEqual(parsed.sales, []);
