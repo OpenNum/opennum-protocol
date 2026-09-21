@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <script>(function(){var t;try{t=localStorage.getItem('opennum-theme');}catch(e){}document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');})();</script>
+  <script defer src="/i18n.js"></script>
+  <script defer src="/site.js"></script>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenNum Explorer — Bitcoin Ordinals Identity Registry</title>
@@ -33,63 +36,48 @@
     }
   }
   </script>
+  <link rel="stylesheet" href="/app.css" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --black:  #f8f6ef;
-      --white:  #102033;
-      --orange: #f7931a;
-      --dim:    #536273;
-      --muted:  #8a918f;
-      --border: #e5dfd2;
-      --card:   #fffdf7;
-      --green:  #22c55e;
-      --amber:  #f59e0b;
-    }
+    /* Tokens come from /app.css so this page themes with the rest of the site. */
     html { scroll-behavior: smooth; }
-    body { background: var(--black); color: var(--white); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; }
+    body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; }
     a { color: inherit; text-decoration: none; }
-    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: #141414; padding: 2px 8px; border-radius: 3px; color: var(--orange); }
+    code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; background: var(--wash); padding: 2px 8px; border-radius: 3px; color: var(--copper); }
 
     /* NAV */
-    nav { position: sticky; top: 0; z-index: 100; background: rgba(248,246,239,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 48px; height: 60px; }
-    .nav-logo { font-size: 17px; font-weight: 700; color: var(--white); display: flex; align-items: center; gap: 10px; }
-    .nav-logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
-    .nav-links { display: flex; align-items: center; gap: 24px; font-size: 13px; color: var(--dim); }
-    .nav-links a:hover { color: var(--white); }
-    .nav-active { color: var(--orange) !important; }
 
     /* HEADER */
     .page-header { max-width: 1040px; margin: 0 auto; padding: 64px 48px 16px; }
-    .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 14px; }
+    .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--copper); margin-bottom: 14px; }
     .page-title { font-size: clamp(32px, 5vw, 54px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 16px; }
-    .page-title span { color: var(--orange); }
-    .page-desc { font-size: 15px; color: var(--dim); max-width: 560px; line-height: 1.75; }
-    .page-subdesc { font-size: 13px; color: #555; margin-top: 6px; font-style: italic; }
+    .page-title span { color: var(--copper); }
+    .page-desc { font-size: 15px; color: var(--soft-ink); max-width: 560px; line-height: 1.75; }
+    .page-subdesc { font-size: 13px; color: var(--muted); margin-top: 6px; font-style: italic; }
 
     /* SEARCH */
     .search-wrap { max-width: 1040px; margin: 0 auto; padding: 40px 48px 48px; }
     .search-box { display: flex; gap: 12px; }
-    .search-input { flex: 1; background: #fffaf0; border: 1px solid var(--border); color: var(--white); font-size: 15px; font-family: inherit; padding: 14px 20px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+    .search-input { flex: 1; background: var(--paper); border: 1px solid var(--line); color: var(--ink); font-size: 15px; font-family: inherit; padding: 14px 20px; border-radius: 8px; outline: none; transition: border-color 0.2s; }
     .search-input::placeholder { color: var(--muted); }
-    .search-input:focus { border-color: var(--orange); }
-    .search-btn { background: var(--orange); color: #000; border: none; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.2s; white-space: nowrap; }
+    .search-input:focus { border-color: var(--copper); }
+    .search-btn { background: var(--copper); color: var(--on-accent); border: none; padding: 14px 28px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.2s; white-space: nowrap; }
     .search-btn:hover { opacity: 0.88; }
     .search-hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
-    .search-hint span { color: var(--orange); font-weight: 600; }
+    .search-hint span { color: var(--copper); font-weight: 600; }
 
     /* SEARCH FEEDBACK */
     .search-feedback { display: none; max-width: 1040px; margin: 0 auto; padding: 0 48px 32px; }
     .search-feedback.visible { display: block; }
-    .no-result { border: 1px solid var(--border); border-radius: 8px; padding: 36px; text-align: center; color: var(--muted); font-size: 14px; }
+    .no-result { border: 1px solid var(--line); border-radius: 8px; padding: 36px; text-align: center; color: var(--muted); font-size: 14px; }
 
     /* STATS */
     .stats-wrap { max-width: 1040px; margin: 0 auto; padding: 0 48px 56px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .stat-card { background: var(--card); padding: 28px 24px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 2px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .stat-card { background: var(--paper); padding: 28px 24px; }
     .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-    .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: var(--white); }
-    .stat-value.orange { color: var(--orange); }
+    .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: var(--ink); }
+    .stat-value.orange { color: var(--copper); }
     .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
     /* SECTION */
@@ -98,85 +86,81 @@
     .section-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
     .section-meta { font-size: 12px; color: var(--muted); }
 
-    hr.sep { border: none; border-top: 1px solid var(--border); margin: 0 48px 56px; }
+    hr.sep { border: none; border-top: 1px solid var(--line); margin: 0 48px 56px; }
 
     /* STATUS PILLS */
     .status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 10px; }
     .status-active  { color: var(--green); border: 1px solid var(--green); }
-    .status-dormant { color: #666; border: 1px solid #333; }
+    .status-dormant { color: var(--muted); border: 1px solid var(--line); }
     .status-cooling { color: var(--amber); border: 1px solid var(--amber); }
     .status-flagged { color: #60a5fa; border: 1px solid #60a5fa; }
     .status-dot-sm  { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
     /* IDENTITY LIST */
-    .id-list { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .id-list-head { display: grid; grid-template-columns: 90px 90px 1fr 160px 130px; gap: 0; background: #0c0c0c; border-bottom: 1px solid var(--border); padding: 12px 20px; }
+    .id-list { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .id-list-head { display: grid; grid-template-columns: 90px 90px 1fr 160px 130px; gap: 0; background: var(--wash); border-bottom: 1px solid var(--line); padding: 12px 20px; }
     .id-list-head span { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-    .id-list-row { display: grid; grid-template-columns: 90px 90px 1fr 160px 130px; gap: 0; padding: 18px 20px; border-bottom: 1px solid var(--border); align-items: center; transition: background 0.15s; }
+    .id-list-row { display: grid; grid-template-columns: 90px 90px 1fr 160px 130px; gap: 0; padding: 18px 20px; border-bottom: 1px solid var(--line); align-items: center; transition: background 0.15s; }
     .id-list-row:last-child { border-bottom: none; }
-    .id-list-row:hover { background: #111; }
-    .cell-number { font-size: 16px; font-weight: 800; color: var(--orange); letter-spacing: -0.3px; }
+    .id-list-row:hover { background: var(--wash); }
+    .cell-number { font-size: 16px; font-weight: 800; color: var(--copper); letter-spacing: -0.3px; }
     .cell-wallet { font-family: monospace; font-size: 12px; color: var(--muted); }
     .cell-date { font-size: 12px; color: var(--muted); }
     .cell-action { text-align: right; }
-    .view-btn { display: inline-block; font-size: 12px; font-weight: 700; color: var(--orange); border: 1px solid var(--orange); padding: 5px 12px; border-radius: 5px; transition: background 0.15s, color 0.15s; cursor: pointer; }
-    .view-btn:hover { background: var(--orange); color: #000; }
+    .view-btn { display: inline-block; font-size: 12px; font-weight: 700; color: var(--copper); border: 1px solid var(--copper); padding: 5px 12px; border-radius: 5px; transition: background 0.15s, color 0.15s; cursor: pointer; }
+    .view-btn:hover { background: var(--copper); color: var(--on-accent); }
 
     /* CARD GRID */
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .id-card { background: var(--card); padding: 28px 24px; transition: background 0.15s; display: flex; flex-direction: column; gap: 10px; }
-    .id-card:hover { background: #141414; }
-    .id-card-num { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--orange); }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 2px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .id-card { background: var(--paper); padding: 28px 24px; transition: background 0.15s; display: flex; flex-direction: column; gap: 10px; }
+    .id-card:hover { background: var(--wash-2); }
+    .id-card-num { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--copper); }
     .id-card-wallet { font-family: monospace; font-size: 12px; color: var(--muted); }
-    .id-card-date { font-size: 11px; color: #444; }
+    .id-card-date { font-size: 11px; color: var(--muted); }
     .id-card-footer { margin-top: 6px; display: flex; align-items: center; justify-content: space-between; }
-    .id-card-view { font-size: 12px; font-weight: 700; color: var(--orange); border: 1px solid var(--orange); padding: 5px 12px; border-radius: 5px; transition: background 0.15s, color 0.15s; }
-    .id-card-view:hover { background: var(--orange); color: #000; }
+    .id-card-view { font-size: 12px; font-weight: 700; color: var(--copper); border: 1px solid var(--copper); padding: 5px 12px; border-radius: 5px; transition: background 0.15s, color 0.15s; }
+    .id-card-view:hover { background: var(--copper); color: var(--on-accent); }
 
     /* FOOTER */
-    footer { border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); margin-top: 32px; }
-    .footer-links { display: flex; gap: 24px; }
-    footer a:hover { color: var(--dim); }
 
-    .nav-toggle { display: none; flex-direction: column; justify-content: center; gap: 5px; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: #0f0f0f; cursor: pointer; padding: 8px 9px; flex-shrink: 0; }
-    .nav-toggle span { display: block; height: 2px; background: var(--white); border-radius: 2px; transition: transform 0.2s, opacity 0.2s; }
-    .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-    .nav-toggle.open span:nth-child(2) { opacity: 0; }
-    .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
     @media (max-width: 768px) {
-      nav { padding: 0 20px; }
-      .nav-toggle { display: flex; }
-      .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; gap: 2px; padding: 10px 12px 14px; background: rgba(8,8,8,0.98); border-bottom: 1px solid var(--border); box-shadow: 0 12px 32px rgba(0,0,0,0.4); z-index: 40; }
-      .nav-links.open { display: flex; }
-      .nav-links a { padding: 11px 14px; border-radius: 8px; font-size: 15px; }
       .page-header, .search-wrap, .stats-wrap, .section { padding-left: 20px; padding-right: 20px; }
       hr.sep { margin-left: 20px; margin-right: 20px; }
       .search-feedback { padding-left: 20px; padding-right: 20px; }
       .id-list-head, .id-list-row { grid-template-columns: 80px 80px 1fr 100px; }
       .cell-wallet { display: none; }
-      footer { padding: 24px 20px; flex-direction: column; text-align: center; }
     }
   </style>
 </head>
-<body>
+<body data-page="explore">
 
-<!-- NAV -->
-<nav>
-  <a href="/" class="nav-logo">
-    <div class="nav-logo-dot"></div>
-    OpenNum
-  </a>
-  <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-links" id="navLinks">
-    <a href="/">Search</a>
-    <a href="/explore" class="nav-active">Explorer</a>
-    <a href="/market">Market</a>
-    <a href="/whitepaper-en">Whitepaper</a>
-    <a href="/register" style="background:var(--orange);color:#000;padding:6px 14px;border-radius:4px;font-weight:700">Register</a>
-  </div>
-</nav>
+<header class="topbar">
+  <nav class="nav shell" aria-label="Primary">
+    <a class="brand" href="/">
+      <span class="brand-mark"><img src="/img/opennum-mark-final.svg" alt="" /></span>
+      <span>OpenNum</span>
+    </a>
+    <form class="nav-search" role="search" aria-label="Find an inscription number">
+      <span class="nav-search-prefix" aria-hidden="true">#</span>
+      <input type="text" inputmode="numeric" autocomplete="off" aria-label="Inscription number" placeholder="Find a number" />
+      <button type="submit">Go</button>
+    </form>
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="navLinks">
+      <a href="/">Search</a>
+      <a class="active" href="/explore">Explore</a>
+      <a href="/market">Market</a>
+      <a href="/register">Register</a>
+      <a href="/my">My OpenNum</a>
+    </div>
+    <button class="theme-toggle" type="button" aria-label="Switch theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+  </nav>
+</header>
 
 <!-- HEADER -->
 <div class="page-header">
@@ -218,7 +202,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Dormant Identities</div>
-      <div class="stat-value" style="color:#555">0</div>
+      <div class="stat-value" style="color:var(--muted)" id="statDormant">0</div>
       <div class="stat-sub">Awaiting re-registration</div>
     </div>
     <div class="stat-card">
@@ -279,12 +263,12 @@
     <div class="section-title">Resolver API</div>
     <div class="section-meta" style="color:var(--green)">Live · Phase 2 alpha</div>
   </div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-    <div style="background:#111;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:8px;">
+  <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden;">
+    <div style="background:var(--wash-2);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:8px;">
       <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
       <div style="width:10px;height:10px;border-radius:50%;background:#febc2e"></div>
       <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
-      <span style="font-size:12px;color:#555;margin-left:8px;font-family:monospace">opennum-api-v1.0</span>
+      <span style="font-size:12px;color:var(--muted);margin-left:8px;font-family:monospace">opennum-api-v1.0</span>
     </div>
     <pre style="padding:24px 28px;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.9;color:#888;overflow-x:auto"><span style="color:#555"># Resolve a number → wallet / status / inscription</span>
 <span style="color:#f7931a">GET</span> /api/resolve?num=<span style="color:#7ec8e3">2311</span>
@@ -303,18 +287,29 @@
 </section>
 
 <!-- FOOTER -->
-<footer>
-  <div>© 2026 OpenNum Contributors — MIT License</div>
-  <div class="footer-links">
-    <a href="https://twitter.com/OpenNumBTC" target="_blank">𝕏 @OpenNumBTC</a>
-    <a href="/market">Market</a>
-    <a href="/whitepaper-en">Whitepaper</a>
-    <a href="/faq">FAQ</a>
-    <a href="/terms">Terms</a>
-    <a href="/privacy">Privacy</a>
-    <a href="https://github.com/OpenNum/opennum-protocol/blob/main/docs/roadmap.md" target="_blank">Roadmap</a>
+<footer class="footer">
+  <div class="shell">
+    <div>&copy; 2026 OpenNum Contributors — MIT License</div>
+    <div class="footer-links">
+      <a href="/whitepaper-en">Whitepaper</a>
+      <a href="/market">Market</a>
+      <a href="/faq">FAQ</a>
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <a href="https://github.com/OpenNum/opennum-protocol/blob/main/docs/roadmap.md" target="_blank" rel="noopener noreferrer">Roadmap</a>
+      <a href="https://twitter.com/OpenNumBTC" target="_blank" rel="noopener noreferrer">X</a>
+    </div>
   </div>
 </footer>
+<div class="chainbar" aria-label="Network status">
+  <div class="shell">
+    <span class="chain-stat"><span class="chain-dot" aria-hidden="true"></span>BLOCK <strong id="chainBlock">&hellip;</strong></span>
+    <span class="chain-stat">FEE <strong id="chainFee">&hellip;</strong></span>
+    <span class="chain-spacer"></span>
+    <a class="chain-stat" href="/explore">REGISTERED <strong id="chainRegistered">&hellip;</strong></a>
+    <a class="chain-stat is-accent" href="/explore">LATEST <strong id="chainLatest">&hellip;</strong></a>
+  </div>
+</div>
 
 <script>
 function toggleNav(btn) {
@@ -346,7 +341,7 @@ async function doSearch() {
       fb.innerHTML = `<div class="no-result">
         <strong style="display:block;margin-bottom:8px;font-size:16px">#${q} is unregistered</strong>
         This number has not been claimed yet.
-        <a href="/register" style="display:inline-block;margin-top:14px;background:var(--orange);color:#000;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700">Register #${q} →</a>
+        <a href="/register" style="display:inline-block;margin-top:14px;background:var(--copper);color:#000;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700">Register #${q} →</a>
       </div>`;
     } else {
       fb.innerHTML = `<div class="no-result">Error: ${escapeHtml(data.error || 'Unknown error')}</div>`;
@@ -378,15 +373,29 @@ async function loadRegistry() {
   const topEl = document.getElementById('topNumbers');
   if (!listEl) return;
   try {
-    const res = await fetch('/api/list?sort=number&order=asc&limit=50');
+    const res = await fetch('/api/list?sort=number&order=asc&limit=100');
     if (!res.ok) throw new Error('Registry request failed');
     const data = await res.json();
     const registrations = data.registrations || [];
 
-    document.getElementById('statTotal').textContent = data.total || registrations.length || 0;
-    document.getElementById('statActive').textContent = registrations.length;
-    document.getElementById('statRecent').textContent = registrations[0]?.registered_at
-      ? new Date(registrations[0].registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
+    // `registrations` comes back sorted by number ascending, so registrations[0]
+    // is the LOWEST number, not the newest one. Pick the newest by date.
+    const total = data.total ?? registrations.length ?? 0;
+    const active = registrations.filter((r) => (r.status || 'active') === 'active');
+    const newest = registrations.reduce((best, r) => {
+      if (!r.registered_at) return best;
+      return !best || r.registered_at > best.registered_at ? r : best;
+    }, null);
+
+    document.getElementById('statTotal').textContent = total;
+    // Counting the fetched page only under-reports once the registry passes the
+    // request limit, so fall back to the server's total when nothing is dormant.
+    document.getElementById('statActive').textContent =
+      registrations.length < total && active.length === registrations.length ? total : active.length;
+    const dormantEl = document.getElementById('statDormant');
+    if (dormantEl) dormantEl.textContent = Math.max(0, total - active.length);
+    document.getElementById('statRecent').textContent = newest
+      ? new Date(newest.registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
       : 'None yet';
 
     if (metaEl) metaEl.textContent = `${data.total || registrations.length || 0} registered · opennum-mainnet`;

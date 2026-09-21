@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <script>(function(){var t;try{t=localStorage.getItem('opennum-theme');}catch(e){}document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');})();</script>
   <script defer src="/i18n.js"></script>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,22 +33,34 @@
     }
   }
   </script>
+  <script defer src="/site.js"></script>
 </head>
-<body>
+<body data-page="home">
   <header class="topbar">
     <nav class="nav shell" aria-label="Primary">
       <a class="brand" href="/">
         <span class="brand-mark"><img src="/img/opennum-mark-final.svg" alt="" /></span>
         <span>OpenNum</span>
       </a>
+      <form class="nav-search" role="search" aria-label="Find an inscription number">
+        <span class="nav-search-prefix" aria-hidden="true">#</span>
+        <input type="text" inputmode="numeric" autocomplete="off" aria-label="Inscription number" placeholder="Find a number" />
+        <button type="submit">Go</button>
+      </form>
       <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleNav(this)">
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
         <a class="active" href="/">Search</a>
+        <a href="/explore">Explore</a>
+        <a href="/market">Market</a>
         <a href="/register">Register</a>
         <a href="/my">My OpenNum</a>
       </div>
+      <button class="theme-toggle" type="button" aria-label="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </button>
     </nav>
   </header>
 
@@ -439,7 +452,7 @@
           <span class="sales-count">${sales.length}</span>
         </div>
         <div class="sales-tier-rows">
-          ${sales.length ? sales.map(renderSale).join('') : '<div class="sales-empty"><strong>No confirmed sales</strong><span>Nothing moved in this tier in the last 24 hours.</span></div>'}
+          ${sales.map(renderSale).join('')}
         </div>
         <a class="sales-tier-link" href="https://ord.net/collection/${definition.href}" target="_blank" rel="noopener noreferrer">View tier on ORD.NET →</a>
       </article>`;
@@ -452,11 +465,31 @@
         const res = await fetch('/api/sales', { signal: AbortSignal.timeout(15000) });
         if (!res.ok) throw new Error('Sales feed unavailable');
         const data = await res.json();
-        grid.innerHTML = SALES_TIERS.map((definition) => renderSalesTier(definition, data.tiers?.[definition.key])).join('');
-        const count = SALES_TIERS.reduce((sum, definition) => sum + (data.tiers?.[definition.key]?.sales?.length || 0), 0);
-        status.textContent = `${count} confirmed sale${count === 1 ? '' : 's'} · Last 24h${data.partial ? ' · Partial feed' : ''}`;
+        // Only tiers that actually traded get a card. Four boxes reading "no
+        // confirmed sales" is the loudest thing on the page and says nothing.
+        const live = SALES_TIERS.filter((definition) => (data.tiers?.[definition.key]?.sales?.length || 0) > 0);
+        const count = live.reduce((sum, definition) => sum + data.tiers[definition.key].sales.length, 0);
+
+        if (!live.length) {
+          grid.classList.add('is-compact');
+          grid.innerHTML = `<div class="sales-quiet">
+            <strong>Quiet tape.</strong>
+            <span>No Sub 100K inscription sale confirmed in the last 24 hours. Early numbers trade thinly — that is normal.</span>
+            <a href="https://ord.net/sales" target="_blank" rel="noopener noreferrer">See the full market on ORD.NET ↗</a>
+          </div>`;
+          status.textContent = 'No confirmed sales · Last 24h';
+          return;
+        }
+
+        grid.classList.toggle('is-compact', live.length < SALES_TIERS.length);
+        grid.innerHTML = live.map((definition) => renderSalesTier(definition, data.tiers[definition.key])).join('');
+        const quiet = SALES_TIERS.length - live.length;
+        status.textContent = `${count} confirmed sale${count === 1 ? '' : 's'} · Last 24h`
+          + (quiet ? ` · ${quiet} tier${quiet === 1 ? '' : 's'} quiet` : '')
+          + (data.partial ? ' · Partial feed' : '');
       } catch (_) {
         status.textContent = 'Live feed temporarily unavailable';
+        grid.classList.add('is-compact');
         grid.innerHTML = `<div class="sales-feed-error">
           <strong>The number tape is temporarily offline.</strong>
           <span>OpenNum profiles and registration are unaffected.</span>
@@ -543,5 +576,14 @@
       return true;
     }
   </script>
+  <div class="chainbar" aria-label="Network status">
+    <div class="shell">
+      <span class="chain-stat"><span class="chain-dot" aria-hidden="true"></span>BLOCK <strong id="chainBlock">&hellip;</strong></span>
+      <span class="chain-stat">FEE <strong id="chainFee">&hellip;</strong></span>
+      <span class="chain-spacer"></span>
+      <a class="chain-stat" href="/explore">REGISTERED <strong id="chainRegistered">&hellip;</strong></a>
+      <a class="chain-stat is-accent" href="/explore">LATEST <strong id="chainLatest">&hellip;</strong></a>
+    </div>
+  </div>
 </body>
 </html>
