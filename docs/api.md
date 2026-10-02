@@ -84,6 +84,9 @@ Parameters:
 | `limit` | `1`-`100` | `50` |
 | `offset` | integer | `0` |
 
+The response carries `offset`, `limit`, `has_more` and `registrations`. There is
+no registry-wide `total`: page with `offset` until `has_more` is `false`.
+
 Compatibility alias:
 
 ```http

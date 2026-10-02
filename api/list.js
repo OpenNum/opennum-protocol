@@ -30,9 +30,9 @@ function memberShape(r) {
 async function handleCollection(res, slug) {
   const tier = TIER_CIRCLES[slug];
   if (tier) {
-    const { data, error, count } = await supabase
+    const { data, error } = await supabase
       .from('registrations')
-      .select('*', { count: 'exact' })
+      .select('*')
       .eq('status', 'active')
       .lt('inscription_num', tier.max)
       .order('inscription_num', { ascending: true })
@@ -40,7 +40,6 @@ async function handleCollection(res, slug) {
     if (error) return res.status(500).json({ error: 'Database error' });
     return res.status(200).json({
       collection: { slug, name: tier.name, kind: 'tier' },
-      total: count || 0,
       members: (data || []).map(memberShape)
     });
   }
@@ -65,7 +64,6 @@ async function handleCollection(res, slug) {
   if (error) return res.status(500).json({ error: 'Database error' });
   return res.status(200).json({
     collection: { slug, name: rows[0].collection_name || slug, kind: 'named' },
-    total: (data || []).length,
     members: (data || []).map(memberShape)
   });
 }
@@ -111,28 +109,31 @@ module.exports = async (req, res) => {
   const market = req.query.market === '1' || req.query.market === 'true';
   const walletFilter = req.query.wallet || null;
 
+  // No registry-wide count on purpose: the public site should not double as a
+  // head count. Fetch one extra row so callers can still tell if a next page exists.
   let query = supabase
     .from('registrations')
-    .select('*', { count: 'exact' })
+    .select('*')
     .eq('status', 'active');
 
   if (market) query = query.eq('for_sale', true);
   if (walletFilter) query = query.eq('wallet_address', walletFilter);
 
-  const { data, error, count } = await query
+  const { data, error } = await query
     .order(sort, { ascending: order })
-    .range(offset, offset + limit - 1);
+    .range(offset, offset + limit);
 
   if (error) {
     console.error('DB error:', error);
     return res.status(500).json({ error: 'Database error' });
   }
 
+  const page = (data || []).slice(0, limit);
   return res.status(200).json({
-    total: count || 0,
     offset,
     limit,
-    registrations: (data || []).map(r => ({
+    has_more: (data || []).length > limit,
+    registrations: page.map(r => ({
       inscription_num: r.inscription_num,
       inscription_id: r.inscription_id || (r.inscription_txid ? `${r.inscription_txid}i0` : null),
       inscription_txid: r.inscription_txid,

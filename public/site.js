@@ -94,16 +94,16 @@
       })
       .catch(function () { setStat('chainFee', null); });
 
-    fetch('/api/list?sort=number&order=asc&limit=100')
+    // LATEST only shows while registrations are fresh; a number that has not
+    // moved for weeks says "nobody is here" louder than showing nothing.
+    var LATEST_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+    fetch('/api/list?sort=registered_at&order=desc&limit=1')
       .then(function (r) { if (!r.ok) throw new Error('registry'); return r.json(); })
       .then(function (d) {
-        var rows = (d && d.registrations) || [];
-        var newest = rows.reduce(function (best, r) {
-          if (!r || !r.registered_at) return best;
-          if (!best || r.registered_at > best.registered_at) return r;
-          return best;
-        }, null);
-        setStat('chainLatest', newest ? '#' + newest.inscription_num : null);
+        var newest = d && d.registrations && d.registrations[0];
+        var at = newest && Date.parse(newest.registered_at);
+        var fresh = Number.isFinite(at) && Date.now() - at <= LATEST_MAX_AGE_MS;
+        setStat('chainLatest', fresh ? '#' + newest.inscription_num : null);
       })
       .catch(function () {
         setStat('chainLatest', null);
