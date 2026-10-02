@@ -135,7 +135,7 @@
         const name = data.collection?.name || slug;
         title.textContent = `${name} on OpenNum`;
         document.title = `${name} on OpenNum`;
-        sub.textContent = `${data.total} registered ${data.total === 1 ? 'identity' : 'identities'} in this circle. Every membership is on-chain — hold one, register it, and you're in.`;
+        sub.textContent = 'Every membership is on-chain — hold one, register it, and you\'re in.';
         grid.innerHTML = (data.members || []).map(memberCard).join('') ||
           '<div class="market-card"><div class="number">0</div><div class="small">Registered members will appear here.</div></div>';
       } catch (_) {
@@ -150,7 +150,6 @@
       <span class="chain-stat"><span class="chain-dot" aria-hidden="true"></span>BLOCK <strong id="chainBlock">&hellip;</strong></span>
       <span class="chain-stat">FEE <strong id="chainFee">&hellip;</strong></span>
       <span class="chain-spacer"></span>
-      <a class="chain-stat" href="/explore">REGISTERED <strong id="chainRegistered">&hellip;</strong></a>
       <a class="chain-stat is-accent" href="/explore">LATEST <strong id="chainLatest">&hellip;</strong></a>
     </div>
   </div>

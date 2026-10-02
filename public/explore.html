@@ -187,65 +187,13 @@
 <!-- SEARCH FEEDBACK (only shown for unregistered numbers) -->
 <div class="search-feedback" id="search-feedback"></div>
 
-<!-- STATS -->
-<div class="stats-wrap">
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Total Numbers</div>
-      <div class="stat-value orange" id="statTotal">...</div>
-      <div class="stat-sub">Registered on OpenNum</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Active Identities</div>
-      <div class="stat-value" style="color:var(--green)" id="statActive">...</div>
-      <div class="stat-sub">Currently active</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Dormant Identities</div>
-      <div class="stat-value" style="color:var(--muted)" id="statDormant">0</div>
-      <div class="stat-sub">Awaiting re-registration</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Recent Registrations</div>
-      <div class="stat-value orange" style="font-size:22px" id="statRecent">...</div>
-      <div class="stat-sub">Latest activity</div>
-    </div>
-  </div>
-</div>
-
 <hr class="sep">
 
-<!-- ALL IDENTITIES LIST -->
+<!-- FEATURED IDENTITIES -->
 <section class="section">
   <div class="section-header">
-    <div class="section-title">All Identities</div>
-    <div class="section-meta" id="allIdentitiesMeta">Loading live registry...</div>
-  </div>
-  <div class="id-list">
-    <div class="id-list-head">
-      <span>Number</span>
-      <span>Status</span>
-      <span>Wallet</span>
-      <span>Last Updated</span>
-      <span></span>
-    </div>
-    <div class="id-list-row">
-      <div class="cell-number">...</div>
-      <div><span class="status-pill status-dormant">Loading</span></div>
-      <div class="cell-wallet">Fetching live API data</div>
-      <div class="cell-date">...</div>
-      <div></div>
-    </div>
-  </div>
-</section>
-
-<hr class="sep">
-
-<!-- TOP NUMBERS CARD GRID -->
-<section class="section">
-  <div class="section-header">
-    <div class="section-title">Top Numbers</div>
-    <div class="section-meta">Lowest live registered inscription numbers</div>
+    <div class="section-title">Featured Identities</div>
+    <div class="section-meta" id="featuredMeta">Live on opennum-mainnet</div>
   </div>
   <div class="card-grid" id="topNumbers">
     <div class="id-card">
@@ -306,7 +254,6 @@
     <span class="chain-stat"><span class="chain-dot" aria-hidden="true"></span>BLOCK <strong id="chainBlock">&hellip;</strong></span>
     <span class="chain-stat">FEE <strong id="chainFee">&hellip;</strong></span>
     <span class="chain-spacer"></span>
-    <a class="chain-stat" href="/explore">REGISTERED <strong id="chainRegistered">&hellip;</strong></a>
     <a class="chain-stat is-accent" href="/explore">LATEST <strong id="chainLatest">&hellip;</strong></a>
   </div>
 </div>
@@ -368,89 +315,39 @@ function onSearchInput(val) {
 
 /* Load live registry from API */
 async function loadRegistry() {
-  const listEl = document.querySelector('.id-list');
-  const metaEl = document.getElementById('allIdentitiesMeta');
   const topEl = document.getElementById('topNumbers');
-  if (!listEl) return;
+  const metaEl = document.getElementById('featuredMeta');
+  if (!topEl) return;
   try {
-    const res = await fetch('/api/list?sort=number&order=asc&limit=100');
+    // Featured = the lowest live numbers. Only a handful are shown on purpose:
+    // the page should not double as a head count of the registry.
+    const res = await fetch('/api/list?sort=number&order=asc&limit=6');
     if (!res.ok) throw new Error('Registry request failed');
     const data = await res.json();
-    const registrations = data.registrations || [];
-
-    // `registrations` comes back sorted by number ascending, so registrations[0]
-    // is the LOWEST number, not the newest one. Pick the newest by date.
-    const total = data.total ?? registrations.length ?? 0;
-    const active = registrations.filter((r) => (r.status || 'active') === 'active');
-    const newest = registrations.reduce((best, r) => {
-      if (!r.registered_at) return best;
-      return !best || r.registered_at > best.registered_at ? r : best;
-    }, null);
-
-    document.getElementById('statTotal').textContent = total;
-    // Counting the fetched page only under-reports once the registry passes the
-    // request limit, so fall back to the server's total when nothing is dormant.
-    document.getElementById('statActive').textContent =
-      registrations.length < total && active.length === registrations.length ? total : active.length;
-    const dormantEl = document.getElementById('statDormant');
-    if (dormantEl) dormantEl.textContent = Math.max(0, total - active.length);
-    document.getElementById('statRecent').textContent = newest
-      ? new Date(newest.registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
-      : 'None yet';
-
-    if (metaEl) metaEl.textContent = `${data.total || registrations.length || 0} registered · opennum-mainnet`;
-
-    const head = listEl.querySelector('.id-list-head');
-    listEl.innerHTML = '';
-    if (head) listEl.appendChild(head);
+    const registrations = (data.registrations || []).slice(0, 6);
 
     if (registrations.length === 0) {
-      listEl.insertAdjacentHTML('beforeend', `<div class="id-list-row"><div class="cell-number">No records</div><div></div><div class="cell-wallet">Register the first OpenNum identity.</div><div></div><div></div></div>`);
-      if (topEl) topEl.innerHTML = `<div class="id-card"><div class="id-card-num">None yet</div><div class="id-card-wallet">The registry is live and waiting for first registrations.</div></div>`;
+      topEl.innerHTML = `<div class="id-card"><div class="id-card-num">None yet</div><div class="id-card-wallet">The registry is live and waiting for first registrations.</div></div>`;
       return;
     }
 
-    registrations.forEach(r => {
-      const num = r.inscription_num;
-      const wallet = r.wallet;
-      const shortWallet = wallet && wallet.length > 20 ? wallet.slice(0, 10) + '…' + wallet.slice(-8) : wallet;
-      const date = r.registered_at ? r.registered_at.slice(0, 10) : '—';
-      const row = document.createElement('div');
-      row.className = 'id-list-row';
-      row.style.cursor = 'pointer';
-      row.onclick = () => location.href = '/n/' + num;
-      row.innerHTML = `
-        <div class="cell-number">${num}</div>
-        <div><span class="status-pill status-active"><span class="status-dot-sm" style="background:var(--green)"></span>Active</span></div>
-        <div class="cell-wallet">${escapeHtml(shortWallet || 'wallet unavailable')}</div>
-        <div class="cell-date">${date}</div>
-        <div class="cell-action"><span class="view-btn" onclick="event.stopPropagation();location.href='/n/${num}'">View Profile →</span></div>
-      `;
-      listEl.appendChild(row);
-    });
-
-    if (topEl) {
-      topEl.innerHTML = registrations.slice(0, 6).map((r) => {
-        const date = r.registered_at ? new Date(r.registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }) : 'Unknown date';
-        return `
-          <div class="id-card">
-            <div class="id-card-num">${r.inscription_num}</div>
-            <span class="status-pill status-active" style="align-self:flex-start"><span class="status-dot-sm" style="background:var(--green)"></span>${escapeHtml(r.status || 'active')}</span>
-            <div class="id-card-wallet">${escapeHtml(r.wallet || 'wallet unavailable')}</div>
-            <div class="id-card-date">Registered ${date}</div>
-            <div class="id-card-footer">
-              <span style="font-size:11px;color:#333">opennum-mainnet</span>
-              <a href="/n/${r.inscription_num}" class="id-card-view">View Profile →</a>
-            </div>
+    topEl.innerHTML = registrations.map((r) => {
+      const date = r.registered_at ? new Date(r.registered_at).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }) : 'Unknown date';
+      return `
+        <div class="id-card">
+          <div class="id-card-num">${r.inscription_num}</div>
+          <span class="status-pill status-active" style="align-self:flex-start"><span class="status-dot-sm" style="background:var(--green)"></span>${escapeHtml(r.status || 'active')}</span>
+          <div class="id-card-wallet">${escapeHtml(r.wallet || 'wallet unavailable')}</div>
+          <div class="id-card-date">Registered ${date}</div>
+          <div class="id-card-footer">
+            <span style="font-size:11px;color:#333">opennum-mainnet</span>
+            <a href="/n/${r.inscription_num}" class="id-card-view">View Profile →</a>
           </div>
-        `;
-      }).join('');
-    }
+        </div>
+      `;
+    }).join('');
   } catch (e) {
     if (metaEl) metaEl.textContent = 'Registry API unavailable';
-    document.getElementById('statTotal').textContent = '!';
-    document.getElementById('statActive').textContent = '!';
-    document.getElementById('statRecent').textContent = 'Retry';
   }
 }
 

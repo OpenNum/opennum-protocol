@@ -98,7 +98,6 @@
       .then(function (r) { if (!r.ok) throw new Error('registry'); return r.json(); })
       .then(function (d) {
         var rows = (d && d.registrations) || [];
-        setStat('chainRegistered', fmt(d && d.total != null ? d.total : rows.length));
         var newest = rows.reduce(function (best, r) {
           if (!r || !r.registered_at) return best;
           if (!best || r.registered_at > best.registered_at) return r;
@@ -107,7 +106,6 @@
         setStat('chainLatest', newest ? '#' + newest.inscription_num : null);
       })
       .catch(function () {
-        setStat('chainRegistered', null);
         setStat('chainLatest', null);
       });
   }
