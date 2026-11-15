@@ -5,10 +5,17 @@
   <script>(function(){var t;try{t=localStorage.getItem('opennum-theme');}catch(e){}document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy — OpenNum</title>
-  <meta name="description" content="OpenNum Privacy. We never see or store your private keys, use cookie-free analytics, and never sell your data." />
+  <meta name="description" content="OpenNum Privacy. We never see or store your private keys, use Google Analytics for aggregate traffic statistics, and never sell your data." />
   <link rel="icon" href="/img/opennum-mark-final.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/app.css" />
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e2f9dfb01398435c89fd9e7b931bff00"}'></script>
+  <!-- Google Analytics 4 (2026-11-15, replaces Cloudflare Web Analytics). Query params like ?email= are redacted in the GA admin. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGQ12FDCD2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-ZGQ12FDCD2", { allow_google_signals: false, allow_ad_personalization_signals: false });
+  </script>
   <style>
     .legal { max-width: 760px; margin: 0 auto; padding: 56px 0 90px; }
     .legal h1 { font-size: 34px; color: var(--ink); letter-spacing: -0.01em; }
@@ -54,7 +61,7 @@
   <main class="shell">
     <article class="legal">
       <h1>Privacy</h1>
-      <div class="updated">Last updated: 21 June 2026</div>
+      <div class="updated">Last updated: 15 November 2026</div>
 
       <p class="intro">OpenNum is built to be privacy-preserving and non-custodial. We never see or store your private keys, and we never ask for your seed phrase.</p>
 
@@ -71,12 +78,12 @@
       <ul>
         <li><strong>Unisat (wallet)</strong> — you authorize and sign through your own wallet extension; we only receive your public address and your signatures.</li>
         <li><strong>Supabase (database hosting)</strong> — stores the public registry, profiles, and messages.</li>
-        <li><strong>Cloudflare Web Analytics</strong> — privacy-first, cookie-free, aggregate traffic statistics. It does not use cookies, does not fingerprint visitors, and collects no personal data — which is why OpenNum shows no cookie banner.</li>
+        <li><strong>Google Analytics</strong> — aggregate traffic statistics (which pages are visited, referral sources, device type). It uses cookies. We turn off Google signals and ad personalisation, and personal parameters in page addresses (such as email) are redacted before they are sent. Google Analytics never receives your wallet address, signatures, or private keys. You can block cookies in your browser or install the <a href="https://tools.google.com/dlpage/gaoptout">Google Analytics Opt-out Browser Add-on</a>.</li>
         <li><strong>ordinals.com / Bitcoin indexers</strong> — queried to verify inscription ownership.</li>
       </ul>
 
       <h2>Cookies</h2>
-      <p>OpenNum does not use tracking cookies.</p>
+      <p>OpenNum does not set its own tracking cookies. Google Analytics sets cookies to count visits, as described above; we do not use advertising cookies.</p>
 
       <h2>Your data is public by design</h2>
       <p>Because OpenNum is a public identity protocol, the information you publish is visible to anyone and may be cached or indexed elsewhere (search engines, archives, the blockchain). Removing it later may not erase copies that already exist.</p>
